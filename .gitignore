@@ -1,0 +1,58 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*~
+*.bak
+*.swp
+*.swo
+
+# Log files
+*.log
+
+# Office temporary files
+~$*
+*.tmp
+
+# Compressed files
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# Node modules (if using any web technologies)
+node_modules/
+npm-debug.log*
+
+# Python cache (if using Python)
+__pycache__/
+*.pyc
+*.pyo
+
+# Java compiled files (if using Java)
+*.class
+*.jar
+
+# .NET files (if using .NET)
+bin/
+obj/
+*.exe
+*.dll
+
+# Personal notes that shouldn't be shared
+personal-notes/
+private/
