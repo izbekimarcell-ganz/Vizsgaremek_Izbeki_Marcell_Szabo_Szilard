@@ -1,0 +1,2 @@
+# Vizsgaremek_Izbeki_Marcell_Szabo_Szilard
+Vizsgaremek_Izbeki_Marcell_Szabo_Szilard fájlok és dokumentációk
