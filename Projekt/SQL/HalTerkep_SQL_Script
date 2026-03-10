@@ -1,0 +1,506 @@
+/* =========================================================
+   HALTÉRKÉP - Komplett adatbázis létrehozó + feltöltő script
+   ========================================================= */
+
+-- 1) Adatbázis létrehozása (ha nem létezik)
+IF DB_ID(N'HalTerkep') IS NULL
+BEGIN
+    CREATE DATABASE HalTerkep;
+END
+GO
+
+USE HalTerkep;
+GO
+
+SET NOCOUNT ON;
+GO
+
+/* 2) Táblák törlése (ha újra szeretnéd futtatni)
+      - FK-k miatt fordított sorrendben */
+IF OBJECT_ID(N'dbo.ForumHozzaszolas', N'U') IS NOT NULL DROP TABLE dbo.ForumHozzaszolas;
+IF OBJECT_ID(N'dbo.ForumTema', N'U') IS NOT NULL DROP TABLE dbo.ForumTema;
+
+IF OBJECT_ID(N'dbo.FogasNaplo', N'U') IS NOT NULL DROP TABLE dbo.FogasNaplo;
+
+IF OBJECT_ID(N'dbo.VizteruletHalfaj', N'U') IS NOT NULL DROP TABLE dbo.VizteruletHalfaj;
+IF OBJECT_ID(N'dbo.VizteruletMegye', N'U') IS NOT NULL DROP TABLE dbo.VizteruletMegye;
+
+IF OBJECT_ID(N'dbo.Vizterulet', N'U') IS NOT NULL DROP TABLE dbo.Vizterulet;
+IF OBJECT_ID(N'dbo.VizTipus', N'U') IS NOT NULL DROP TABLE dbo.VizTipus;
+
+IF OBJECT_ID(N'dbo.Megye', N'U') IS NOT NULL DROP TABLE dbo.Megye;
+IF OBJECT_ID(N'dbo.Halfaj', N'U') IS NOT NULL DROP TABLE dbo.Halfaj;
+
+IF OBJECT_ID(N'dbo.FelhasznaloSzerepkor', N'U') IS NOT NULL DROP TABLE dbo.FelhasznaloSzerepkor;
+IF OBJECT_ID(N'dbo.Szerepkor', N'U') IS NOT NULL DROP TABLE dbo.Szerepkor;
+IF OBJECT_ID(N'dbo.Felhasznalo', N'U') IS NOT NULL DROP TABLE dbo.Felhasznalo;
+GO
+
+/* =========================================================
+   3) Törzs táblák
+   ========================================================= */
+
+-- Felhasználók
+CREATE TABLE dbo.Felhasznalo
+(
+    FelhasznaloId      INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Felhasznalo PRIMARY KEY,
+    Felhasznalonev     NVARCHAR(50)  NOT NULL,
+    Email              NVARCHAR(100) NOT NULL,
+    JelszoHash         VARBINARY(64) NOT NULL,
+    JelszoSo           VARBINARY(16) NOT NULL,
+    Letrehozva         DATETIME2     NOT NULL CONSTRAINT DF_Felhasznalo_Letrehozva DEFAULT (SYSUTCDATETIME()),
+    Aktiv              BIT           NOT NULL CONSTRAINT DF_Felhasznalo_Aktiv DEFAULT (1)
+);
+GO
+
+CREATE UNIQUE INDEX UX_Felhasznalo_Felhasznalonev ON dbo.Felhasznalo(Felhasznalonev);
+CREATE UNIQUE INDEX UX_Felhasznalo_Email          ON dbo.Felhasznalo(Email);
+GO
+
+-- Szerepkörök
+CREATE TABLE dbo.Szerepkor
+(
+    SzerepkorId  INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Szerepkor PRIMARY KEY,
+    Nev          NVARCHAR(30) NOT NULL
+);
+GO
+
+CREATE UNIQUE INDEX UX_Szerepkor_Nev ON dbo.Szerepkor(Nev);
+GO
+
+-- Felhasználó-Szerepkör
+CREATE TABLE dbo.FelhasznaloSzerepkor
+(
+    FelhasznaloId INT NOT NULL,
+    SzerepkorId   INT NOT NULL,
+    CONSTRAINT PK_FelhasznaloSzerepkor PRIMARY KEY (FelhasznaloId, SzerepkorId),
+    CONSTRAINT FK_FelhasznaloSzerepkor_Felhasznalo FOREIGN KEY (FelhasznaloId) REFERENCES dbo.Felhasznalo(FelhasznaloId),
+    CONSTRAINT FK_FelhasznaloSzerepkor_Szerepkor   FOREIGN KEY (SzerepkorId)   REFERENCES dbo.Szerepkor(SzerepkorId)
+);
+GO
+
+-- Halfajok
+CREATE TABLE dbo.Halfaj
+(
+    HalfajId        INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Halfaj PRIMARY KEY,
+    MagyarNev       NVARCHAR(100) NOT NULL,
+    LatinNev        NVARCHAR(150) NULL,
+    Vedett          BIT           NOT NULL CONSTRAINT DF_Halfaj_Vedett DEFAULT (0),
+    MinMeretCm      INT           NULL,
+    NapiLimit       INT           NULL,
+    Megjegyzes      NVARCHAR(500) NULL
+);
+GO
+
+-- Megyék
+CREATE TABLE dbo.Megye
+(
+    MegyeId   INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Megye PRIMARY KEY,
+    Nev       NVARCHAR(50) NOT NULL
+);
+GO
+
+CREATE UNIQUE INDEX UX_Megye_Nev ON dbo.Megye(Nev);
+GO
+
+-- Víztípus
+CREATE TABLE dbo.VizTipus
+(
+    VizTipusId  INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_VizTipus PRIMARY KEY,
+    Nev         NVARCHAR(50) NOT NULL
+);
+GO
+
+CREATE UNIQUE INDEX UX_VizTipus_Nev ON dbo.VizTipus(Nev);
+GO
+
+-- Vízterület
+CREATE TABLE dbo.Vizterulet
+(
+    VizteruletId  INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Vizterulet PRIMARY KEY,
+    Nev           NVARCHAR(150) NOT NULL,
+    VizTipusId    INT NOT NULL,
+    CONSTRAINT FK_Vizterulet_VizTipus FOREIGN KEY (VizTipusId) REFERENCES dbo.VizTipus(VizTipusId)
+);
+GO
+
+/* =========================================================
+   4) Kapcsolótáblák a vízterületekhez
+   ========================================================= */
+
+CREATE TABLE dbo.VizteruletMegye
+(
+    VizteruletId INT NOT NULL,
+    MegyeId      INT NOT NULL,
+    CONSTRAINT PK_VizteruletMegye PRIMARY KEY (VizteruletId, MegyeId),
+    CONSTRAINT FK_VizteruletMegye_Vizterulet FOREIGN KEY (VizteruletId) REFERENCES dbo.Vizterulet(VizteruletId),
+    CONSTRAINT FK_VizteruletMegye_Megye      FOREIGN KEY (MegyeId)      REFERENCES dbo.Megye(MegyeId)
+);
+GO
+
+CREATE TABLE dbo.VizteruletHalfaj
+(
+    VizteruletId INT NOT NULL,
+    HalfajId     INT NOT NULL,
+    Megjegyzes   NVARCHAR(500) NULL,
+    CONSTRAINT PK_VizteruletHalfaj PRIMARY KEY (VizteruletId, HalfajId),
+    CONSTRAINT FK_VizteruletHalfaj_Vizterulet FOREIGN KEY (VizteruletId) REFERENCES dbo.Vizterulet(VizteruletId),
+    CONSTRAINT FK_VizteruletHalfaj_Halfaj     FOREIGN KEY (HalfajId)     REFERENCES dbo.Halfaj(HalfajId)
+);
+GO
+
+/* =========================================================
+   5) Fogásnapló
+   ========================================================= */
+
+CREATE TABLE dbo.FogasNaplo
+(
+    FogasId        INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_FogasNaplo PRIMARY KEY,
+    FelhasznaloId  INT NOT NULL,
+    HalfajId       INT NOT NULL,
+    VizteruletId   INT NOT NULL,
+    FogasIdeje     DATETIME2 NOT NULL,
+    SulyKg         DECIMAL(5,2) NULL,
+    HosszCm        INT NULL,
+    FotoUrl        NVARCHAR(300) NULL,
+    Megjegyzes     NVARCHAR(500) NULL,
+
+    CONSTRAINT FK_FogasNaplo_Felhasznalo FOREIGN KEY (FelhasznaloId) REFERENCES dbo.Felhasznalo(FelhasznaloId),
+    CONSTRAINT FK_FogasNaplo_Halfaj      FOREIGN KEY (HalfajId)      REFERENCES dbo.Halfaj(HalfajId),
+    CONSTRAINT FK_FogasNaplo_Vizterulet  FOREIGN KEY (VizteruletId)  REFERENCES dbo.Vizterulet(VizteruletId)
+);
+GO
+
+CREATE INDEX IX_FogasNaplo_FelhasznaloId ON dbo.FogasNaplo(FelhasznaloId);
+CREATE INDEX IX_FogasNaplo_HalfajId      ON dbo.FogasNaplo(HalfajId);
+CREATE INDEX IX_FogasNaplo_VizteruletId  ON dbo.FogasNaplo(VizteruletId);
+CREATE INDEX IX_FogasNaplo_FogasIdeje    ON dbo.FogasNaplo(FogasIdeje);
+GO
+
+/* =========================================================
+   6) Fórum
+   ========================================================= */
+
+CREATE TABLE dbo.ForumTema
+(
+    TemaId        INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_ForumTema PRIMARY KEY,
+    FelhasznaloId INT NOT NULL,
+    Cim           NVARCHAR(150) NOT NULL,
+    Letrehozva    DATETIME2 NOT NULL CONSTRAINT DF_ForumTema_Letrehozva DEFAULT (SYSUTCDATETIME()),
+
+    CONSTRAINT FK_ForumTema_Felhasznalo FOREIGN KEY (FelhasznaloId) REFERENCES dbo.Felhasznalo(FelhasznaloId)
+);
+GO
+
+CREATE INDEX IX_ForumTema_FelhasznaloId ON dbo.ForumTema(FelhasznaloId);
+GO
+
+CREATE TABLE dbo.ForumHozzaszolas
+(
+    HozzaszolasId INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_ForumHozzaszolas PRIMARY KEY,
+    TemaId        INT NOT NULL,
+    FelhasznaloId INT NOT NULL,
+    Szoveg        NVARCHAR(MAX) NOT NULL,
+    KepUrl        NVARCHAR(300) NULL,
+    Letrehozva    DATETIME2 NOT NULL CONSTRAINT DF_ForumHozzaszolas_Letrehozva DEFAULT (SYSUTCDATETIME()),
+
+    CONSTRAINT FK_ForumHozzaszolas_Tema        FOREIGN KEY (TemaId)        REFERENCES dbo.ForumTema(TemaId) ON DELETE CASCADE,
+    CONSTRAINT FK_ForumHozzaszolas_Felhasznalo FOREIGN KEY (FelhasznaloId) REFERENCES dbo.Felhasznalo(FelhasznaloId)
+);
+GO
+
+CREATE INDEX IX_ForumHozzaszolas_TemaId ON dbo.ForumHozzaszolas(TemaId);
+CREATE INDEX IX_ForumHozzaszolas_FelhasznaloId ON dbo.ForumHozzaszolas(FelhasznaloId);
+GO
+
+/* =========================================================
+   7) Adatfeltöltés
+   ========================================================= */
+
+BEGIN TRY
+    BEGIN TRAN;
+
+    /* =========================================================
+       7.1) Szerepkörök
+       ========================================================= */
+    IF NOT EXISTS (SELECT 1 FROM dbo.Szerepkor WHERE Nev = N'User')
+        INSERT INTO dbo.Szerepkor (Nev) VALUES (N'User');
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.Szerepkor WHERE Nev = N'Admin')
+        INSERT INTO dbo.Szerepkor (Nev) VALUES (N'Admin');
+
+    /* =========================================================
+       7.2) Megyék (19 megye + Budapest)
+       ========================================================= */
+    DECLARE @Megyek TABLE (Nev NVARCHAR(50));
+    INSERT INTO @Megyek (Nev) VALUES
+        (N'Bács-Kiskun'),
+        (N'Baranya'),
+        (N'Békés'),
+        (N'Borsod-Abaúj-Zemplén'),
+        (N'Csongrád-Csanád'),
+        (N'Fejér'),
+        (N'Győr-Moson-Sopron'),
+        (N'Hajdú-Bihar'),
+        (N'Heves'),
+        (N'Jász-Nagykun-Szolnok'),
+        (N'Komárom-Esztergom'),
+        (N'Nógrád'),
+        (N'Pest'),
+        (N'Somogy'),
+        (N'Szabolcs-Szatmár-Bereg'),
+        (N'Tolna'),
+        (N'Vas'),
+        (N'Veszprém'),
+        (N'Zala'),
+        (N'Budapest');
+
+    INSERT INTO dbo.Megye (Nev)
+    SELECT m.Nev
+    FROM @Megyek m
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Megye x WHERE x.Nev = m.Nev);
+
+    /* =========================================================
+       7.3) Víztípusok
+       ========================================================= */
+    DECLARE @VizTipusok TABLE (Nev NVARCHAR(50));
+    INSERT INTO @VizTipusok (Nev) VALUES
+        (N'Folyó'),
+        (N'Tó'),
+        (N'Csatorna'),
+        (N'Holtág'),
+        (N'Bányató');
+
+    INSERT INTO dbo.VizTipus (Nev)
+    SELECT v.Nev
+    FROM @VizTipusok v
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.VizTipus x WHERE x.Nev = v.Nev);
+
+    /* =========================================================
+       7.4) Halfajok
+       ========================================================= */
+    DECLARE @Halfajok TABLE
+    (
+        MagyarNev   NVARCHAR(100) NOT NULL,
+        LatinNev    NVARCHAR(150) NULL,
+        Vedett      BIT NOT NULL,
+        MinMeretCm  INT NULL,
+        NapiLimit   INT NULL
+    );
+
+    INSERT INTO @Halfajok (MagyarNev, LatinNev, Vedett, MinMeretCm, NapiLimit) VALUES
+        (N'Ponty',                  N'Cyprinus carpio',             0, 30, NULL),
+        (N'Amur',                   N'Ctenopharyngodon idella',     0, 40, NULL),
+        (N'Keszeg (déver)',         N'Abramis brama',               0, 20, NULL),
+        (N'Keszeg (karika)',        N'Blicca bjoerkna',             0, 15, NULL),
+        (N'Vörösszárnyú keszeg',    N'Scardinius erythrophthalmus', 0, 15, NULL),
+        (N'Bodorka',                N'Rutilus rutilus',             0, 15, NULL),
+        (N'Compó',                  N'Tinca tinca',                 0, 25, NULL),
+        (N'Kárász',                 N'Carassius spp.',              0, NULL, NULL),
+        (N'Jászkeszeg',             N'Leuciscus idus',              0, 20, NULL),
+        (N'Paduc',                  N'Chondrostoma nasus',          0, 25, NULL),
+        (N'Márna',                  N'Barbus barbus',               0, 40, NULL),
+        (N'Balin',                  N'Aspius aspius',               0, 40, NULL),
+        (N'Sügér',                  N'Perca fluviatilis',           0, 15, NULL),
+        (N'Süllő',                  N'Sander lucioperca',           0, 30, NULL),
+        (N'Kősüllő',                N'Sander volgensis',            0, 20, NULL),
+        (N'Csuka',                  N'Esox lucius',                 0, 40, NULL),
+        (N'Harcsa',                 N'Silurus glanis',              0, 60, NULL),
+        (N'Garda',                  N'Pelecus cultratus',           0, 20, NULL),
+        (N'Küsz',                   N'Alburnus alburnus',           0, 12, NULL),
+        (N'Busa (fehér)',           N'Hypophthalmichthys molitrix', 0, NULL, NULL),
+        (N'Busa (pettyes)',         N'Hypophthalmichthys nobilis',  0, NULL, NULL),
+        (N'Angolna',                N'Anguilla anguilla',           0, NULL, NULL),
+        (N'Menyhal',                N'Lota lota',                   0, 25, NULL),
+        (N'Sebes pisztráng',        N'Salmo trutta',                0, 22, NULL),
+        (N'Szivárványos pisztráng', N'Oncorhynchus mykiss',         0, 22, NULL);
+
+    INSERT INTO dbo.Halfaj (MagyarNev, LatinNev, Vedett, MinMeretCm, NapiLimit, Megjegyzes)
+    SELECT h.MagyarNev, h.LatinNev, h.Vedett, h.MinMeretCm, h.NapiLimit, NULL
+    FROM @Halfajok h
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Halfaj x WHERE x.MagyarNev = h.MagyarNev);
+
+    /* =========================================================
+       7.5) Minta felhasználók
+       ========================================================= */
+    IF NOT EXISTS (SELECT 1 FROM dbo.Felhasznalo WHERE Felhasznalonev = N'admin')
+    BEGIN
+        INSERT INTO dbo.Felhasznalo
+            (Felhasznalonev, Email, JelszoHash, JelszoSo, Letrehozva, Aktiv)
+        VALUES
+            (N'admin', N'admin@halterkep.local',
+             0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F20,
+             0xA1A2A3A4A5A6A7A8A9AAABACADAEAFB0,
+             SYSUTCDATETIME(), 1);
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.Felhasznalo WHERE Felhasznalonev = N'teszt')
+    BEGIN
+        INSERT INTO dbo.Felhasznalo
+            (Felhasznalonev, Email, JelszoHash, JelszoSo, Letrehozva, Aktiv)
+        VALUES
+            (N'teszt', N'teszt@halterkep.local',
+             0x1112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F30,
+             0xB1B2B3B4B5B6B7B8B9BABBBCBDBEBFC0,
+             SYSUTCDATETIME(), 1);
+    END
+
+    DECLARE @AdminId INT = (SELECT FelhasznaloId FROM dbo.Felhasznalo WHERE Felhasznalonev = N'admin');
+    DECLARE @TesztId INT = (SELECT FelhasznaloId FROM dbo.Felhasznalo WHERE Felhasznalonev = N'teszt');
+    DECLARE @AdminRoleId INT = (SELECT SzerepkorId FROM dbo.Szerepkor WHERE Nev = N'Admin');
+    DECLARE @UserRoleId  INT = (SELECT SzerepkorId FROM dbo.Szerepkor WHERE Nev = N'User');
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.FelhasznaloSzerepkor WHERE FelhasznaloId = @AdminId AND SzerepkorId = @AdminRoleId)
+        INSERT INTO dbo.FelhasznaloSzerepkor (FelhasznaloId, SzerepkorId) VALUES (@AdminId, @AdminRoleId);
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.FelhasznaloSzerepkor WHERE FelhasznaloId = @AdminId AND SzerepkorId = @UserRoleId)
+        INSERT INTO dbo.FelhasznaloSzerepkor (FelhasznaloId, SzerepkorId) VALUES (@AdminId, @UserRoleId);
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.FelhasznaloSzerepkor WHERE FelhasznaloId = @TesztId AND SzerepkorId = @UserRoleId)
+        INSERT INTO dbo.FelhasznaloSzerepkor (FelhasznaloId, SzerepkorId) VALUES (@TesztId, @UserRoleId);
+
+    /* =========================================================
+       7.6) Pest megyei minta vízterületek
+       ========================================================= */
+    DECLARE @PestId INT = (SELECT MegyeId FROM dbo.Megye WHERE Nev = N'Pest');
+    DECLARE @BpId   INT = (SELECT MegyeId FROM dbo.Megye WHERE Nev = N'Budapest');
+
+    DECLARE @FolyóId INT      = (SELECT VizTipusId FROM dbo.VizTipus WHERE Nev = N'Folyó');
+    DECLARE @TóId INT         = (SELECT VizTipusId FROM dbo.VizTipus WHERE Nev = N'Tó');
+    DECLARE @BányatóId INT    = (SELECT VizTipusId FROM dbo.VizTipus WHERE Nev = N'Bányató');
+    DECLARE @HoltágId INT     = (SELECT VizTipusId FROM dbo.VizTipus WHERE Nev = N'Holtág');
+    DECLARE @CsatornaId INT   = (SELECT VizTipusId FROM dbo.VizTipus WHERE Nev = N'Csatorna');
+
+    DECLARE @PestVizteruletek TABLE (Nev NVARCHAR(150), VizTipusId INT);
+    INSERT INTO @PestVizteruletek (Nev, VizTipusId) VALUES
+        (N'Duna (Pest megyei szakasz)',                  @FolyóId),
+        (N'Ráckevei (Soroksári)-Duna',                   @FolyóId),
+        (N'Szentendrei-Duna ág',                         @FolyóId),
+        (N'Ipoly (Pest megyei szakasz)',                 @FolyóId),
+        (N'Gödöllői-patak',                              @CsatornaId),
+        (N'Lupa-tó (Budakalász)',                        @BányatóId),
+        (N'Dunakeszi kavicsbányató',                     @BányatóId),
+        (N'Szigetszentmiklósi bányató',                  @BányatóId),
+        (N'Ráckevei-Holtág (mintaterület)',              @HoltágId),
+        (N'Ráckevei Duna-ág menti tavak (mintaterület)', @TóId);
+
+    INSERT INTO dbo.Vizterulet (Nev, VizTipusId)
+    SELECT p.Nev, p.VizTipusId
+    FROM @PestVizteruletek p
+    WHERE NOT EXISTS (SELECT 1 FROM dbo.Vizterulet v WHERE v.Nev = p.Nev);
+
+    INSERT INTO dbo.VizteruletMegye (VizteruletId, MegyeId)
+    SELECT v.VizteruletId, @PestId
+    FROM dbo.Vizterulet v
+    INNER JOIN @PestVizteruletek p ON p.Nev = v.Nev
+    WHERE NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.VizteruletMegye vm
+        WHERE vm.VizteruletId = v.VizteruletId
+          AND vm.MegyeId = @PestId
+    );
+
+    DECLARE @BpList TABLE (Nev NVARCHAR(150));
+    INSERT INTO @BpList (Nev) VALUES
+        (N'Duna (Pest megyei szakasz)'),
+        (N'Ráckevei (Soroksári)-Duna'),
+        (N'Szentendrei-Duna ág');
+
+    INSERT INTO dbo.VizteruletMegye (VizteruletId, MegyeId)
+    SELECT v.VizteruletId, @BpId
+    FROM dbo.Vizterulet v
+    INNER JOIN @BpList b ON b.Nev = v.Nev
+    WHERE NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.VizteruletMegye vm
+        WHERE vm.VizteruletId = v.VizteruletId
+          AND vm.MegyeId = @BpId
+    );
+
+    /* =========================================================
+       7.7) Pest megyei halfaj–vízterület kapcsolatok
+       ========================================================= */
+    DECLARE @CsukaId INT   = (SELECT HalfajId FROM dbo.Halfaj WHERE MagyarNev = N'Csuka');
+    DECLARE @PontyId INT   = (SELECT HalfajId FROM dbo.Halfaj WHERE MagyarNev = N'Ponty');
+    DECLARE @SulloId INT   = (SELECT HalfajId FROM dbo.Halfaj WHERE MagyarNev = N'Süllő');
+    DECLARE @HarcsaId INT  = (SELECT HalfajId FROM dbo.Halfaj WHERE MagyarNev = N'Harcsa');
+    DECLARE @SugerId INT   = (SELECT HalfajId FROM dbo.Halfaj WHERE MagyarNev = N'Sügér');
+    DECLARE @DeverId INT   = (SELECT HalfajId FROM dbo.Halfaj WHERE MagyarNev = N'Keszeg (déver)');
+    DECLARE @BalinId INT   = (SELECT HalfajId FROM dbo.Halfaj WHERE MagyarNev = N'Balin');
+    DECLARE @AmurId INT    = (SELECT HalfajId FROM dbo.Halfaj WHERE MagyarNev = N'Amur');
+    DECLARE @CompoId INT   = (SELECT HalfajId FROM dbo.Halfaj WHERE MagyarNev = N'Compó');
+    DECLARE @BodorkaId INT = (SELECT HalfajId FROM dbo.Halfaj WHERE MagyarNev = N'Bodorka');
+
+    DECLARE @DunaId INT         = (SELECT VizteruletId FROM dbo.Vizterulet WHERE Nev = N'Duna (Pest megyei szakasz)');
+    DECLARE @RsdId INT          = (SELECT VizteruletId FROM dbo.Vizterulet WHERE Nev = N'Ráckevei (Soroksári)-Duna');
+    DECLARE @SzendaId INT       = (SELECT VizteruletId FROM dbo.Vizterulet WHERE Nev = N'Szentendrei-Duna ág');
+    DECLARE @IpolyId INT        = (SELECT VizteruletId FROM dbo.Vizterulet WHERE Nev = N'Ipoly (Pest megyei szakasz)');
+    DECLARE @GodolloPatakId INT = (SELECT VizteruletId FROM dbo.Vizterulet WHERE Nev = N'Gödöllői-patak');
+    DECLARE @LupaId INT         = (SELECT VizteruletId FROM dbo.Vizterulet WHERE Nev = N'Lupa-tó (Budakalász)');
+    DECLARE @DunakesziId INT    = (SELECT VizteruletId FROM dbo.Vizterulet WHERE Nev = N'Dunakeszi kavicsbányató');
+    DECLARE @SzigetId INT       = (SELECT VizteruletId FROM dbo.Vizterulet WHERE Nev = N'Szigetszentmiklósi bányató');
+    DECLARE @RackHoltId INT     = (SELECT VizteruletId FROM dbo.Vizterulet WHERE Nev = N'Ráckevei-Holtág (mintaterület)');
+    DECLARE @RackTavakId INT    = (SELECT VizteruletId FROM dbo.Vizterulet WHERE Nev = N'Ráckevei Duna-ág menti tavak (mintaterület)');
+
+    DECLARE @Kapcs TABLE (VizteruletId INT, HalfajId INT);
+
+    INSERT INTO @Kapcs (VizteruletId, HalfajId) VALUES
+        (@DunaId, @CsukaId), (@DunaId, @SulloId), (@DunaId, @HarcsaId), (@DunaId, @BalinId), (@DunaId, @DeverId),
+        (@RsdId, @PontyId), (@RsdId, @CsukaId), (@RsdId, @SulloId), (@RsdId, @HarcsaId), (@RsdId, @BodorkaId),
+        (@SzendaId, @PontyId), (@SzendaId, @CsukaId), (@SzendaId, @SugerId), (@SzendaId, @DeverId),
+        (@IpolyId, @CsukaId), (@IpolyId, @DeverId), (@IpolyId, @BodorkaId),
+        (@GodolloPatakId, @BodorkaId), (@GodolloPatakId, @DeverId),
+        (@LupaId, @PontyId), (@LupaId, @AmurId), (@LupaId, @CompoId),
+        (@DunakesziId, @PontyId), (@DunakesziId, @AmurId), (@DunakesziId, @CsukaId),
+        (@SzigetId, @PontyId), (@SzigetId, @AmurId),
+        (@RackHoltId, @PontyId), (@RackHoltId, @CsukaId), (@RackHoltId, @CompoId),
+        (@RackTavakId, @PontyId), (@RackTavakId, @DeverId), (@RackTavakId, @BodorkaId);
+
+    INSERT INTO dbo.VizteruletHalfaj (VizteruletId, HalfajId, Megjegyzes)
+    SELECT k.VizteruletId, k.HalfajId, NULL
+    FROM @Kapcs k
+    WHERE k.VizteruletId IS NOT NULL
+      AND k.HalfajId IS NOT NULL
+      AND NOT EXISTS
+      (
+          SELECT 1
+          FROM dbo.VizteruletHalfaj vh
+          WHERE vh.VizteruletId = k.VizteruletId
+            AND vh.HalfajId = k.HalfajId
+      );
+
+    /* =========================================================
+       7.8) Minimális fórum és fogás minta
+       ========================================================= */
+    IF NOT EXISTS (SELECT 1 FROM dbo.ForumTema)
+    BEGIN
+        INSERT INTO dbo.ForumTema (FelhasznaloId, Cim, Letrehozva)
+        VALUES (@TesztId, N'Bemutatkozás', SYSUTCDATETIME());
+
+        DECLARE @TemaId INT = SCOPE_IDENTITY();
+
+        INSERT INTO dbo.ForumHozzaszolas (TemaId, FelhasznaloId, Szoveg, KepUrl, Letrehozva)
+        VALUES (@TemaId, @TesztId, N'Sziasztok! Ez egy minta hozzászólás.', NULL, SYSUTCDATETIME());
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.FogasNaplo)
+    BEGIN
+        INSERT INTO dbo.FogasNaplo
+            (FelhasznaloId, HalfajId, VizteruletId, FogasIdeje, SulyKg, HosszCm, FotoUrl, Megjegyzes)
+        VALUES
+            (@TesztId, @PontyId, @RsdId, DATEADD(day, -7, SYSUTCDATETIME()), 3.50, 52, NULL, NULL),
+            (@TesztId, @CsukaId, @DunaId, DATEADD(day, -2, SYSUTCDATETIME()), 2.10, 65, NULL, NULL);
+    END
+
+    COMMIT TRAN;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0
+        ROLLBACK TRAN;
+
+    DECLARE @Err NVARCHAR(4000) = ERROR_MESSAGE();
+    RAISERROR(N'Hiba az adatfeltöltés során: %s', 16, 1, @Err);
+END CATCH;
+GO

@@ -1,0 +1,293 @@
+/* =========================
+   Alap változók - sötét mód
+   ========================= */
+:root {
+  --panel: rgba(18, 27, 39, 0.84);
+  --card: rgba(15, 22, 32, 0.88);
+  --text: #e7eef7;
+  --muted: #c2d2e6;
+  --border: rgba(255, 255, 255, 0.12);
+  --accent: #4ea8ff;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+/* =========================
+   Világos mód változók
+   ========================= */
+body[data-theme="light"] {
+  --panel: rgba(255, 255, 255, 0.84);
+  --card: rgba(255, 255, 255, 0.88);
+  --text: #15202b;
+  --muted: #31475c;
+  --border: rgba(21, 32, 43, 0.12);
+  --accent: #1f75d8;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* =========================
+   Alap beállítások
+   ========================= */
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background-image: url("../assets/sotet_hatter.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  transition: background-image 0.3s ease, color 0.3s ease, background-color 0.3s ease;
+}
+
+body[data-theme="light"] {
+  background-image: url("../assets/vilagos_hatter.png");
+}
+
+.main-content {
+  flex: 1;
+}
+
+/* =========================
+   Általános szövegek
+   ========================= */
+.section-text {
+  color: var(--muted) !important;
+}
+
+.footer-text {
+  color: var(--muted);
+}
+
+.brand-subtitle {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.brand-title {
+  color: var(--text);
+}
+
+body[data-theme="light"] .brand-title {
+  color: #15202b;
+}
+
+/* =========================
+   Navbar
+   ========================= */
+.app-navbar {
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-container {
+  position: relative;
+}
+
+.brand-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.navbar .nav-link {
+  color: var(--text) !important;
+  opacity: 0.9;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+  opacity: 1;
+  font-weight: 700;
+}
+
+/* =========================
+   Mobil felső vezérlők
+   ========================= */
+.nav-actions-mobile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* =========================
+   Téma váltó gomb
+   ========================= */
+.theme-toggle-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.04);
+}
+
+.theme-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* =========================
+   Hero szekció
+   ========================= */
+.hero-section {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+}
+
+/* =========================
+   Kártyák
+   ========================= */
+.app-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 1rem;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+}
+
+/* =========================
+   Form elemek
+   ========================= */
+.app-input,
+.app-input:focus,
+.form-select.app-input {
+  background-color: rgba(0, 0, 0, 0.2);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+body[data-theme="light"] .app-input,
+body[data-theme="light"] .app-input:focus,
+body[data-theme="light"] .form-select.app-input {
+  background-color: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+}
+
+.app-input::placeholder {
+  color: var(--muted);
+}
+
+.form-select.app-input option {
+  background: #121b27;
+  color: #e7eef7;
+}
+
+body[data-theme="light"] .form-select.app-input option {
+  background: #ffffff;
+  color: #15202b;
+}
+
+/* =========================
+   Térkép helyőrző
+   ========================= */
+.map-placeholder {
+  min-height: 260px;
+  border: 1px dashed var(--border);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* =========================
+   Listaelemek
+   ========================= */
+.app-list-item {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+body[data-theme="light"] .app-list-item {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.app-list-item + .app-list-item {
+  margin-top: 0.9rem;
+}
+
+/* =========================
+   Táblázatok
+   ========================= */
+.app-table {
+  --bs-table-bg: transparent;
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.02);
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+body[data-theme="light"] .app-table {
+  --bs-table-color: var(--text);
+  --bs-table-border-color: var(--border);
+  --bs-table-bg: transparent;
+  --bs-table-hover-color: var(--text);
+  --bs-table-hover-bg: rgba(0, 0, 0, 0.04);
+}
+
+/* =========================
+   Gomb finomhangolás
+   ========================= */
+.btn-outline-light {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+body[data-theme="light"] .btn-outline-light {
+  background-color: rgba(255, 255, 255, 0.45);
+  border-color: rgba(21, 32, 43, 0.18);
+  color: var(--text);
+}
+
+body[data-theme="light"] .btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.78);
+}
+
+/* =========================
+   Footer
+   ========================= */
+.app-footer {
+  margin-top: auto;
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+}
+
+/* =========================
+   Reszponzív finomítás
+   ========================= */
+@media (max-width: 991.98px) {
+  .navbar .btn {
+    width: 100%;
+  }
+
+  .brand-subtitle {
+    display: none;
+  }
+
+  .brand-logo {
+    width: 52px;
+    height: 52px;
+  }
+}
