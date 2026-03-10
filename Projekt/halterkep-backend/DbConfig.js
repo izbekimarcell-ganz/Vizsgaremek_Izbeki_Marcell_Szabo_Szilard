@@ -5,11 +5,18 @@ const dbConfig = {
     password: process.env.DB_PASSWORD,
     server: process.env.DB_SERVER,
     database: process.env.DB_NAME,
-    port: parseInt(process.env.DB_PORT),
+    // Port-ot ne add meg, mert named instance-nál automatikusan felismeri
     options: {
         encrypt: false,
         trustServerCertificate: true,
+        enableArithAbort: true,
+        instanceName: 'SQLEXPRESS'
     },
+    pool: {
+        max: 10,
+        min: 0,
+        idleTimeoutMillis: 30000
+    }
 };
 
 const poolPromise = new sql.ConnectionPool(dbConfig)

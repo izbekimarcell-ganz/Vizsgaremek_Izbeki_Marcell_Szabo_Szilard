@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const { sql, poolPromise } = require("../DbConfig");
 
 // Alapvető auth middleware - ellenőrzi, hogy be van-e jelentkezve
 const verifyToken = (req, res, next) => {
@@ -31,23 +32,24 @@ const verifyToken = (req, res, next) => {
 // Admin jogosultság ellenőrzése
 const verifyAdmin = async (req, res, next) => {
   try {
-    const { sql, poolPromise } = require("../DbConfig");
+    const felhasznaloId = req.user.id;
     const pool = await poolPromise;
 
-    // Ellenőrizzük, hogy a felhasználó rendelkezik-e Admin szerepkörrel
     const result = await pool
       .request()
-      .input("felhasznaloId", sql.Int, req.user.id)
+      .input("felhasznaloId", sql.Int, felhasznaloId)
       .query(`
-        SELECT fs.SzerepkorId, sz.Nev
+        SELECT COUNT(*) AS adminCount
         FROM dbo.FelhasznaloSzerepkor fs
         INNER JOIN dbo.Szerepkor sz ON fs.SzerepkorId = sz.SzerepkorId
         WHERE fs.FelhasznaloId = @felhasznaloId AND sz.Nev = 'Admin'
       `);
 
-    if (result.recordset.length === 0) {
+    const isAdmin = result.recordset[0].adminCount > 0;
+
+    if (!isAdmin) {
       return res.status(403).json({
-        message: "Hozzaferes megtagadva. Admin jogosultsag szukseges.",
+        message: "Nincs jogosultsag ehhez a muvelethez.",
       });
     }
 

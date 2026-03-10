@@ -31,31 +31,13 @@ IF OBJECT_ID(N'dbo.VizTipus', N'U') IS NOT NULL DROP TABLE dbo.VizTipus;
 IF OBJECT_ID(N'dbo.Megye', N'U') IS NOT NULL DROP TABLE dbo.Megye;
 IF OBJECT_ID(N'dbo.Halfaj', N'U') IS NOT NULL DROP TABLE dbo.Halfaj;
 
-IF OBJECT_ID(N'dbo.FelhasznaloSzerepkor', N'U') IS NOT NULL DROP TABLE dbo.FelhasznaloSzerepkor;
-IF OBJECT_ID(N'dbo.Szerepkor', N'U') IS NOT NULL DROP TABLE dbo.Szerepkor;
 IF OBJECT_ID(N'dbo.Felhasznalo', N'U') IS NOT NULL DROP TABLE dbo.Felhasznalo;
+IF OBJECT_ID(N'dbo.Szerepkor', N'U') IS NOT NULL DROP TABLE dbo.Szerepkor;
 GO
 
 /* =========================================================
    3) Törzs táblák
    ========================================================= */
-
--- Felhasználók
-CREATE TABLE dbo.Felhasznalo
-(
-    FelhasznaloId      INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Felhasznalo PRIMARY KEY,
-    Felhasznalonev     NVARCHAR(50)  NOT NULL,
-    Email              NVARCHAR(100) NOT NULL,
-    JelszoHash         VARBINARY(64) NOT NULL,
-    JelszoSo           VARBINARY(16) NOT NULL,
-    Letrehozva         DATETIME2     NOT NULL CONSTRAINT DF_Felhasznalo_Letrehozva DEFAULT (SYSUTCDATETIME()),
-    Aktiv              BIT           NOT NULL CONSTRAINT DF_Felhasznalo_Aktiv DEFAULT (1)
-);
-GO
-
-CREATE UNIQUE INDEX UX_Felhasznalo_Felhasznalonev ON dbo.Felhasznalo(Felhasznalonev);
-CREATE UNIQUE INDEX UX_Felhasznalo_Email          ON dbo.Felhasznalo(Email);
-GO
 
 -- Szerepkörök
 CREATE TABLE dbo.Szerepkor
@@ -68,15 +50,25 @@ GO
 CREATE UNIQUE INDEX UX_Szerepkor_Nev ON dbo.Szerepkor(Nev);
 GO
 
--- Felhasználó-Szerepkör
-CREATE TABLE dbo.FelhasznaloSzerepkor
+-- Felhasználók
+CREATE TABLE dbo.Felhasznalo
 (
-    FelhasznaloId INT NOT NULL,
-    SzerepkorId   INT NOT NULL,
-    CONSTRAINT PK_FelhasznaloSzerepkor PRIMARY KEY (FelhasznaloId, SzerepkorId),
-    CONSTRAINT FK_FelhasznaloSzerepkor_Felhasznalo FOREIGN KEY (FelhasznaloId) REFERENCES dbo.Felhasznalo(FelhasznaloId),
-    CONSTRAINT FK_FelhasznaloSzerepkor_Szerepkor   FOREIGN KEY (SzerepkorId)   REFERENCES dbo.Szerepkor(SzerepkorId)
+    FelhasznaloId      INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Felhasznalo PRIMARY KEY,
+    Felhasznalonev     NVARCHAR(50)  NOT NULL,
+    Email              NVARCHAR(100) NOT NULL,
+    JelszoHash         VARBINARY(64) NOT NULL,
+    JelszoSo           VARBINARY(16) NOT NULL,
+    SzerepkorId        INT NOT NULL,
+    Letrehozva         DATETIME2     NOT NULL CONSTRAINT DF_Felhasznalo_Letrehozva DEFAULT (SYSUTCDATETIME()),
+    Aktiv              BIT           NOT NULL CONSTRAINT DF_Felhasznalo_Aktiv DEFAULT (1),
+
+    CONSTRAINT FK_Felhasznalo_Szerepkor FOREIGN KEY (SzerepkorId) REFERENCES dbo.Szerepkor(SzerepkorId)
 );
+GO
+
+CREATE UNIQUE INDEX UX_Felhasznalo_Felhasznalonev ON dbo.Felhasznalo(Felhasznalonev);
+CREATE UNIQUE INDEX UX_Felhasznalo_Email          ON dbo.Felhasznalo(Email);
+CREATE INDEX IX_Felhasznalo_SzerepkorId           ON dbo.Felhasznalo(SzerepkorId);
 GO
 
 -- Halfajok
@@ -229,6 +221,9 @@ BEGIN TRY
     IF NOT EXISTS (SELECT 1 FROM dbo.Szerepkor WHERE Nev = N'Admin')
         INSERT INTO dbo.Szerepkor (Nev) VALUES (N'Admin');
 
+    DECLARE @AdminRoleId INT = (SELECT SzerepkorId FROM dbo.Szerepkor WHERE Nev = N'Admin');
+    DECLARE @UserRoleId  INT = (SELECT SzerepkorId FROM dbo.Szerepkor WHERE Nev = N'User');
+
     /* =========================================================
        7.2) Megyék (19 megye + Budapest)
        ========================================================= */
@@ -326,38 +321,29 @@ BEGIN TRY
     IF NOT EXISTS (SELECT 1 FROM dbo.Felhasznalo WHERE Felhasznalonev = N'admin')
     BEGIN
         INSERT INTO dbo.Felhasznalo
-            (Felhasznalonev, Email, JelszoHash, JelszoSo, Letrehozva, Aktiv)
+            (Felhasznalonev, Email, JelszoHash, JelszoSo, SzerepkorId, Letrehozva, Aktiv)
         VALUES
             (N'admin', N'admin@halterkep.local',
              0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F20,
              0xA1A2A3A4A5A6A7A8A9AAABACADAEAFB0,
+             @AdminRoleId,
              SYSUTCDATETIME(), 1);
     END
 
     IF NOT EXISTS (SELECT 1 FROM dbo.Felhasznalo WHERE Felhasznalonev = N'teszt')
     BEGIN
         INSERT INTO dbo.Felhasznalo
-            (Felhasznalonev, Email, JelszoHash, JelszoSo, Letrehozva, Aktiv)
+            (Felhasznalonev, Email, JelszoHash, JelszoSo, SzerepkorId, Letrehozva, Aktiv)
         VALUES
             (N'teszt', N'teszt@halterkep.local',
              0x1112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F30,
              0xB1B2B3B4B5B6B7B8B9BABBBCBDBEBFC0,
+             @UserRoleId,
              SYSUTCDATETIME(), 1);
     END
 
     DECLARE @AdminId INT = (SELECT FelhasznaloId FROM dbo.Felhasznalo WHERE Felhasznalonev = N'admin');
     DECLARE @TesztId INT = (SELECT FelhasznaloId FROM dbo.Felhasznalo WHERE Felhasznalonev = N'teszt');
-    DECLARE @AdminRoleId INT = (SELECT SzerepkorId FROM dbo.Szerepkor WHERE Nev = N'Admin');
-    DECLARE @UserRoleId  INT = (SELECT SzerepkorId FROM dbo.Szerepkor WHERE Nev = N'User');
-
-    IF NOT EXISTS (SELECT 1 FROM dbo.FelhasznaloSzerepkor WHERE FelhasznaloId = @AdminId AND SzerepkorId = @AdminRoleId)
-        INSERT INTO dbo.FelhasznaloSzerepkor (FelhasznaloId, SzerepkorId) VALUES (@AdminId, @AdminRoleId);
-
-    IF NOT EXISTS (SELECT 1 FROM dbo.FelhasznaloSzerepkor WHERE FelhasznaloId = @AdminId AND SzerepkorId = @UserRoleId)
-        INSERT INTO dbo.FelhasznaloSzerepkor (FelhasznaloId, SzerepkorId) VALUES (@AdminId, @UserRoleId);
-
-    IF NOT EXISTS (SELECT 1 FROM dbo.FelhasznaloSzerepkor WHERE FelhasznaloId = @TesztId AND SzerepkorId = @UserRoleId)
-        INSERT INTO dbo.FelhasznaloSzerepkor (FelhasznaloId, SzerepkorId) VALUES (@TesztId, @UserRoleId);
 
     /* =========================================================
        7.6) Pest megyei minta vízterületek
