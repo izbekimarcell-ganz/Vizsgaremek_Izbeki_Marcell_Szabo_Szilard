@@ -5,18 +5,11 @@ const { sql, poolPromise } = require("../DbConfig");
 //register
 const register = async (req, res) => {
   try {
-    const { email, username, teljes_nev, password, szerep } = req.body;
+    const { email, felhasznalonev, password } = req.body;
 
-    if (!email || !username || !teljes_nev || !password || !szerep) {
+    if (!email || !felhasznalonev || !password) {
       return res.status(400).json({
         message: "Minden kotelezo mezot ki kell tolteni.",
-      });
-    }
-
-    const allowedRoles = ["berlo", "palyatulajdonos"];
-    if (!allowedRoles.includes(szerep)) {
-      return res.status(400).json({
-        message: "Ervenytelen szerepkor.",
       });
     }
 
@@ -24,12 +17,12 @@ const register = async (req, res) => {
 
     const existingUser = await pool
       .request()
-      .input("email", sql.NVarChar(200), email)
-      .input("username", sql.NVarChar(50), username)
+      .input("email", sql.NVarChar(100), email)
+      .input("felhasznalonev", sql.NVarChar(50), felhasznalonev)
       .query(`
-        SELECT felhasznalo_id
-        FROM Felhasznalok
-        WHERE email = @email OR username = @username
+        SELECT FelhasznaloId
+        FROM dbo.Felhasznalo
+        WHERE Email = @email OR Felhasznalonev = @felhasznalonev
       `);
 
     if (existingUser.recordset.length > 0) {
@@ -42,21 +35,17 @@ const register = async (req, res) => {
 
     const result = await pool
       .request()
-      .input("username", sql.NVarChar(50), username)
-      .input("teljes_nev", sql.NVarChar(150), teljes_nev)
-      .input("email", sql.NVarChar(200), email)
-      .input("jelszo_hash", sql.NVarChar(300), jelszo_hash)
-      .input("szerep", sql.NVarChar(50), szerep)
+      .input("felhasznalonev", sql.NVarChar(50), felhasznalonev)
+      .input("email", sql.NVarChar(100), email)
+      .input("jelszo_hash", sql.VarBinary(64), jelszo_hash)
       .query(`
-        INSERT INTO Felhasznalok (username, teljes_nev, email, jelszo_hash, szerep)
+        INSERT INTO dbo.Felhasznalo (Felhasznalonev, Email, JelszoHash, Aktiv)
         OUTPUT
-          INSERTED.felhasznalo_id,
-          INSERTED.username,
-          INSERTED.teljes_nev,
-          INSERTED.email,
-          INSERTED.szerep,
-          INSERTED.letrehozva
-        VALUES (@username, @teljes_nev, @email, @jelszo_hash, @szerep)
+          INSERTED.FelhasznaloId,
+          INSERTED.Felhasznalonev,
+          INSERTED.Email,
+          INSERTED.Letrehozva
+        VALUES (@felhasznalonev, @email, @jelszo_hash, 1)
       `);
 
     return res.status(201).json({
@@ -85,18 +74,16 @@ const login = async (req, res) => {
 
     const result = await pool
       .request()
-      .input("identifier", sql.NVarChar(200), identifier)
+      .input("identifier", sql.NVarChar(100), identifier)
       .query(`
         SELECT
-          felhasznalo_id,
-          username,
-          teljes_nev,
-          email,
-          jelszo_hash,
-          szerep,
-          aktiv
-        FROM Felhasznalok
-        WHERE email = @identifier OR username = @identifier
+          FelhasznaloId,
+          Felhasznalonev,
+          Email,
+          JelszoHash,
+          Aktiv
+        FROM dbo.Felhasznalo
+        WHERE Email = @identifier OR Felhasznalonev = @identifier
       `);
 
     const user = result.recordset[0];
@@ -107,13 +94,13 @@ const login = async (req, res) => {
       });
     }
 
-    if (!user.aktiv) {
+    if (!user.Aktiv) {
       return res.status(403).json({
         message: "A fiok inaktiv.",
       });
     }
 
-    const helyesJelszo = await bcrypt.compare(password, user.jelszo_hash);
+    const helyesJelszo = await bcrypt.compare(password, user.JelszoHash);
 
     if (!helyesJelszo) {
       return res.status(401).json({
@@ -121,21 +108,11 @@ const login = async (req, res) => {
       });
     }
 
-    await pool
-      .request()
-      .input("felhasznalo_id", sql.Int, user.felhasznalo_id)
-      .query(`
-        UPDATE Felhasznalok
-        SET utoljara_belepett = SYSDATETIME()
-        WHERE felhasznalo_id = @felhasznalo_id
-      `);
-
     const token = jwt.sign(
       {
-        id: user.felhasznalo_id,
-        email: user.email,
-        username: user.username,
-        szerep: user.szerep,
+        id: user.FelhasznaloId,
+        email: user.Email,
+        felhasznalonev: user.Felhasznalonev,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
@@ -145,11 +122,9 @@ const login = async (req, res) => {
       message: "Sikeres bejelentkezes.",
       token,
       user: {
-        felhasznalo_id: user.felhasznalo_id,
-        username: user.username,
-        teljes_nev: user.teljes_nev,
-        email: user.email,
-        szerep: user.szerep,
+        FelhasznaloId: user.FelhasznaloId,
+        Felhasznalonev: user.Felhasznalonev,
+        Email: user.Email,
       },
     });
   } catch (error) {

@@ -38,13 +38,13 @@
       </button>
 
       <div class="collapse navbar-collapse" id="mainNavbar">
-        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center" id="navbarMenu">
           <li class="nav-item"><a class="nav-link" href="index.html">Kezdőlap</a></li>
           <li class="nav-item"><a class="nav-link" href="vizteruletek.html">Vízterületek</a></li>
           <li class="nav-item"><a class="nav-link" href="fogasnaplo.html">Fogásnapló</a></li>
           <li class="nav-item"><a class="nav-link" href="forum.html">Fórum</a></li>
-          <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
-          <li class="nav-item"><a class="nav-link" href="profil.html">Profil</a></li>
+          <li class="nav-item d-none" id="adminNavItem"><a class="nav-link" href="admin.html">Admin</a></li>
+          <li class="nav-item d-none" id="profilNavItem"><a class="nav-link" href="profil.html">Profil</a></li>
 
           <li class="nav-item ms-lg-2 mt-2 mt-lg-0 d-none d-lg-block">
             <button id="themeToggleDesktop" class="theme-toggle-btn" type="button" aria-label="Téma váltása">
@@ -52,11 +52,14 @@
             </button>
           </li>
 
-          <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
-            <a class="btn btn-outline-light btn-sm" href="profil.html#login">Bejelentkezés</a>
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="loginNavItem">
+            <a class="btn btn-outline-light btn-sm" href="login.html">Bejelentkezés</a>
           </li>
-          <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
-            <a class="btn btn-primary btn-sm" href="profil.html#register">Regisztráció</a>
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="registerNavItem">
+            <a class="btn btn-primary btn-sm" href="register.html">Regisztráció</a>
+          </li>
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0 d-none" id="logoutNavItem">
+            <button class="btn btn-outline-danger btn-sm" onclick="handleLogout()">Kijelentkezés</button>
           </li>
         </ul>
       </div>

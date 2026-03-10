@@ -18,10 +18,12 @@ const poolPromise = new sql.ConnectionPool(dbConfig)
         console.log("Sikeres MSSQL kapcsolat.");
         return pool;
     })
-    .catch((err) =>{
+    .catch((err) => {
         console.error("MSSQL kapcsolati hiba:", err);
         throw err;
-    })
+    });
+
 module.exports = {
-    sql, poolPromise
-}
+    sql,
+    poolPromise
+};

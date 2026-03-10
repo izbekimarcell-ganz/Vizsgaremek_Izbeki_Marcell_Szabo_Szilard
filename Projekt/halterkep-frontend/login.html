@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HalTérkép - Fórum</title>
+  <title>HalTérkép - Bejelentkezés</title>
 
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
@@ -11,7 +11,7 @@
   />
   <link rel="stylesheet" href="CSS/styles.css">
 </head>
-<body data-page="forum" data-theme="dark">
+<body data-page="login" data-theme="dark">
 
   <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
@@ -70,103 +70,53 @@
   <!-- Fő tartalom -->
   <main class="main-content py-5">
     <div class="container">
-      <div class="mb-4">
-        <h1 class="mb-1">Fórum</h1>
-        <p class="section-text mb-0">Témák, hozzászólások és beszélgetések.</p>
-      </div>
-
-      <div class="row g-4">
-        <!-- Új téma -->
-        <div class="col-lg-5">
+      <div class="row justify-content-center">
+        <div class="col-lg-5 col-md-7">
           <div class="card app-card">
-            <div class="card-body">
-              <h2 class="h5 mb-3">Új téma</h2>
+            <div class="card-body p-4">
+              <h1 class="h3 mb-4 text-center">Bejelentkezés</h1>
 
-              <form id="forumTopicForm" enctype="multipart/form-data" novalidate>
+              <form id="loginForm" novalidate>
                 <div class="mb-3">
-                  <label class="form-label" for="topicTitle">Cím</label>
-                  <input id="topicTitle" name="cim" type="text" class="form-control app-input" />
+                  <label class="form-label" for="loginIdentifier">Felhasználónév vagy Email</label>
+                  <input 
+                    id="loginIdentifier" 
+                    name="azonosito" 
+                    class="form-control app-input" 
+                    required
+                    autocomplete="username"
+                  />
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label" for="topicBody">Szöveg</label>
-                  <textarea id="topicBody" name="szoveg" class="form-control app-input" rows="5"></textarea>
+                  <label class="form-label" for="loginPassword">Jelszó</label>
+                  <input 
+                    id="loginPassword" 
+                    name="jelszo" 
+                    type="password" 
+                    class="form-control app-input" 
+                    required
+                    autocomplete="current-password"
+                  />
                 </div>
 
-                <div class="mb-3">
-                  <label class="form-label" for="topicImage">Kép</label>
-                  <input id="topicImage" name="kep" type="file" class="form-control app-input" />
-                </div>
+                <button id="loginButton" class="btn btn-primary w-100 mb-3" type="submit">
+                  Belépés
+                </button>
 
-                <button id="createTopicButton" class="btn btn-primary" type="submit">Közzététel</button>
+                <div class="text-center">
+                  <p class="section-text mb-0">
+                    Nincs még fiókod? 
+                    <a href="register.html" class="text-primary">Regisztrálj itt</a>
+                  </p>
+                </div>
               </form>
 
-              <div id="forumTopicFormMessage" class="small mt-3"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Témalisták -->
-        <div class="col-lg-7">
-          <div class="card app-card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center gap-2 mb-3 flex-wrap">
-                <h2 class="h5 mb-0">Témák</h2>
-                <span id="forumTopicsCount" class="section-text small"></span>
-              </div>
-
-              <div id="forumTopicsLoading" class="section-text d-none">Betöltés...</div>
-              <div id="forumTopicsError" class="text-danger d-none"></div>
-              <div id="forumTopicsEmpty" class="section-text d-none">Nincs még fórumtéma.</div>
-
-              <div id="forumTopicsList">
-                <!-- Dinamikus témák ide -->
-              </div>
+              <div id="loginMessage" class="alert mt-3 d-none"></div>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Kiválasztott téma -->
-      <div id="forumSelectedTopicCard" class="card app-card mt-4 d-none">
-        <div class="card-body">
-          <div class="mb-4">
-            <h2 id="selectedTopicTitle" class="h4 mb-2"></h2>
-            <div id="selectedTopicMeta" class="section-text small"></div>
-          </div>
-
-          <div id="forumPostsLoading" class="section-text d-none">Betöltés...</div>
-          <div id="forumPostsError" class="text-danger d-none"></div>
-          <div id="forumPostsEmpty" class="section-text d-none">Még nincs hozzászólás.</div>
-
-          <div id="forumPostsList" class="mb-4">
-            <!-- Dinamikus hozzászólások ide -->
-          </div>
-
-          <hr>
-
-          <h3 class="h5 mb-3">Válasz írása</h3>
-
-          <form id="forumReplyForm" novalidate>
-            <input type="hidden" id="replyTopicId" name="temaId" />
-
-            <div class="mb-3">
-              <label class="form-label" for="replyBody">Hozzászólás</label>
-              <textarea id="replyBody" name="szoveg" class="form-control app-input" rows="4"></textarea>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label" for="replyImage">Kép</label>
-              <input id="replyImage" name="kep" type="file" class="form-control app-input" />
-            </div>
-
-            <button id="sendReplyButton" class="btn btn-primary" type="submit">Küldés</button>
-          </form>
-
-          <div id="forumReplyFormMessage" class="small mt-3"></div>
-        </div>
-      </div>
-
     </div>
   </main>
   <!-- Fő tartalom vége -->
@@ -179,6 +129,5 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="JavaScript/script.js"></script>
-
 </body>
 </html>

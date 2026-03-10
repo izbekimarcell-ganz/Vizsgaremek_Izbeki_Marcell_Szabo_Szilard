@@ -38,13 +38,13 @@
       </button>
 
       <div class="collapse navbar-collapse" id="mainNavbar">
-        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center" id="navbarMenu">
           <li class="nav-item"><a class="nav-link" href="index.html">Kezdőlap</a></li>
           <li class="nav-item"><a class="nav-link" href="vizteruletek.html">Vízterületek</a></li>
           <li class="nav-item"><a class="nav-link" href="fogasnaplo.html">Fogásnapló</a></li>
           <li class="nav-item"><a class="nav-link" href="forum.html">Fórum</a></li>
-          <li class="nav-item"><a class="nav-link" href="admin.html">Admin</a></li>
-          <li class="nav-item"><a class="nav-link" href="profil.html">Profil</a></li>
+          <li class="nav-item d-none" id="adminNavItem"><a class="nav-link" href="admin.html">Admin</a></li>
+          <li class="nav-item d-none" id="profilNavItem"><a class="nav-link" href="profil.html">Profil</a></li>
 
           <li class="nav-item ms-lg-2 mt-2 mt-lg-0 d-none d-lg-block">
             <button id="themeToggleDesktop" class="theme-toggle-btn" type="button" aria-label="Téma váltása">
@@ -52,11 +52,14 @@
             </button>
           </li>
 
-          <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
-            <a class="btn btn-outline-light btn-sm" href="profil.html#login">Bejelentkezés</a>
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="loginNavItem">
+            <a class="btn btn-outline-light btn-sm" href="login.html">Bejelentkezés</a>
           </li>
-          <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
-            <a class="btn btn-primary btn-sm" href="profil.html#register">Regisztráció</a>
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="registerNavItem">
+            <a class="btn btn-primary btn-sm" href="register.html">Regisztráció</a>
+          </li>
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0 d-none" id="logoutNavItem">
+            <button class="btn btn-outline-danger btn-sm" onclick="handleLogout()">Kijelentkezés</button>
           </li>
         </ul>
       </div>
@@ -69,91 +72,53 @@
     <div class="container">
       <div class="mb-4">
         <h1 class="mb-1">Profil</h1>
-        <p class="section-text mb-0">Belépés, regisztráció és profilinformációk.</p>
+        <p class="section-text mb-0">Profilinformációk és beállítások.</p>
       </div>
 
-      <div class="row g-4">
+      <div class="row justify-content-center">
         <!-- Profil adatok -->
-        <div class="col-lg-4">
-          <div class="card app-card h-100">
+        <div class="col-lg-6">
+          <div class="card app-card">
             <div class="card-body">
-              <h2 class="h5 mb-3">Profil adatok</h2>
+              <h2 class="h5 mb-4">Profil adatok</h2>
 
               <div id="profileLoading" class="section-text d-none">Betöltés...</div>
-              <div id="profileError" class="text-danger d-none"></div>
-              <div id="profileEmpty" class="section-text">Nincs bejelentkezett felhasználó.</div>
+              <div id="profileError" class="alert alert-danger d-none"></div>
+              <div id="profileEmpty" class="alert alert-info">
+                Nincs bejelentkezett felhasználó. 
+                <a href="login.html" class="alert-link">Jelentkezz be</a> vagy 
+                <a href="register.html" class="alert-link">regisztrálj</a>.
+              </div>
 
               <div id="profileContent" class="d-none">
                 <div class="mb-3">
-                  <label class="form-label">Felhasználónév</label>
-                  <input id="profileUsername" class="form-control app-input" disabled />
+                  <label class="form-label fw-bold">Felhasználónév</label>
+                  <p id="profileName" class="section-text mb-0"></p>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-bold">Email</label>
+                  <p id="profileEmail" class="section-text mb-0"></p>
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label">Email</label>
-                  <input id="profileEmail" class="form-control app-input" disabled />
+                  <label class="form-label fw-bold">Regisztráció dátuma</label>
+                  <p id="profileCreated" class="section-text mb-0"></p>
                 </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-bold">Szerepkörök</label>
+                  <p id="profileRoles" class="section-text mb-0"></p>
+                </div>
+
+                <hr class="my-4">
 
                 <div class="d-flex gap-2 flex-wrap">
-                  <button id="changePasswordButton" class="btn btn-primary" type="button">Jelszó módosítás</button>
-                  <button id="logoutButton" class="btn btn-outline-light" type="button">Kijelentkezés</button>
+                  <button id="logoutButton" class="btn btn-outline-danger" type="button" onclick="handleLogout()">
+                    Kijelentkezés
+                  </button>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bejelentkezés -->
-        <div class="col-lg-4" id="login">
-          <div class="card app-card h-100">
-            <div class="card-body">
-              <h2 class="h5 mb-3">Bejelentkezés</h2>
-
-              <form id="loginForm" novalidate>
-                <div class="mb-3">
-                  <label class="form-label" for="loginIdentifier">Felhasználónév / Email</label>
-                  <input id="loginIdentifier" name="azonosito" class="form-control app-input" />
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label" for="loginPassword">Jelszó</label>
-                  <input id="loginPassword" name="jelszo" type="password" class="form-control app-input" />
-                </div>
-
-                <button id="loginButton" class="btn btn-primary w-100" type="submit">Belépés</button>
-              </form>
-
-              <div id="loginMessage" class="small mt-3"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Regisztráció -->
-        <div class="col-lg-4" id="register">
-          <div class="card app-card h-100">
-            <div class="card-body">
-              <h2 class="h5 mb-3">Regisztráció</h2>
-
-              <form id="registerForm" novalidate>
-                <div class="mb-3">
-                  <label class="form-label" for="registerUsername">Felhasználónév</label>
-                  <input id="registerUsername" name="felhasznalonev" class="form-control app-input" />
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label" for="registerEmail">Email</label>
-                  <input id="registerEmail" name="email" type="email" class="form-control app-input" />
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label" for="registerPassword">Jelszó</label>
-                  <input id="registerPassword" name="jelszo" type="password" class="form-control app-input" />
-                </div>
-
-                <button id="registerButton" class="btn btn-primary w-100" type="submit">Fiók létrehozása</button>
-              </form>
-
-              <div id="registerMessage" class="small mt-3"></div>
             </div>
           </div>
         </div>
