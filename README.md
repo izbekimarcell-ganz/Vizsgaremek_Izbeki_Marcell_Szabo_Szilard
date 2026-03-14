@@ -21,4 +21,4 @@
 - Térkép tervezésének és megcsinálásának elkezdése **()**
 - Regisztrációnál az adatok ellenőrzése **()**
 - Marketplace csinálás **()**
-- Pici redesign **()**
+- Pici redesign(nagyon látszik az ai) **()**
