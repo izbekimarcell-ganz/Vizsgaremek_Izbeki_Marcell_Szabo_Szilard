@@ -1,4 +1,4 @@
-# Fejlesztési feladatok
+# Fejlesztési feladatok/Ötletek
 
 ## 2026.03.10
 
