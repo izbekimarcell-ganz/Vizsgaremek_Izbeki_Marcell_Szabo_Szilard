@@ -40,7 +40,7 @@
         alert(
           typeof data === "object" && data?.message
             ? data.message
-            : "Hibas bejelentkezes."
+            : "Hibás bejelentkezés."
         );
         return;
       }
@@ -52,17 +52,14 @@
         localStorage.setItem("authUser", JSON.stringify(data.user));
       }
 
-      alert("Sikeres bejelentkezes!");
+      alert("Sikeres bejelentkezés!");
       const pendingRedirect =
         typeof consumePendingRedirect === "function" ? consumePendingRedirect() : null;
-      const target = pendingRedirect ||
-        (typeof getDefaultPostLoginTarget === "function"
-          ? getDefaultPostLoginTarget(data.user)
-          : "./index.html");
+      const target = pendingRedirect || "./index.html";
       window.location.href = target;
     } catch (error) {
       console.error("Login fetch hiba:", error);
-      alert("Nem sikerult kapcsolodni a szerverhez.");
+      alert("Nem sikerült kapcsolódni a szerverhez.");
     }
 
     form.classList.add("was-validated");

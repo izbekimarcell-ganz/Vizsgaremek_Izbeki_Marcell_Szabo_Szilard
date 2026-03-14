@@ -251,35 +251,36 @@ async function loadVizteruletek(filters = {}) {
    Szűrők betöltése (megyék, víztípusok)
    ========================= */
 async function loadFilterOptions() {
-  // Itt később API-ból tölthetjük be, most statikus
   const countySelect = $("#county");
   const typeSelect = $("#type");
-  
-  if (countySelect) {
-    const counties = [
-      "Budapest", "Bács-Kiskun", "Baranya", "Békés", "Borsod-Abaúj-Zemplén",
-      "Csongrád-Csanád", "Fejér", "Győr-Moson-Sopron", "Hajdú-Bihar", "Heves",
-      "Jász-Nagykun-Szolnok", "Komárom-Esztergom", "Nógrád", "Pest", "Somogy",
-      "Szabolcs-Szatmár-Bereg", "Tolna", "Vas", "Veszprém", "Zala"
-    ];
-    
-    counties.forEach(county => {
-      const option = document.createElement("option");
-      option.value = county;
-      option.textContent = county;
-      countySelect.appendChild(option);
-    });
-  }
-  
-  if (typeSelect) {
-    const types = ["Folyó", "Tó", "Víztározó", "Holtág", "Csatorna"];
-    
-    types.forEach(type => {
-      const option = document.createElement("option");
-      option.value = type;
-      option.textContent = type;
-      typeSelect.appendChild(option);
-    });
+
+  try {
+    const [counties, types] = await Promise.all([
+      apiRequest("/vizteruletek/megyek"),
+      apiRequest("/vizteruletek/viztipusok"),
+    ]);
+
+    if (countySelect) {
+      countySelect.innerHTML = '<option value="">Összes</option>';
+      counties.forEach((county) => {
+        const option = document.createElement("option");
+        option.value = county.Nev;
+        option.textContent = county.Nev;
+        countySelect.appendChild(option);
+      });
+    }
+
+    if (typeSelect) {
+      typeSelect.innerHTML = '<option value="">Összes</option>';
+      types.forEach((type) => {
+        const option = document.createElement("option");
+        option.value = type.Nev;
+        option.textContent = type.Nev;
+        typeSelect.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error("Szűrő opciók betöltési hiba:", error);
   }
 }
 
@@ -305,29 +306,41 @@ async function handleWaterSearch(event) {
 async function showVizteruletDetails(vizteruletId) {
   try {
     const data = await apiRequest(`/vizteruletek/${vizteruletId}`);
-    
-    // Egyszerű alert formátumban
-    let details = `Vízterület: ${data.vizterulet.Nev}\n`;
-    details += `Típus: ${data.vizterulet.VizTipusNev}\n\n`;
-    
-  
-  // Dropdown-ok betöltése
-  loadCatchFormOptions();
-    if (data.halfajok.length > 0) {
-      details += `Halfajok:\n`;
-      data.halfajok.forEach(h => {
-        details += `- ${h.MagyarNev}${h.Vedett ? " (Védett)" : ""}\n`;
-      });
+
+    const detailsCard = $("#waterDetailsCard");
+    const nameElement = $("#waterDetailName");
+    const typeElement = $("#waterDetailType");
+    const countiesElement = $("#waterDetailCounties");
+    const descriptionElement = $("#waterDetailDescription");
+    const speciesElement = $("#waterDetailSpecies");
+
+    if (detailsCard) {
+      detailsCard.classList.remove("d-none");
+      detailsCard.scrollIntoView({ behavior: "smooth", block: "start" });
     }
-    
-    if (data.megyek.length > 0) {
-      details += `\nMegyék:\n`;
-      data.megyek.forEach(m => {
-        details += `- ${m.Nev}\n`;
-      });
+
+    setText(nameElement, data.vizterulet.Nev);
+    setText(typeElement, data.vizterulet.VizTipusNev || "N/A");
+    setText(
+      countiesElement,
+      data.megyek.length ? data.megyek.map((megye) => megye.Nev).join(", ") : "N/A"
+    );
+    setText(descriptionElement, data.vizterulet.Leiras || "Nincs további leírás.");
+
+    if (speciesElement) {
+      clearElement(speciesElement);
+
+      if (!data.halfajok.length) {
+        speciesElement.innerHTML = '<span class="section-text">Nincs rögzített halfaj.</span>';
+      } else {
+        data.halfajok.forEach((halfaj) => {
+          const badge = document.createElement("span");
+          badge.className = `badge ${halfaj.Vedett ? "bg-warning text-dark" : "bg-info text-dark"}`;
+          badge.textContent = halfaj.MagyarNev;
+          speciesElement.appendChild(badge);
+        });
+      }
     }
-    
-    alert(details);
   } catch (error) {
     alert("Hiba a részletek betöltése során!");
   }
@@ -340,16 +353,22 @@ function prepareCatchLogPage() {
   const catchForm = $("#catchForm");
   const catchListContainer = $("#catchListContainer");
 
+  if (!isLoggedIn()) {
+    setPendingRedirect("fogasnaplo.html");
+    window.location.href = "login.html";
+    return;
+  }
+
   if (catchForm) {
     catchForm.addEventListener("submit", handleAddCatch);
   }
 
   if (catchListContainer) {
     clearElement(catchListContainer);
-    if (isLoggedIn()) {
-      loadSajatFogasok();
-    }
+    loadSajatFogasok();
   }
+
+  loadCatchFormOptions();
 }
 
 /* =========================
@@ -410,6 +429,7 @@ async function loadCatchFormOptions() {
   if (waterbodySelect) {
     try {
       const vizteruletek = await apiRequest("/vizteruletek");
+      waterbodySelect.innerHTML = '<option value="">Válassz vízterületet</option>';
       vizteruletek.forEach(viz => {
         const option = document.createElement("option");
         option.value = viz.VizteruletId;
@@ -425,6 +445,7 @@ async function loadCatchFormOptions() {
   if (speciesSelect) {
     try {
       const halfajok = await apiRequest("/halfajok");
+      speciesSelect.innerHTML = '<option value="">Válassz halfajt</option>';
       halfajok.forEach(halfaj => {
         const option = document.createElement("option");
         option.value = halfaj.HalfajId;
@@ -450,7 +471,7 @@ async function handleAddCatch(event) {
     fogasIdeje: form.querySelector("#catchDateTime")?.value,
     sulyKg: parseFloat(form.querySelector("#catchWeight")?.value) || null,
     hosszCm: parseInt(form.querySelector("#catchLength")?.value) || null,
-    fotoUrl: form.querySelector("#catchImage")?.value || null,
+    fotoUrl: null,
     megjegyzes: form.querySelector("#catchNote")?.value || null,
   };
 
@@ -552,6 +573,7 @@ async function handleCreateTopic(event) {
   const form = event.target;
   
   const cim = form.querySelector("#topicTitle")?.value;
+  const szoveg = form.querySelector("#topicBody")?.value || "";
 
   if (!cim) {
     alert("A téma címe kötelező!");
@@ -566,7 +588,7 @@ async function handleCreateTopic(event) {
   try {
     await apiRequest("/forum/tema", {
       method: "POST",
-      body: JSON.stringify({ cim }),
+      body: JSON.stringify({ cim, szoveg, kepUrl: null }),
     });
 
     alert("Téma sikeresen létrehozva!");
@@ -583,21 +605,52 @@ async function handleCreateTopic(event) {
 async function loadTopicReplies(temaId) {
   try {
     const data = await apiRequest(`/forum/tema/${temaId}/hozzaszolasok`);
-    
-    let replies = `Hozzászólások:\n\n`;
-    
-    if (data.length === 0) {
-      replies += "Még nincs hozzászólás.";
-    } else {
+
+    const selectedTopicCard = $("#forumSelectedTopicCard");
+    const postsList = $("#forumPostsList");
+    const postsEmpty = $("#forumPostsEmpty");
+    const selectedTopicTitle = $("#selectedTopicTitle");
+    const selectedTopicMeta = $("#selectedTopicMeta");
+
+    if (selectedTopicCard) {
+      selectedTopicCard.classList.remove("d-none");
+      selectedTopicCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    if (selectedTopicTitle) {
+      const topicCard = document.querySelector(
+        `button[onclick="loadTopicReplies(${temaId})"]`
+      )?.closest(".card-body");
+      selectedTopicTitle.textContent =
+        topicCard?.querySelector(".card-title")?.textContent || "Kiválasztott téma";
+    }
+
+    if (selectedTopicMeta) {
+      selectedTopicMeta.textContent = `Téma azonosító: ${temaId}`;
+    }
+
+    if (postsList) {
+      clearElement(postsList);
+    }
+
+    if (postsEmpty) {
+      postsEmpty.classList.toggle("d-none", data.length !== 0);
+    }
+
+    if (postsList && data.length) {
       data.forEach((hz) => {
-        replies += `${hz.Felhasznalonev} (${new Date(hz.Letrehozva).toLocaleString("hu-HU")}):\n`;
-        replies += `${hz.Szoveg}\n\n`;
+        const item = document.createElement("div");
+        item.className = "border rounded p-3 mb-3";
+        item.innerHTML = `
+          <div class="small section-text mb-2">
+            ${hz.Felhasznalonev} | ${new Date(hz.Letrehozva).toLocaleString("hu-HU")}
+          </div>
+          <div>${hz.Szoveg}</div>
+        `;
+        postsList.appendChild(item);
       });
     }
-    
-    alert(replies);
-    
-    // Beállítjuk az aktuális témát a hozzászólás formhoz
+
     const replyForm = $("#forumReplyForm");
     if (replyForm) {
       const temaIdInput = replyForm.querySelector("#replyTopicId");
@@ -617,7 +670,7 @@ async function handleCreateReply(event) {
   
   const temaId = parseInt(form.querySelector("#replyTopicId")?.value);
   const szoveg = form.querySelector("#replyBody")?.value;
-  const kepUrl = form.querySelector("#replyImage")?.value || null;
+  const kepUrl = null;
 
   if (!temaId || !szoveg) {
     alert("A téma és a szöveg megadása kötelező!");
@@ -637,6 +690,7 @@ async function handleCreateReply(event) {
 
     alert("Hozzászólás sikeresen létrehozva!");
     form.reset();
+    await loadTopicReplies(temaId);
   } catch (error) {
     alert(error.message || "Hiba a hozzászólás létrehozása során!");
   }
@@ -647,6 +701,10 @@ async function handleCreateReply(event) {
    ========================= */
 function prepareAdminPage() {
   const usersTableBody = $("#adminUsersTableBody");
+  const manageSpeciesButton = $("#manageSpeciesButton");
+  const manageWatersButton = $("#manageWatersButton");
+  const manageRelationsButton = $("#manageRelationsButton");
+  const moderateForumButton = $("#moderateForumButton");
 
   if (!isLoggedIn()) {
     setPendingRedirect("admin.html");
@@ -662,6 +720,33 @@ function prepareAdminPage() {
   if (usersTableBody) {
     clearElement(usersTableBody);
     loadAllUsers();
+  }
+
+  const pendingFeatureMessage =
+    "Ez a funkció még nincs elkészítve backend oldalon, ezért egyelőre nem használható.";
+
+  if (manageSpeciesButton) {
+    manageSpeciesButton.addEventListener("click", () => {
+      alert(`Halfajok kezelése\n\n${pendingFeatureMessage}`);
+    });
+  }
+
+  if (manageWatersButton) {
+    manageWatersButton.addEventListener("click", () => {
+      alert(`Vízterületek kezelése\n\n${pendingFeatureMessage}`);
+    });
+  }
+
+  if (manageRelationsButton) {
+    manageRelationsButton.addEventListener("click", () => {
+      alert(`Kapcsolatok kezelése\n\n${pendingFeatureMessage}`);
+    });
+  }
+
+  if (moderateForumButton) {
+    moderateForumButton.addEventListener("click", () => {
+      alert(`Fórum moderáció\n\n${pendingFeatureMessage}`);
+    });
   }
 }
 
@@ -798,7 +883,7 @@ function getStoredUser() {
   try {
     return JSON.parse(rawUser);
   } catch (error) {
-    console.error("Nem sikerult beolvasni a tarolt felhasznalot:", error);
+    console.error("Nem sikerült beolvasni a tárolt felhasználót:", error);
     return null;
   }
 }
@@ -894,6 +979,51 @@ function handleLogout() {
   window.location.href = "index.html";
 }
 
+async function handleDeleteProfile() {
+  const user = getStoredUser();
+
+  if (!user || isAdminUser(user)) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Biztosan törölni akarod a profilodat? Ha törlöd a profilt, utána már nem lehet visszahozni."
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const response = await fetch("http://localhost:4000/api/profile/delete", {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
+
+    const contentType = response.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
+
+    if (!response.ok) {
+      throw new Error(
+        typeof data === "object" && data?.message
+          ? data.message
+          : "Nem sikerült törölni a profilt."
+      );
+    }
+
+    alert("A profil sikeresen törölve lett.");
+    clearAuthSession();
+    window.location.href = "index.html";
+  } catch (error) {
+    console.error("Profil törlési hiba:", error);
+    alert(error.message || "Nem sikerült törölni a profilt.");
+  }
+}
+
 function updateAccountShortcut(user = getStoredUser()) {
   const shortcutLink = $("#accountShortcutLink");
   const shortcutTitle = $("#accountCardTitle");
@@ -907,7 +1037,7 @@ function updateAccountShortcut(user = getStoredUser()) {
     shortcutLink.setAttribute("href", "profil.html");
     if (shortcutTitle) shortcutTitle.textContent = "Profil";
     if (shortcutDescription) {
-      shortcutDescription.textContent = "Belepes, regisztracio es profilkezeles.";
+      shortcutDescription.textContent = "Belépés, regisztráció és profilkezelés.";
     }
     return;
   }
@@ -916,7 +1046,7 @@ function updateAccountShortcut(user = getStoredUser()) {
     shortcutLink.setAttribute("href", "admin.html");
     if (shortcutTitle) shortcutTitle.textContent = "Admin";
     if (shortcutDescription) {
-      shortcutDescription.textContent = "Admin felulet es felhasznalok kezelese.";
+      shortcutDescription.textContent = "Admin felület és felhasználók kezelése.";
     }
     return;
   }
@@ -924,7 +1054,7 @@ function updateAccountShortcut(user = getStoredUser()) {
   shortcutLink.setAttribute("href", "profil.html");
   if (shortcutTitle) shortcutTitle.textContent = "Profil";
   if (shortcutDescription) {
-    shortcutDescription.textContent = "Sajat fiokod es profiladataid megtekintese.";
+    shortcutDescription.textContent = "Saját fiókod és profiladataid megtekintése.";
   }
 }
 
@@ -952,7 +1082,7 @@ async function apiRequest(endpoint, options = {}) {
       throw new Error(
         typeof data === "object" && data?.message
           ? data.message
-          : "Hiba tortent a keres soran."
+          : "Hiba történt a kérés során."
       );
     }
 
@@ -975,6 +1105,7 @@ async function loadUserProfile() {
     const profileEmail = $("#profileEmail");
     const profileCreated = $("#profileCreated");
     const profileRoles = $("#profileRoles");
+    const deleteProfileButton = $("#deleteProfileButton");
 
     if (!user) {
       if (profileContent) profileContent.classList.add("d-none");
@@ -993,14 +1124,17 @@ async function loadUserProfile() {
         : "-";
     }
     if (profileRoles) {
-      profileRoles.textContent = isAdminUser(user) ? "Admin" : "Felhasznalo";
+      profileRoles.textContent = isAdminUser(user) ? "Admin" : "Felhasználó";
+    }
+    if (deleteProfileButton) {
+      deleteProfileButton.classList.toggle("d-none", isAdminUser(user));
     }
   } catch (error) {
     console.error("Profil betöltési hiba:", error);
     const profileError = $("#profileError");
     if (profileError) {
       profileError.classList.remove("d-none");
-      profileError.textContent = "Hiba a profil betoltese soran!";
+      profileError.textContent = "Hiba a profil betöltése során!";
     }
   }
 }

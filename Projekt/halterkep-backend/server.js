@@ -3,10 +3,12 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
-// const palyaRoutes = require("./routes/palyaRoutes");
-// const profileRoutes = require("./routes/profileRoutes");
-// const bookingRoutes = require("./routes/bookingRoutes");
-// const notificationRoutes = require("./routes/notificationRoutes");
+const profileDeleteRoutes = require("./routes/profileDeleteRoutes");
+const waterRoutes = require("./routes/waterRoutes");
+const speciesRoutes = require("./routes/speciesRoutes");
+const catchLogRoutes = require("./routes/catchLogRoutes");
+const forumRoutes = require("./routes/forumRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
@@ -18,10 +20,12 @@ app.get("/", (req, res) => {
 });
 
 app.use("/auth", authRoutes);
-// app.use("/api/palyak", palyaRoutes);
-// app.use("/api/profile", profileRoutes);
-// app.use("/api/bookings", bookingRoutes);
-// app.use("/api/notifications", notificationRoutes);
+app.use("/api/profile", profileDeleteRoutes);
+app.use("/api/vizteruletek", waterRoutes);
+app.use("/api/halfajok", speciesRoutes);
+app.use("/api/fogasnaplo", catchLogRoutes);
+app.use("/api/forum", forumRoutes);
+app.use("/api/users", userRoutes);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

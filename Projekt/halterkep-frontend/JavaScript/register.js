@@ -16,7 +16,7 @@ if (registerForm) {
     }
 
     if (password !== confirmPassword) {
-      alert("A ket jelszo nem egyezik.");
+      alert("A két jelszó nem egyezik.");
       return;
     }
 
@@ -42,16 +42,16 @@ if (registerForm) {
         alert(
           typeof data === "object" && data?.message
             ? data.message
-            : "Hiba tortent regisztracio kozben."
+            : "Hiba történt regisztráció közben."
         );
         return;
       }
 
-      alert("Sikeres regisztracio!");
+      alert("Sikeres regisztráció!");
       window.location.href = "./login.html";
     } catch (error) {
       console.error("Register fetch hiba:", error);
-      alert("Nem sikerult kapcsolodni a szerverhez.");
+      alert("Nem sikerült kapcsolódni a szerverhez.");
     }
   });
 }
