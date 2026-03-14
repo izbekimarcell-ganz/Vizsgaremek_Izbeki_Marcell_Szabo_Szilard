@@ -649,8 +649,13 @@ function prepareAdminPage() {
   const usersTableBody = $("#adminUsersTableBody");
 
   if (!isLoggedIn()) {
-    alert("Admin jogosultság szükséges!");
-    window.location.href = "index.html";
+    setPendingRedirect("admin.html");
+    window.location.href = "login.html";
+    return;
+  }
+
+  if (!isAdminUser()) {
+    window.location.href = "profil.html";
     return;
   }
 
@@ -735,22 +740,26 @@ async function toggleUserStatus(userId) {
    Profil oldal előkészítés
    ========================= */
 function prepareProfilePage() {
-  // Ha van token, töltsük be a profilt
-  if (isLoggedIn()) {
-    loadUserProfile();
-  } else {
-    // Ha nincs bejelentkezve, átirányítás a login oldalra
+  if (!isLoggedIn()) {
+    setPendingRedirect("profil.html");
     window.location.href = "login.html";
+    return;
   }
+
+  if (isAdminUser()) {
+    window.location.href = "admin.html";
+    return;
+  }
+
+  loadUserProfile();
 }
 
 /* =========================
    Login oldal előkészítése
    ========================= */
 function prepareLoginPage() {
-  const loginForm = $("#loginForm");
-  if (loginForm) {
-    loginForm.addEventListener("submit", handleLogin);
+  if (isLoggedIn()) {
+    window.location.href = getDefaultPostLoginTarget();
   }
 }
 
@@ -758,25 +767,83 @@ function prepareLoginPage() {
    Register oldal előkészítése
    ========================= */
 function prepareRegisterPage() {
-  const registerForm = $("#registerForm");
-  if (registerForm) {
-    registerForm.addEventListener("submit", handleRegister);
+  if (isLoggedIn()) {
+    window.location.href = getDefaultPostLoginTarget();
   }
 }
 
 /* =========================
    JWT Token kezelés
    ========================= */
-function getToken() {
-  return localStorage.getItem("authToken");
+function getStorageValue(key) {
+  return localStorage.getItem(key) || sessionStorage.getItem(key);
 }
 
-function setToken(token) {
-  localStorage.setItem("authToken", token);
+function removeStorageValue(key) {
+  localStorage.removeItem(key);
+  sessionStorage.removeItem(key);
+}
+
+function getToken() {
+  return getStorageValue("authToken") || getStorageValue("token");
+}
+
+function getStoredUser() {
+  const rawUser = getStorageValue("authUser") || getStorageValue("user");
+
+  if (!rawUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawUser);
+  } catch (error) {
+    console.error("Nem sikerult beolvasni a tarolt felhasznalot:", error);
+    return null;
+  }
+}
+
+function isAdminUser(user = getStoredUser()) {
+  return Boolean(user && (user.admin === true || user.Admin === true));
+}
+
+function getDefaultPostLoginTarget(user = getStoredUser()) {
+  return isAdminUser(user) ? "admin.html" : "profil.html";
+}
+
+function setPendingRedirect(path) {
+  sessionStorage.setItem("pendingRedirect", path);
+}
+
+function consumePendingRedirect() {
+  const path = sessionStorage.getItem("pendingRedirect");
+  sessionStorage.removeItem("pendingRedirect");
+  return path;
+}
+
+function setAuthSession(token, user, remember = true) {
+  const storage = remember ? localStorage : sessionStorage;
+
+  removeStorageValue("authToken");
+  removeStorageValue("token");
+  removeStorageValue("authUser");
+  removeStorageValue("user");
+
+  storage.setItem("authToken", token);
+  storage.setItem("token", token);
+  storage.setItem("authUser", JSON.stringify(user));
+  storage.setItem("user", JSON.stringify(user));
 }
 
 function removeToken() {
-  localStorage.removeItem("authToken");
+  removeStorageValue("authToken");
+  removeStorageValue("token");
+}
+
+function clearAuthSession() {
+  removeToken();
+  removeStorageValue("authUser");
+  removeStorageValue("user");
 }
 
 function isLoggedIn() {
@@ -797,49 +864,68 @@ async function updateNavbar() {
   const loginNavItem = $("#loginNavItem");
   const registerNavItem = $("#registerNavItem");
   const logoutNavItem = $("#logoutNavItem");
+  const user = getStoredUser();
+  const isAdmin = isAdminUser(user);
 
   if (isLoggedIn()) {
-    // Felhasználó be van jelentkezve
-    try {
-      const profile = await apiRequest("/users/profile");
-      
-      // Elrejti login/register, megjeleníti profil/logout
-      if (loginNavItem) loginNavItem.classList.add("d-none");
-      if (registerNavItem) registerNavItem.classList.add("d-none");
-      if (profilNavItem) profilNavItem.classList.remove("d-none");
-      if (logoutNavItem) logoutNavItem.classList.remove("d-none");
-
-      // Admin fül megjelenítése, ha van Admin szerepkör
-      const isAdmin = profile.szerepkorok && profile.szerepkorok.some(role => role.Nev === "Admin");
-      if (adminNavItem) {
-        if (isAdmin) {
-          adminNavItem.classList.remove("d-none");
-        } else {
-          adminNavItem.classList.add("d-none");
-        }
-      }
-    } catch (error) {
-      console.error("Nem sikerült betölteni a profil adatokat:", error);
-      // Ha hiba van, kijelentkeztetjük
-      removeToken();
-      updateNavbar();
-    }
+    if (loginNavItem) loginNavItem.classList.add("d-none");
+    if (registerNavItem) registerNavItem.classList.add("d-none");
+    if (logoutNavItem) logoutNavItem.classList.remove("d-none");
+    if (profilNavItem) profilNavItem.classList.toggle("d-none", isAdmin);
+    if (adminNavItem) adminNavItem.classList.toggle("d-none", !isAdmin);
   } else {
-    // Felhasználó nincs bejelentkezve
     if (loginNavItem) loginNavItem.classList.remove("d-none");
     if (registerNavItem) registerNavItem.classList.remove("d-none");
     if (profilNavItem) profilNavItem.classList.add("d-none");
     if (logoutNavItem) logoutNavItem.classList.add("d-none");
     if (adminNavItem) adminNavItem.classList.add("d-none");
   }
+
+  updateAccountShortcut(user);
 }
 
 /* =========================
    Kijelentkezés
    ========================= */
 function handleLogout() {
-  removeToken();
+  clearAuthSession();
+  sessionStorage.removeItem("pendingRedirect");
+  updateNavbar();
   window.location.href = "index.html";
+}
+
+function updateAccountShortcut(user = getStoredUser()) {
+  const shortcutLink = $("#accountShortcutLink");
+  const shortcutTitle = $("#accountCardTitle");
+  const shortcutDescription = $("#accountCardDescription");
+
+  if (!shortcutLink) {
+    return;
+  }
+
+  if (!user) {
+    shortcutLink.setAttribute("href", "profil.html");
+    if (shortcutTitle) shortcutTitle.textContent = "Profil";
+    if (shortcutDescription) {
+      shortcutDescription.textContent = "Belepes, regisztracio es profilkezeles.";
+    }
+    return;
+  }
+
+  if (isAdminUser(user)) {
+    shortcutLink.setAttribute("href", "admin.html");
+    if (shortcutTitle) shortcutTitle.textContent = "Admin";
+    if (shortcutDescription) {
+      shortcutDescription.textContent = "Admin felulet es felhasznalok kezelese.";
+    }
+    return;
+  }
+
+  shortcutLink.setAttribute("href", "profil.html");
+  if (shortcutTitle) shortcutTitle.textContent = "Profil";
+  if (shortcutDescription) {
+    shortcutDescription.textContent = "Sajat fiokod es profiladataid megtekintese.";
+  }
 }
 
 /* =========================
@@ -857,10 +943,17 @@ async function apiRequest(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, config);
-    const data = await response.json();
+    const contentType = response.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+      ? await response.json()
+      : await response.text();
 
     if (!response.ok) {
-      throw new Error(data.message || "Hiba történt a kérés során.");
+      throw new Error(
+        typeof data === "object" && data?.message
+          ? data.message
+          : "Hiba tortent a keres soran."
+      );
     }
 
     return data;
@@ -871,111 +964,43 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 /* =========================
-   Autentikáció - Login
-   ========================= */
-async function handleLogin(event) {
-  event.preventDefault();
-  const form = event.target;
-  const identifier = form.querySelector("#loginIdentifier")?.value;
-  const password = form.querySelector("#loginPassword")?.value;
-
-  if (!identifier || !password) {
-    alert("Minden mező kitöltése kötelező!");
-    return;
-  }
-
-  try {
-    const data = await apiRequest("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ identifier, password }),
-    });
-
-    setToken(data.token);
-    alert("Sikeres bejelentkezés!");
-    window.location.href = "index.html";
-  } catch (error) {
-    alert(error.message || "Bejelentkezési hiba!");
-  }
-}
-
-/* =========================
-   Autentikáció - Register
-   ========================= */
-async function handleRegister(event) {
-  event.preventDefault();
-  const form = event.target;
-  const email = form.querySelector("#registerEmail")?.value;
-  const felhasznalonev = form.querySelector("#registerUsername")?.value;
-  const password = form.querySelector("#registerPassword")?.value;
-  const passwordConfirm = form.querySelector("#registerPasswordConfirm")?.value;
-
-  if (!email || !felhasznalonev || !password || !passwordConfirm) {
-    alert("Minden mező kitöltése kötelező!");
-    return;
-  }
-
-  if (password !== passwordConfirm) {
-    alert("A jelszavak nem egyeznek!");
-    return;
-  }
-
-  try {
-    await apiRequest("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ email, felhasznalonev, password }),
-    });
-
-    alert("Sikeres regisztráció! Most már bejelentkezhetsz.");
-    form.reset();
-  } catch (error) {
-    alert(error.message || "Regisztrációs hiba!");
-  }
-}
-
-/* =========================
    Profil betöltése
    ========================= */
 async function loadUserProfile() {
   try {
-    const data = await apiRequest("/users/profile");
-    
-    // Profil adatok megjelenítése
+    const user = getStoredUser();
     const profileContent = $("#profileContent");
     const profileEmpty = $("#profileEmpty");
     const profileName = $("#profileName");
     const profileEmail = $("#profileEmail");
     const profileCreated = $("#profileCreated");
     const profileRoles = $("#profileRoles");
-    
+
+    if (!user) {
+      if (profileContent) profileContent.classList.add("d-none");
+      if (profileEmpty) profileEmpty.classList.remove("d-none");
+      return;
+    }
+
     if (profileContent) profileContent.classList.remove("d-none");
     if (profileEmpty) profileEmpty.classList.add("d-none");
-    
-    if (profileName) profileName.textContent = data.felhasznalo.Felhasznalonev;
-    if (profileEmail) profileEmail.textContent = data.felhasznalo.Email;
+
+    if (profileName) profileName.textContent = user.username || "";
+    if (profileEmail) profileEmail.textContent = user.email || "";
     if (profileCreated) {
-      profileCreated.textContent = new Date(data.felhasznalo.Letrehozva).toLocaleDateString("hu-HU");
+      profileCreated.textContent = user.letrehozva
+        ? new Date(user.letrehozva).toLocaleDateString("hu-HU")
+        : "-";
     }
     if (profileRoles) {
-      const roles = data.szerepkorok && data.szerepkorok.length > 0 
-        ? data.szerepkorok.map(sz => sz.Nev).join(", ") 
-        : "Felhasználó";
-      profileRoles.textContent = roles;
+      profileRoles.textContent = isAdminUser(user) ? "Admin" : "Felhasznalo";
     }
   } catch (error) {
     console.error("Profil betöltési hiba:", error);
     const profileError = $("#profileError");
     if (profileError) {
       profileError.classList.remove("d-none");
-      profileError.textContent = "Hiba a profil betöltése során!";
+      profileError.textContent = "Hiba a profil betoltese soran!";
     }
   }
-}
-
-/* =========================
-   Kijelentkezés
-   ========================= */
-function handleLogout() {
-  removeToken();
-  alert("Sikeresen kijelentkeztél!");
-  window.location.href = "index.html";
 }

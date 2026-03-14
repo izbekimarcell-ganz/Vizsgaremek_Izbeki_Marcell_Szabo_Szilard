@@ -1,7 +1,11 @@
-(() => {
+﻿(() => {
   "use strict";
 
   const form = document.getElementById("loginForm");
+
+  if (!form) {
+    return;
+  }
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -12,12 +16,11 @@
       return;
     }
 
-    const identifier = document.getElementById("identifier").value.trim();
-    const password = document.getElementById("password").value;
-    const rememberMe = document.getElementById("rememberMe").checked;
+    const identifier = document.getElementById("loginIdentifier").value.trim();
+    const password = document.getElementById("loginPassword").value;
 
     try {
-      const response = await fetch("http://localhost:4000/api/auth/login", {
+      const response = await fetch("http://localhost:4000/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -28,26 +31,38 @@
         }),
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await response.json()
+        : await response.text();
 
       if (!response.ok) {
-        alert(data.message || "Hibás bejelentkezés.");
+        alert(
+          typeof data === "object" && data?.message
+            ? data.message
+            : "Hibas bejelentkezes."
+        );
         return;
       }
 
-      if (rememberMe) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+      if (typeof setAuthSession === "function") {
+        setAuthSession(data.token, data.user, true);
       } else {
-        sessionStorage.setItem("token", data.token);
-        sessionStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("authUser", JSON.stringify(data.user));
       }
 
-      alert("Sikeres bejelentkezés!");
-      window.location.href = "./index.html";
+      alert("Sikeres bejelentkezes!");
+      const pendingRedirect =
+        typeof consumePendingRedirect === "function" ? consumePendingRedirect() : null;
+      const target = pendingRedirect ||
+        (typeof getDefaultPostLoginTarget === "function"
+          ? getDefaultPostLoginTarget(data.user)
+          : "./index.html");
+      window.location.href = target;
     } catch (error) {
       console.error("Login fetch hiba:", error);
-      alert("Nem sikerült kapcsolódni a szerverhez.");
+      alert("Nem sikerult kapcsolodni a szerverhez.");
     }
 
     form.classList.add("was-validated");

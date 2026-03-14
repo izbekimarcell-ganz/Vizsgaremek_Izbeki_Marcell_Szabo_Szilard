@@ -1,5 +1,6 @@
 /* =========================================================
    HALTÉRKÉP - Komplett adatbázis létrehozó + feltöltő script
+   bcrypt kompatibilis verzió
    ========================================================= */
 
 -- 1) Adatbázis létrehozása (ha nem létezik)
@@ -32,23 +33,11 @@ IF OBJECT_ID(N'dbo.Megye', N'U') IS NOT NULL DROP TABLE dbo.Megye;
 IF OBJECT_ID(N'dbo.Halfaj', N'U') IS NOT NULL DROP TABLE dbo.Halfaj;
 
 IF OBJECT_ID(N'dbo.Felhasznalo', N'U') IS NOT NULL DROP TABLE dbo.Felhasznalo;
-IF OBJECT_ID(N'dbo.Szerepkor', N'U') IS NOT NULL DROP TABLE dbo.Szerepkor;
 GO
 
 /* =========================================================
    3) Törzs táblák
    ========================================================= */
-
--- Szerepkörök
-CREATE TABLE dbo.Szerepkor
-(
-    SzerepkorId  INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Szerepkor PRIMARY KEY,
-    Nev          NVARCHAR(30) NOT NULL
-);
-GO
-
-CREATE UNIQUE INDEX UX_Szerepkor_Nev ON dbo.Szerepkor(Nev);
-GO
 
 -- Felhasználók
 CREATE TABLE dbo.Felhasznalo
@@ -56,19 +45,16 @@ CREATE TABLE dbo.Felhasznalo
     FelhasznaloId      INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_Felhasznalo PRIMARY KEY,
     Felhasznalonev     NVARCHAR(50)  NOT NULL,
     Email              NVARCHAR(100) NOT NULL,
-    JelszoHash         VARBINARY(64) NOT NULL,
-    JelszoSo           VARBINARY(16) NOT NULL,
-    SzerepkorId        INT NOT NULL,
+    JelszoHash         NVARCHAR(255) NOT NULL,
+    Admin              BIT           NOT NULL CONSTRAINT DF_Felhasznalo_Admin DEFAULT (0),
     Letrehozva         DATETIME2     NOT NULL CONSTRAINT DF_Felhasznalo_Letrehozva DEFAULT (SYSUTCDATETIME()),
-    Aktiv              BIT           NOT NULL CONSTRAINT DF_Felhasznalo_Aktiv DEFAULT (1),
-
-    CONSTRAINT FK_Felhasznalo_Szerepkor FOREIGN KEY (SzerepkorId) REFERENCES dbo.Szerepkor(SzerepkorId)
+    Aktiv              BIT           NOT NULL CONSTRAINT DF_Felhasznalo_Aktiv DEFAULT (1)
 );
 GO
 
 CREATE UNIQUE INDEX UX_Felhasznalo_Felhasznalonev ON dbo.Felhasznalo(Felhasznalonev);
 CREATE UNIQUE INDEX UX_Felhasznalo_Email          ON dbo.Felhasznalo(Email);
-CREATE INDEX IX_Felhasznalo_SzerepkorId           ON dbo.Felhasznalo(SzerepkorId);
+CREATE INDEX IX_Felhasznalo_Admin                 ON dbo.Felhasznalo(Admin);
 GO
 
 -- Halfajok
@@ -213,19 +199,7 @@ BEGIN TRY
     BEGIN TRAN;
 
     /* =========================================================
-       7.1) Szerepkörök
-       ========================================================= */
-    IF NOT EXISTS (SELECT 1 FROM dbo.Szerepkor WHERE Nev = N'User')
-        INSERT INTO dbo.Szerepkor (Nev) VALUES (N'User');
-
-    IF NOT EXISTS (SELECT 1 FROM dbo.Szerepkor WHERE Nev = N'Admin')
-        INSERT INTO dbo.Szerepkor (Nev) VALUES (N'Admin');
-
-    DECLARE @AdminRoleId INT = (SELECT SzerepkorId FROM dbo.Szerepkor WHERE Nev = N'Admin');
-    DECLARE @UserRoleId  INT = (SELECT SzerepkorId FROM dbo.Szerepkor WHERE Nev = N'User');
-
-    /* =========================================================
-       7.2) Megyék (19 megye + Budapest)
+       7.1) Megyék (19 megye + Budapest)
        ========================================================= */
     DECLARE @Megyek TABLE (Nev NVARCHAR(50));
     INSERT INTO @Megyek (Nev) VALUES
@@ -256,7 +230,7 @@ BEGIN TRY
     WHERE NOT EXISTS (SELECT 1 FROM dbo.Megye x WHERE x.Nev = m.Nev);
 
     /* =========================================================
-       7.3) Víztípusok
+       7.2) Víztípusok
        ========================================================= */
     DECLARE @VizTipusok TABLE (Nev NVARCHAR(50));
     INSERT INTO @VizTipusok (Nev) VALUES
@@ -272,7 +246,7 @@ BEGIN TRY
     WHERE NOT EXISTS (SELECT 1 FROM dbo.VizTipus x WHERE x.Nev = v.Nev);
 
     /* =========================================================
-       7.4) Halfajok
+       7.3) Halfajok
        ========================================================= */
     DECLARE @Halfajok TABLE
     (
@@ -316,37 +290,43 @@ BEGIN TRY
     WHERE NOT EXISTS (SELECT 1 FROM dbo.Halfaj x WHERE x.MagyarNev = h.MagyarNev);
 
     /* =========================================================
-       7.5) Minta felhasználók
+       7.4) Felhasználók (csak 2 db, bcrypt hash-sel)
        ========================================================= */
     IF NOT EXISTS (SELECT 1 FROM dbo.Felhasznalo WHERE Felhasznalonev = N'admin')
     BEGIN
         INSERT INTO dbo.Felhasznalo
-            (Felhasznalonev, Email, JelszoHash, JelszoSo, SzerepkorId, Letrehozva, Aktiv)
+            (Felhasznalonev, Email, JelszoHash, Admin, Letrehozva, Aktiv)
         VALUES
-            (N'admin', N'admin@halterkep.local',
-             0x0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F20,
-             0xA1A2A3A4A5A6A7A8A9AAABACADAEAFB0,
-             @AdminRoleId,
-             SYSUTCDATETIME(), 1);
+            (
+                N'admin',
+                N'admin@gmail.com',
+                N'$2b$10$o17Dedk38RvG6XvHW5NTxO5nrtK3SsgJSO1c4CpYOtulf/b8zS1l2',
+                1,
+                SYSUTCDATETIME(),
+                1
+            );
     END
 
-    IF NOT EXISTS (SELECT 1 FROM dbo.Felhasznalo WHERE Felhasznalonev = N'teszt')
+    IF NOT EXISTS (SELECT 1 FROM dbo.Felhasznalo WHERE Felhasznalonev = N'Felhasznalo')
     BEGIN
         INSERT INTO dbo.Felhasznalo
-            (Felhasznalonev, Email, JelszoHash, JelszoSo, SzerepkorId, Letrehozva, Aktiv)
+            (Felhasznalonev, Email, JelszoHash, Admin, Letrehozva, Aktiv)
         VALUES
-            (N'teszt', N'teszt@halterkep.local',
-             0x1112131415161718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F30,
-             0xB1B2B3B4B5B6B7B8B9BABBBCBDBEBFC0,
-             @UserRoleId,
-             SYSUTCDATETIME(), 1);
+            (
+                N'Felhasznalo',
+                N'felhasznalo@gmail.com',
+                N'$2b$10$eCt7i8Nh7MIGJEnZktn6JuQsu4B2zHpE7.sFKilGmKjsLwvknwZNO',
+                0,
+                SYSUTCDATETIME(),
+                1
+            );
     END
 
     DECLARE @AdminId INT = (SELECT FelhasznaloId FROM dbo.Felhasznalo WHERE Felhasznalonev = N'admin');
-    DECLARE @TesztId INT = (SELECT FelhasznaloId FROM dbo.Felhasznalo WHERE Felhasznalonev = N'teszt');
+    DECLARE @TesztId INT = (SELECT FelhasznaloId FROM dbo.Felhasznalo WHERE Felhasznalonev = N'Felhasznalo');
 
     /* =========================================================
-       7.6) Pest megyei minta vízterületek
+       7.5) Pest megyei minta vízterületek
        ========================================================= */
     DECLARE @PestId INT = (SELECT MegyeId FROM dbo.Megye WHERE Nev = N'Pest');
     DECLARE @BpId   INT = (SELECT MegyeId FROM dbo.Megye WHERE Nev = N'Budapest');
@@ -406,7 +386,7 @@ BEGIN TRY
     );
 
     /* =========================================================
-       7.7) Pest megyei halfaj–vízterület kapcsolatok
+       7.6) Pest megyei halfaj–vízterület kapcsolatok
        ========================================================= */
     DECLARE @CsukaId INT   = (SELECT HalfajId FROM dbo.Halfaj WHERE MagyarNev = N'Csuka');
     DECLARE @PontyId INT   = (SELECT HalfajId FROM dbo.Halfaj WHERE MagyarNev = N'Ponty');
@@ -458,7 +438,7 @@ BEGIN TRY
       );
 
     /* =========================================================
-       7.8) Minimális fórum és fogás minta
+       7.7) Minimális fórum és fogás minta
        ========================================================= */
     IF NOT EXISTS (SELECT 1 FROM dbo.ForumTema)
     BEGIN
@@ -476,8 +456,8 @@ BEGIN TRY
         INSERT INTO dbo.FogasNaplo
             (FelhasznaloId, HalfajId, VizteruletId, FogasIdeje, SulyKg, HosszCm, FotoUrl, Megjegyzes)
         VALUES
-            (@TesztId, @PontyId, @RsdId, DATEADD(day, -7, SYSUTCDATETIME()), 3.50, 52, NULL, NULL),
-            (@TesztId, @CsukaId, @DunaId, DATEADD(day, -2, SYSUTCDATETIME()), 2.10, 65, NULL, NULL);
+            (@TesztId, @PontyId, @RsdId, DATEADD(day, -7, SYSUTCDATETIME()), 3.50, 52, NULL, N'Minta fogás'),
+            (@TesztId, @CsukaId, @DunaId, DATEADD(day, -2, SYSUTCDATETIME()), 2.10, 65, NULL, N'Minta fogás');
     END
 
     COMMIT TRAN;
@@ -490,3 +470,19 @@ BEGIN CATCH
     RAISERROR(N'Hiba az adatfeltöltés során: %s', 16, 1, @Err);
 END CATCH;
 GO
+
+/*
+=========================================================
+BELÉPÉSI ADATOK
+=========================================================
+
+Admin:
+Felhasználónév: admin
+Email: admin@gmail.com
+Jelszó: Admin123!
+
+Teszt felhasználó:
+Felhasználónév: Felhasznalo
+Email: felhasznalo@gmail.com
+Jelszó: Felhasznalo123!
+*/
