@@ -22,3 +22,4 @@
 - Regisztrációnál az adatok ellenőrzése **()**
 - Marketplace csinálás **()**
 - Pici redesign(nagyon látszik az ai) **()**
+- Regisztrácónál az emailt és jelszavakat ellenőrizni
