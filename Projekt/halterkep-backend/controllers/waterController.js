@@ -369,6 +369,8 @@ async function updateWater(req, res) {
 }
 
 async function deleteWater(req, res) {
+  let transaction;
+
   try {
     const vizteruletId = Number.parseInt(req.params.id, 10);
 
@@ -379,30 +381,36 @@ async function deleteWater(req, res) {
     }
 
     const pool = await poolPromise;
-    const usageResult = await pool
-      .request()
+    transaction = new sql.Transaction(pool);
+    await transaction.begin();
+
+    const usageResult = await new sql.Request(transaction)
       .input("vizteruletId", sql.Int, vizteruletId)
       .query(`
         SELECT
-          (SELECT COUNT(*) FROM VizteruletMegye WHERE VizteruletId = @vizteruletId) AS MegyeKapcsolatok,
-          (SELECT COUNT(*) FROM VizteruletHalfaj WHERE VizteruletId = @vizteruletId) AS HalfajKapcsolatok,
           (SELECT COUNT(*) FROM FogasNaplo WHERE VizteruletId = @vizteruletId) AS FogasokSzama
       `);
 
     const usage = usageResult.recordset[0];
 
-    if (
-      usage.MegyeKapcsolatok > 0 ||
-      usage.HalfajKapcsolatok > 0 ||
-      usage.FogasokSzama > 0
-    ) {
+    if (usage.FogasokSzama > 0) {
+      await transaction.rollback();
       return res.status(409).json({
         message: "A vizterulet nem torolheto, mert kapcsolodik mas adatokhoz.",
       });
     }
 
-    const result = await pool
-      .request()
+    await new sql.Request(transaction)
+      .input("vizteruletId", sql.Int, vizteruletId)
+      .query(`
+        DELETE FROM VizteruletMegye
+        WHERE VizteruletId = @vizteruletId;
+
+        DELETE FROM VizteruletHalfaj
+        WHERE VizteruletId = @vizteruletId;
+      `);
+
+    const result = await new sql.Request(transaction)
       .input("vizteruletId", sql.Int, vizteruletId)
       .query(`
         DELETE FROM Vizterulet
@@ -411,15 +419,26 @@ async function deleteWater(req, res) {
       `);
 
     if (!result.recordset.length) {
+      await transaction.rollback();
       return res.status(404).json({
         message: "Vizterulet nem talalhato.",
       });
     }
 
+    await transaction.commit();
+
     return res.status(200).json({
       message: "Vizterulet sikeresen torolve.",
     });
   } catch (error) {
+    if (transaction) {
+      try {
+        await transaction.rollback();
+      } catch (rollbackError) {
+        console.error("Vizterulet torles rollback hiba:", rollbackError);
+      }
+    }
+
     console.error("Vizterulet torlesi hiba:", error);
     return res.status(500).json({
       message: "Hiba a vizterulet torlesekor.",

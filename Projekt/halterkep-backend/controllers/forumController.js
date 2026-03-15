@@ -28,8 +28,11 @@ async function getTopics(req, res) {
 
 async function createTopic(req, res) {
   const { cim, szoveg, kepUrl } = req.body;
+  const normalizedTitle = String(cim || "").trim();
+  const normalizedText = String(szoveg || "").trim();
+  const normalizedImageUrl = String(kepUrl || "").trim() || null;
 
-  if (!cim) {
+  if (!normalizedTitle) {
     return res.status(400).json({
       message: "A tema cime kotelezo.",
     });
@@ -43,7 +46,7 @@ async function createTopic(req, res) {
     try {
       const topicResult = await new sql.Request(transaction)
         .input("felhasznaloId", sql.Int, req.user.id)
-        .input("cim", sql.NVarChar(150), cim.trim())
+        .input("cim", sql.NVarChar(150), normalizedTitle)
         .query(`
           INSERT INTO ForumTema (FelhasznaloId, Cim)
           OUTPUT INSERTED.TemaId
@@ -52,12 +55,12 @@ async function createTopic(req, res) {
 
       const temaId = topicResult.recordset[0].TemaId;
 
-      if (szoveg && szoveg.trim()) {
+      if (normalizedText || normalizedImageUrl) {
         await new sql.Request(transaction)
           .input("temaId", sql.Int, temaId)
           .input("felhasznaloId", sql.Int, req.user.id)
-          .input("szoveg", sql.NVarChar(sql.MAX), szoveg.trim())
-          .input("kepUrl", sql.NVarChar(sql.MAX), kepUrl || null)
+          .input("szoveg", sql.NVarChar(sql.MAX), normalizedText)
+          .input("kepUrl", sql.NVarChar(sql.MAX), normalizedImageUrl)
           .query(`
             INSERT INTO ForumHozzaszolas (TemaId, FelhasznaloId, Szoveg, KepUrl)
             VALUES (@temaId, @felhasznaloId, @szoveg, @kepUrl)
@@ -122,10 +125,12 @@ async function getTopicReplies(req, res) {
 async function createReply(req, res) {
   try {
     const { temaId, szoveg, kepUrl } = req.body;
+    const normalizedText = String(szoveg || "").trim();
+    const normalizedImageUrl = String(kepUrl || "").trim() || null;
 
-    if (!temaId || !szoveg?.trim()) {
+    if (!temaId || (!normalizedText && !normalizedImageUrl)) {
       return res.status(400).json({
-        message: "A tema es a szoveg kotelezo.",
+        message: "A tema es legalabb szoveg vagy kep kotelezo.",
       });
     }
 
@@ -134,8 +139,8 @@ async function createReply(req, res) {
       .request()
       .input("temaId", sql.Int, parseInt(temaId, 10))
       .input("felhasznaloId", sql.Int, req.user.id)
-      .input("szoveg", sql.NVarChar(sql.MAX), szoveg.trim())
-      .input("kepUrl", sql.NVarChar(sql.MAX), kepUrl || null)
+      .input("szoveg", sql.NVarChar(sql.MAX), normalizedText)
+      .input("kepUrl", sql.NVarChar(sql.MAX), normalizedImageUrl)
       .query(`
         INSERT INTO ForumHozzaszolas (TemaId, FelhasznaloId, Szoveg, KepUrl)
         OUTPUT INSERTED.HozzaszolasId

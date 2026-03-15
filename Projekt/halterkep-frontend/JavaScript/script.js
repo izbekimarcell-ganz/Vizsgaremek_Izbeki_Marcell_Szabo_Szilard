@@ -5,6 +5,8 @@ const APP_CONFIG = {
   apiBaseUrl: "http://localhost:4000/api"
 };
 
+const IMAGE_UPLOAD_MAX_SIZE_BYTES = 5 * 1024 * 1024;
+
 /* =========================
    Gyors DOM helper-ek
    ========================= */
@@ -169,6 +171,42 @@ function setText(element, value = "") {
 
 function clearElement(element) {
   if (element) element.innerHTML = "";
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Nem sikerült beolvasni a kiválasztott képet."));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function getImageDataUrlFromInput(input, fieldLabel = "A kép") {
+  const file = input?.files?.[0];
+
+  if (!file) {
+    return null;
+  }
+
+  if (!file.type || !file.type.startsWith("image/")) {
+    throw new Error(`${fieldLabel} csak képfájl lehet.`);
+  }
+
+  if (file.size > IMAGE_UPLOAD_MAX_SIZE_BYTES) {
+    throw new Error(`${fieldLabel} legfeljebb 5 MB méretű lehet.`);
+  }
+
+  return readFileAsDataUrl(file);
+}
+
+function renderImageHtml(src, alt, className = "img-fluid rounded mt-3") {
+  if (!src) {
+    return "";
+  }
+
+  return `<img src="${escapeHtml(src)}" class="${escapeHtml(className)}" alt="${escapeHtml(alt)}">`;
 }
 
 /* =========================
@@ -395,15 +433,15 @@ async function loadSajatFogasok() {
       card.className = "card mb-3";
       card.innerHTML = `
         <div class="card-body">
-          <h5 class="card-title">${fogas.HalfajNev}</h5>
+          <h5 class="card-title">${escapeHtml(fogas.HalfajNev)}</h5>
           <p class="card-text">
-            <strong>Vízterület:</strong> ${fogas.VizteruletNev}<br>
+            <strong>Vízterület:</strong> ${escapeHtml(fogas.VizteruletNev)}<br>
             <strong>Időpont:</strong> ${new Date(fogas.FogasIdeje).toLocaleString("hu-HU")}<br>
-            ${fogas.SulyKg ? `<strong>Súly:</strong> ${fogas.SulyKg} kg<br>` : ""}
-            ${fogas.HosszCm ? `<strong>Hossz:</strong> ${fogas.HosszCm} cm<br>` : ""}
-            ${fogas.Megjegyzes ? `<strong>Megjegyzés:</strong> ${fogas.Megjegyzes}` : ""}
+            ${fogas.SulyKg ? `<strong>Súly:</strong> ${escapeHtml(String(fogas.SulyKg))} kg<br>` : ""}
+            ${fogas.HosszCm ? `<strong>Hossz:</strong> ${escapeHtml(String(fogas.HosszCm))} cm<br>` : ""}
+            ${fogas.Megjegyzes ? `<strong>Megjegyzés:</strong> ${escapeHtml(fogas.Megjegyzes)}` : ""}
           </p>
-          ${fogas.FotoUrl ? `<img src="${fogas.FotoUrl}" class="img-fluid" alt="Fogás fotó">` : ""}
+          ${renderImageHtml(fogas.FotoUrl, "Fogás fotó")}
         </div>
       `;
       catchListContainer.appendChild(card);
@@ -464,6 +502,17 @@ async function loadCatchFormOptions() {
 async function handleAddCatch(event) {
   event.preventDefault();
   const form = event.target;
+  let fotoUrl = null;
+
+  try {
+    fotoUrl = await getImageDataUrlFromInput(
+      form.querySelector("#catchImage"),
+      "A fogás képe"
+    );
+  } catch (error) {
+    alert(error.message);
+    return;
+  }
   
   const catchData = {
     halfajId: parseInt(form.querySelector("#catchSpeciesId")?.value),
@@ -471,7 +520,7 @@ async function handleAddCatch(event) {
     fogasIdeje: form.querySelector("#catchDateTime")?.value,
     sulyKg: parseFloat(form.querySelector("#catchWeight")?.value) || null,
     hosszCm: parseInt(form.querySelector("#catchLength")?.value) || null,
-    fotoUrl: null,
+    fotoUrl,
     megjegyzes: form.querySelector("#catchNote")?.value || null,
   };
 
@@ -574,6 +623,17 @@ async function handleCreateTopic(event) {
   
   const cim = form.querySelector("#topicTitle")?.value;
   const szoveg = form.querySelector("#topicBody")?.value || "";
+  let kepUrl = null;
+
+  try {
+    kepUrl = await getImageDataUrlFromInput(
+      form.querySelector("#topicImage"),
+      "A témához feltöltött kép"
+    );
+  } catch (error) {
+    alert(error.message);
+    return;
+  }
 
   if (!cim) {
     alert("A téma címe kötelező!");
@@ -588,7 +648,7 @@ async function handleCreateTopic(event) {
   try {
     await apiRequest("/forum/tema", {
       method: "POST",
-      body: JSON.stringify({ cim, szoveg, kepUrl: null }),
+      body: JSON.stringify({ cim, szoveg, kepUrl }),
     });
 
     alert("Téma sikeresen létrehozva!");
@@ -643,9 +703,10 @@ async function loadTopicReplies(temaId) {
         item.className = "border rounded p-3 mb-3";
         item.innerHTML = `
           <div class="small section-text mb-2">
-            ${hz.Felhasznalonev} | ${new Date(hz.Letrehozva).toLocaleString("hu-HU")}
+            ${escapeHtml(hz.Felhasznalonev)} | ${escapeHtml(new Date(hz.Letrehozva).toLocaleString("hu-HU"))}
           </div>
-          <div>${hz.Szoveg}</div>
+          ${hz.Szoveg ? `<div>${escapeHtml(hz.Szoveg)}</div>` : ""}
+          ${renderImageHtml(hz.KepUrl, "Fórum kép", "img-fluid rounded mt-3")}
         `;
         postsList.appendChild(item);
       });
@@ -669,11 +730,21 @@ async function handleCreateReply(event) {
   const form = event.target;
   
   const temaId = parseInt(form.querySelector("#replyTopicId")?.value);
-  const szoveg = form.querySelector("#replyBody")?.value;
-  const kepUrl = null;
+  const szoveg = form.querySelector("#replyBody")?.value || "";
+  let kepUrl = null;
 
-  if (!temaId || !szoveg) {
-    alert("A téma és a szöveg megadása kötelező!");
+  try {
+    kepUrl = await getImageDataUrlFromInput(
+      form.querySelector("#replyImage"),
+      "A hozzászólás képe"
+    );
+  } catch (error) {
+    alert(error.message);
+    return;
+  }
+
+  if (!temaId || (!szoveg.trim() && !kepUrl)) {
+    alert("A téma mellett legalább szöveg vagy kép megadása kötelező!");
     return;
   }
 
@@ -1351,7 +1422,8 @@ function renderForumRepliesAdmin(topicId, topicTitle) {
       <div class="d-flex justify-content-between gap-3 flex-wrap">
         <div>
           <div class="small section-text">${escapeHtml(reply.Felhasznalonev)} | ${escapeHtml(formatDateTime(reply.Letrehozva))}</div>
-          <div class="admin-forum-item-body mt-2">${escapeHtml(reply.Szoveg || "")}</div>
+          ${reply.Szoveg ? `<div class="admin-forum-item-body mt-2">${escapeHtml(reply.Szoveg)}</div>` : ""}
+          ${renderImageHtml(reply.KepUrl, "Fórum kép", "img-fluid rounded mt-3")}
         </div>
         <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteForumReply(${reply.HozzaszolasId}, ${reply.TemaId})">Törlés</button>
       </div>
@@ -1461,21 +1533,6 @@ function prepareAdminPage() {
         "waters",
         "Vízterületek kezelése",
         "Új vízterület létrehozása és a meglévő vízterületek szerkesztése."
-      );
-      if (!adminState.species.length) {
-        await loadSpeciesAdminData();
-      }
-      await loadWatersAdminData();
-    });
-  }
-
-  const manageRelationsButton = $("#manageRelationsButton");
-  if (manageRelationsButton) {
-    manageRelationsButton.addEventListener("click", async () => {
-      openAdminPanel(
-        "waters",
-        "Vízterületek kezelése",
-        "A vízterületekhez tartozó megyék és halfajok itt módosíthatók."
       );
       if (!adminState.species.length) {
         await loadSpeciesAdminData();
