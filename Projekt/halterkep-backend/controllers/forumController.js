@@ -57,7 +57,7 @@ async function createTopic(req, res) {
           .input("temaId", sql.Int, temaId)
           .input("felhasznaloId", sql.Int, req.user.id)
           .input("szoveg", sql.NVarChar(sql.MAX), szoveg.trim())
-          .input("kepUrl", sql.NVarChar(300), kepUrl || null)
+          .input("kepUrl", sql.NVarChar(sql.MAX), kepUrl || null)
           .query(`
             INSERT INTO ForumHozzaszolas (TemaId, FelhasznaloId, Szoveg, KepUrl)
             VALUES (@temaId, @felhasznaloId, @szoveg, @kepUrl)
@@ -135,7 +135,7 @@ async function createReply(req, res) {
       .input("temaId", sql.Int, parseInt(temaId, 10))
       .input("felhasznaloId", sql.Int, req.user.id)
       .input("szoveg", sql.NVarChar(sql.MAX), szoveg.trim())
-      .input("kepUrl", sql.NVarChar(300), kepUrl || null)
+      .input("kepUrl", sql.NVarChar(sql.MAX), kepUrl || null)
       .query(`
         INSERT INTO ForumHozzaszolas (TemaId, FelhasznaloId, Szoveg, KepUrl)
         OUTPUT INSERTED.HozzaszolasId
@@ -154,9 +154,150 @@ async function createReply(req, res) {
   }
 }
 
+async function getTopicsForAdmin(req, res) {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT
+        t.TemaId,
+        t.Cim,
+        t.Letrehozva,
+        f.Felhasznalonev,
+        COUNT(h.HozzaszolasId) AS HozzaszolasokSzama
+      FROM ForumTema t
+      INNER JOIN Felhasznalo f ON f.FelhasznaloId = t.FelhasznaloId
+      LEFT JOIN ForumHozzaszolas h ON h.TemaId = t.TemaId
+      GROUP BY t.TemaId, t.Cim, t.Letrehozva, f.Felhasznalonev
+      ORDER BY t.Letrehozva DESC, t.TemaId DESC
+    `);
+
+    return res.status(200).json(result.recordset);
+  } catch (error) {
+    console.error("Admin forum temak lekeresi hiba:", error);
+    return res.status(500).json({
+      message: "Hiba a forum temak admin lekeresekor.",
+    });
+  }
+}
+
+async function getRepliesForAdmin(req, res) {
+  try {
+    const temaId = parseInt(req.params.temaId, 10);
+
+    if (Number.isNaN(temaId)) {
+      return res.status(400).json({
+        message: "Ervenytelen tema azonosito.",
+      });
+    }
+
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("temaId", sql.Int, temaId)
+      .query(`
+        SELECT
+          h.HozzaszolasId,
+          h.TemaId,
+          h.Szoveg,
+          h.KepUrl,
+          h.Letrehozva,
+          f.Felhasznalonev
+        FROM ForumHozzaszolas h
+        INNER JOIN Felhasznalo f ON f.FelhasznaloId = h.FelhasznaloId
+        WHERE h.TemaId = @temaId
+        ORDER BY h.Letrehozva ASC, h.HozzaszolasId ASC
+      `);
+
+    return res.status(200).json(result.recordset);
+  } catch (error) {
+    console.error("Admin hozzaszolasok lekeresi hiba:", error);
+    return res.status(500).json({
+      message: "Hiba a hozzaszolasok admin lekeresekor.",
+    });
+  }
+}
+
+async function deleteTopic(req, res) {
+  try {
+    const temaId = parseInt(req.params.temaId, 10);
+
+    if (Number.isNaN(temaId)) {
+      return res.status(400).json({
+        message: "Ervenytelen tema azonosito.",
+      });
+    }
+
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("temaId", sql.Int, temaId)
+      .query(`
+        DELETE FROM ForumTema
+        OUTPUT DELETED.TemaId
+        WHERE TemaId = @temaId
+      `);
+
+    if (!result.recordset.length) {
+      return res.status(404).json({
+        message: "Tema nem talalhato.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Tema sikeresen torolve.",
+    });
+  } catch (error) {
+    console.error("Tema torlesi hiba:", error);
+    return res.status(500).json({
+      message: "Hiba a tema torlesekor.",
+    });
+  }
+}
+
+async function deleteReply(req, res) {
+  try {
+    const hozzaszolasId = parseInt(req.params.hozzaszolasId, 10);
+
+    if (Number.isNaN(hozzaszolasId)) {
+      return res.status(400).json({
+        message: "Ervenytelen hozzaszolas azonosito.",
+      });
+    }
+
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("hozzaszolasId", sql.Int, hozzaszolasId)
+      .query(`
+        DELETE FROM ForumHozzaszolas
+        OUTPUT DELETED.HozzaszolasId
+        WHERE HozzaszolasId = @hozzaszolasId
+      `);
+
+    if (!result.recordset.length) {
+      return res.status(404).json({
+        message: "Hozzaszolas nem talalhato.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Hozzaszolas sikeresen torolve.",
+    });
+  } catch (error) {
+    console.error("Hozzaszolas torlesi hiba:", error);
+    return res.status(500).json({
+      message: "Hiba a hozzaszolas torlesekor.",
+    });
+  }
+}
+
 module.exports = {
   getTopics,
   createTopic,
   getTopicReplies,
   createReply,
+  getTopicsForAdmin,
+  getRepliesForAdmin,
+  deleteTopic,
+  deleteReply,
 };

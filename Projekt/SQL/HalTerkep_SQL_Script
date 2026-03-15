@@ -140,7 +140,7 @@ CREATE TABLE dbo.FogasNaplo
     FogasIdeje     DATETIME2 NOT NULL,
     SulyKg         DECIMAL(5,2) NULL,
     HosszCm        INT NULL,
-    FotoUrl        NVARCHAR(300) NULL,
+    FotoUrl        NVARCHAR(MAX) NULL,
     Megjegyzes     NVARCHAR(500) NULL,
 
     CONSTRAINT FK_FogasNaplo_Felhasznalo FOREIGN KEY (FelhasznaloId) REFERENCES dbo.Felhasznalo(FelhasznaloId),
@@ -179,7 +179,7 @@ CREATE TABLE dbo.ForumHozzaszolas
     TemaId        INT NOT NULL,
     FelhasznaloId INT NOT NULL,
     Szoveg        NVARCHAR(MAX) NOT NULL,
-    KepUrl        NVARCHAR(300) NULL,
+    KepUrl        NVARCHAR(MAX) NULL,
     Letrehozva    DATETIME2 NOT NULL CONSTRAINT DF_ForumHozzaszolas_Letrehozva DEFAULT (SYSUTCDATETIME()),
 
     CONSTRAINT FK_ForumHozzaszolas_Tema        FOREIGN KEY (TemaId)        REFERENCES dbo.ForumTema(TemaId) ON DELETE CASCADE,

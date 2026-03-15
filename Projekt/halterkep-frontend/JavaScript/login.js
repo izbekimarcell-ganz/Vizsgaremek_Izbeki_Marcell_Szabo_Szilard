@@ -46,10 +46,10 @@
       }
 
       if (typeof setAuthSession === "function") {
-        setAuthSession(data.token, data.user, true);
+        setAuthSession(data.token, data.user, false);
       } else {
-        localStorage.setItem("authToken", data.token);
-        localStorage.setItem("authUser", JSON.stringify(data.user));
+        sessionStorage.setItem("authToken", data.token);
+        sessionStorage.setItem("authUser", JSON.stringify(data.user));
       }
 
       alert("Sikeres bejelentkezés!");

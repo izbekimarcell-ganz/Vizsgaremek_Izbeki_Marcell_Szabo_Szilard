@@ -124,6 +124,234 @@
         </div>
       </div>
 
+      <section id="adminMasterDataSection" class="mt-5 d-none">
+        <div class="card app-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-3 mb-4 flex-wrap">
+              <div>
+                <h2 id="adminMasterDataTitle" class="h4 mb-1">Törzsadat kezelés</h2>
+                <p id="adminMasterDataDescription" class="section-text mb-0">
+                  Válassz egy kezelési területet a fenti gombokkal.
+                </p>
+              </div>
+              <button id="closeAdminMasterDataSection" class="btn btn-outline-secondary btn-sm" type="button">
+                Bezárás
+              </button>
+            </div>
+
+            <div id="adminMasterDataFeedback" class="alert d-none" role="alert"></div>
+
+            <div id="adminSpeciesPanel" class="d-none">
+              <div class="row g-4">
+                <div class="col-lg-5">
+                  <form id="speciesForm" class="row g-3">
+                    <input type="hidden" id="speciesId" />
+                    <div class="col-12">
+                      <label class="form-label" for="speciesHungarianName">Magyar név</label>
+                      <input id="speciesHungarianName" class="form-control" type="text" required />
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label" for="speciesLatinName">Latin név</label>
+                      <input id="speciesLatinName" class="form-control" type="text" />
+                    </div>
+                    <div class="col-sm-6">
+                      <label class="form-label" for="speciesMinSize">Minimum méret (cm)</label>
+                      <input id="speciesMinSize" class="form-control" type="number" min="0" />
+                    </div>
+                    <div class="col-sm-6">
+                      <label class="form-label" for="speciesDailyLimit">Napi limit</label>
+                      <input id="speciesDailyLimit" class="form-control" type="number" min="0" />
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label" for="speciesNote">Megjegyzés</label>
+                      <textarea id="speciesNote" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-12">
+                      <div class="form-check">
+                        <input id="speciesProtected" class="form-check-input" type="checkbox" />
+                        <label class="form-check-label" for="speciesProtected">Védett halfaj</label>
+                      </div>
+                    </div>
+                    <div id="speciesFormError" class="col-12 text-danger small d-none"></div>
+                    <div class="col-12 d-flex gap-2 flex-wrap">
+                      <button class="btn btn-primary" type="submit">Mentés</button>
+                      <button id="speciesFormResetButton" class="btn btn-outline-light" type="button">Űrlap törlése</button>
+                    </div>
+                  </form>
+                </div>
+                <div class="col-lg-7">
+                  <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0 app-table">
+                      <thead>
+                        <tr>
+                          <th>Halfaj</th>
+                          <th>Szabályok</th>
+                          <th>Művelet</th>
+                        </tr>
+                      </thead>
+                      <tbody id="adminSpeciesTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="adminWatersPanel" class="d-none">
+              <div class="row g-4">
+                <div class="col-lg-5">
+                  <form id="waterForm" class="row g-3">
+                    <div class="col-12">
+                      <label class="form-label" for="waterName">Vízterület neve</label>
+                      <input id="waterName" class="form-control" type="text" required />
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label" for="waterTypeId">Víztípus</label>
+                      <select id="waterTypeId" class="form-select" required></select>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label" for="waterCountyIds">Megyék</label>
+                      <div id="waterCountyIds" class="multi-select-list" data-placeholder="Nincs megye" data-single-select="true"></div>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label" for="waterSpeciesIds">Halfajok</label>
+                      <div id="waterSpeciesIds" class="multi-select-list" data-placeholder="Nincs halfaj"></div>
+                    </div>
+                    <div id="waterFormError" class="col-12 text-danger small d-none"></div>
+                    <div class="col-12 d-flex gap-2 flex-wrap">
+                      <button class="btn btn-primary" type="submit">Mentés</button>
+                      <button id="waterFormResetButton" class="btn btn-outline-light" type="button">Űrlap törlése</button>
+                    </div>
+                  </form>
+                </div>
+                <div class="col-lg-7">
+                  <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0 app-table">
+                      <thead>
+                        <tr>
+                          <th>Név</th>
+                          <th>Típus</th>
+                          <th>Megyék</th>
+                          <th>Művelet</th>
+                        </tr>
+                      </thead>
+                      <tbody id="adminWatersTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="adminForumPanel" class="d-none">
+              <div class="row g-4">
+                <div class="col-lg-5">
+                  <div class="card bg-transparent border-secondary-subtle h-100">
+                    <div class="card-body">
+                      <h3 class="h6 mb-3">Témák</h3>
+                      <div id="adminForumTopicsList" class="d-grid gap-3"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-7">
+                  <div class="card bg-transparent border-secondary-subtle h-100">
+                    <div class="card-body">
+                      <h3 id="adminForumRepliesTitle" class="h6 mb-3">Hozzászólások</h3>
+                      <div id="adminForumRepliesList" class="d-grid gap-3"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <div class="modal fade" id="waterEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+          <div class="modal-content app-card border-info-subtle">
+            <div class="modal-header border-secondary-subtle">
+              <h2 class="modal-title fs-5">Vízterület szerkesztése</h2>
+              <button type="button" class="btn-close admin-modal-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+            </div>
+            <form id="waterEditForm">
+              <div class="modal-body">
+                <input type="hidden" id="editWaterId" />
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label" for="editWaterName">Vízterület neve</label>
+                    <input id="editWaterName" class="form-control" type="text" required />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="editWaterTypeId">Víztípus</label>
+                    <select id="editWaterTypeId" class="form-select" required></select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="editWaterCountyIds">Megyék</label>
+                    <div id="editWaterCountyIds" class="multi-select-list" data-placeholder="Nincs megye" data-single-select="true"></div>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="editWaterSpeciesIds">Halfajok</label>
+                    <div id="editWaterSpeciesIds" class="multi-select-list" data-placeholder="Nincs halfaj"></div>
+                  </div>
+                  <div id="editWaterFormError" class="col-12 text-danger small d-none"></div>
+                </div>
+              </div>
+              <div class="modal-footer border-secondary-subtle">
+                <button type="submit" class="btn btn-primary">Mentés</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="speciesEditModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+          <div class="modal-content app-card border-info-subtle">
+            <div class="modal-header border-secondary-subtle">
+              <h2 class="modal-title fs-5">Halfaj szerkesztése</h2>
+              <button type="button" class="btn-close admin-modal-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+            </div>
+            <form id="speciesEditForm">
+              <div class="modal-body">
+                <input type="hidden" id="editSpeciesId" />
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label" for="editSpeciesHungarianName">Magyar név</label>
+                    <input id="editSpeciesHungarianName" class="form-control" type="text" required />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="editSpeciesLatinName">Latin név</label>
+                    <input id="editSpeciesLatinName" class="form-control" type="text" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="editSpeciesMinSize">Minimum méret (cm)</label>
+                    <input id="editSpeciesMinSize" class="form-control" type="number" min="0" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="editSpeciesDailyLimit">Napi limit</label>
+                    <input id="editSpeciesDailyLimit" class="form-control" type="number" min="0" />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label" for="editSpeciesNote">Megjegyzés</label>
+                    <textarea id="editSpeciesNote" class="form-control" rows="3"></textarea>
+                  </div>
+                  <div class="col-12">
+                    <div class="form-check">
+                      <input id="editSpeciesProtected" class="form-check-input" type="checkbox" />
+                      <label class="form-check-label" for="editSpeciesProtected">Védett halfaj</label>
+                    </div>
+                  </div>
+                  <div id="editSpeciesFormError" class="col-12 text-danger small d-none"></div>
+                </div>
+              </div>
+              <div class="modal-footer border-secondary-subtle">
+                <button type="submit" class="btn btn-primary">Mentés</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
     </div>
   </main>
   <!-- Fő tartalom vége -->

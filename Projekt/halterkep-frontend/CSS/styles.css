@@ -50,6 +50,18 @@ body[data-theme="light"] {
   background-image: url("../assets/vilagos_hatter.png");
 }
 
+body[data-page="admin"],
+body[data-page="profil"] {
+  background-image: none;
+  background-color: #0a0d12;
+}
+
+body[data-theme="light"][data-page="admin"],
+body[data-theme="light"][data-page="profil"] {
+  background-image: none;
+  background-color: #f3f4f6;
+}
+
 .main-content {
   flex: 1;
 }
@@ -92,8 +104,8 @@ body[data-theme="light"] .brand-title {
 }
 
 .brand-logo {
-  width: 64px;
-  height: 64px;
+  width: 128px;
+  height: 128px;
   object-fit: contain;
 }
 
@@ -264,6 +276,99 @@ body[data-theme="light"] .btn-outline-light:hover {
   background-color: rgba(255, 255, 255, 0.78);
 }
 
+.admin-modal-close {
+  opacity: 1;
+  filter: brightness(0) saturate(100%) invert(30%) sepia(89%) saturate(2851%)
+    hue-rotate(340deg) brightness(102%) contrast(101%);
+}
+
+.admin-modal-close:hover {
+  opacity: 1;
+  filter: brightness(0) saturate(100%) invert(45%) sepia(88%) saturate(1991%)
+    hue-rotate(327deg) brightness(106%) contrast(97%);
+}
+
+.admin-modal-close:focus {
+  box-shadow: 0 0 0 0.25rem rgba(255, 77, 79, 0.28);
+}
+
+.multi-select-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-height: 3rem;
+  max-height: 15rem;
+  overflow-y: auto;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="light"] .multi-select-list {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.multi-select-option {
+  border: 1px solid rgba(32, 201, 255, 0.35);
+  background: transparent;
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.95rem;
+}
+
+.multi-select-option:hover {
+  border-color: rgba(32, 201, 255, 0.65);
+  background: rgba(32, 201, 255, 0.08);
+}
+
+.multi-select-option.is-selected {
+  background: #20c9ff;
+  border-color: #20c9ff;
+  color: #10202c;
+  font-weight: 600;
+}
+
+.multi-select-empty {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+#adminForumPanel .card-body,
+#adminForumPanel .h6,
+.admin-forum-item-title,
+.admin-forum-item-body {
+  color: var(--text) !important;
+}
+
+.admin-forum-item {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="light"] .admin-forum-item {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.admin-forum-item-meta {
+  color: var(--muted) !important;
+}
+
+.admin-forum-item-image {
+  max-height: 320px;
+  object-fit: contain;
+  display: block;
+}
+
+.admin-table-actions {
+  min-width: 0;
+}
+
+.admin-table-action-btn {
+  min-width: 0;
+  white-space: normal;
+}
+
 /* =========================
    Footer
    ========================= */
@@ -287,7 +392,19 @@ body[data-theme="light"] .btn-outline-light:hover {
   }
 
   .brand-logo {
-    width: 52px;
-    height: 52px;
+    width: 104px;
+    height: 104px;
+  }
+
+  .admin-table-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-table-action-btn {
+    width: 100%;
+    font-size: 0.85rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
 }

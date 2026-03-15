@@ -139,7 +139,7 @@ function updateThemeButtons() {
   const desktopButton = $("#themeToggleDesktop");
   const mobileButton = $("#themeToggleMobile");
 
-  const icon = currentTheme === "dark" ? "☀️" : "🌙";
+  const icon = currentTheme === "dark" ? "\u2600\uFE0F" : "\uD83C\uDF19";
 
   if (desktopButton) {
     const iconSpan = desktopButton.querySelector(".theme-icon");
@@ -696,6 +696,720 @@ async function handleCreateReply(event) {
   }
 }
 
+const adminState = {
+  activePanel: null,
+  species: [],
+  waters: [],
+  counties: [],
+  waterTypes: [],
+  forumTopics: [],
+  forumRepliesByTopic: {},
+};
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function getAdminPanelElements() {
+  return {
+    section: $("#adminMasterDataSection"),
+    title: $("#adminMasterDataTitle"),
+    description: $("#adminMasterDataDescription"),
+    feedback: $("#adminMasterDataFeedback"),
+    species: $("#adminSpeciesPanel"),
+    waters: $("#adminWatersPanel"),
+    forum: $("#adminForumPanel"),
+  };
+}
+
+function hideAdminFeedback() {
+  const feedback = $("#adminMasterDataFeedback");
+  if (!feedback) return;
+  feedback.className = "alert d-none";
+  feedback.textContent = "";
+}
+
+function showAdminFeedback(message, type = "success") {
+  const feedback = $("#adminMasterDataFeedback");
+  if (!feedback) return;
+  feedback.className = `alert alert-${type}`;
+  feedback.textContent = message;
+}
+
+function closeAdminPanel() {
+  const panels = getAdminPanelElements();
+  adminState.activePanel = null;
+  hideElement(panels.section);
+  hideElement(panels.species);
+  hideElement(panels.waters);
+  hideElement(panels.forum);
+  hideAdminFeedback();
+}
+
+function openAdminPanel(panelName, title, description) {
+  const panels = getAdminPanelElements();
+  adminState.activePanel = panelName;
+  showElement(panels.section);
+  hideAdminFeedback();
+  hideElement(panels.species);
+  hideElement(panels.waters);
+  hideElement(panels.forum);
+  setText(panels.title, title);
+  setText(panels.description, description);
+
+  if (panelName === "species") showElement(panels.species);
+  if (panelName === "waters") showElement(panels.waters);
+  if (panelName === "forum") showElement(panels.forum);
+}
+
+function normalizeNumberInput(value) {
+  if (value === "" || value === null || value === undefined) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? NaN : parsed;
+}
+
+function formatSpeciesRules(species) {
+  const parts = [];
+
+  if (species.MinMeretCm !== null && species.MinMeretCm !== undefined) {
+    parts.push(`Min. ${species.MinMeretCm} cm`);
+  }
+
+  if (species.NapiLimit !== null && species.NapiLimit !== undefined) {
+    parts.push(`Napi limit: ${species.NapiLimit}`);
+  }
+
+  if (species.Vedett) {
+    parts.push("Védett");
+  }
+
+  return parts.length ? parts.join(" | ") : "Nincs megadva";
+}
+
+function formatDateTime(value) {
+  return value ? new Date(value).toLocaleString("hu-HU") : "-";
+}
+
+function createModalInstance(modalId) {
+  const modalElement = document.getElementById(modalId);
+  if (!modalElement || typeof bootstrap === "undefined") {
+    return null;
+  }
+
+  return bootstrap.Modal.getOrCreateInstance(modalElement);
+}
+
+function populateSingleSelect(selectElement, options, placeholder, valueKey, labelKey) {
+  if (!selectElement) return;
+
+  selectElement.innerHTML = "";
+
+  const placeholderOption = document.createElement("option");
+  placeholderOption.value = "";
+  placeholderOption.textContent = placeholder;
+  selectElement.appendChild(placeholderOption);
+
+  options.forEach((item) => {
+    const option = document.createElement("option");
+    option.value = item[valueKey];
+    option.textContent = item[labelKey];
+    selectElement.appendChild(option);
+  });
+}
+
+function syncMultiSelectDataset(container, selectedValues) {
+  if (!container) return;
+  container.dataset.selectedValues = JSON.stringify(selectedValues);
+}
+
+function getSelectedValues(container) {
+  if (!container) return [];
+
+  try {
+    const values = JSON.parse(container.dataset.selectedValues || "[]");
+    return Array.isArray(values) ? values.map((value) => Number(value)) : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function renderMultiSelect(container, options, selectedValues = []) {
+  if (!container) return;
+
+  const uniqueSelected = [...new Set(selectedValues.map((value) => Number(value)).filter((value) => !Number.isNaN(value)))];
+  const isSingleSelect = container.dataset.singleSelect === "true";
+
+  clearElement(container);
+  syncMultiSelectDataset(container, uniqueSelected);
+
+  if (!options.length) {
+    const empty = document.createElement("div");
+    empty.className = "multi-select-empty";
+    empty.textContent = container.dataset.placeholder || "Nincs adat";
+    container.appendChild(empty);
+    return;
+  }
+
+  options.forEach((item) => {
+    const itemId =
+      item.MegyeId ?? item.HalfajId ?? item.id ?? item.value ?? item.VizTipusId;
+    const label = item.Nev ?? item.MagyarNev ?? item.label ?? item.name ?? "";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "multi-select-option";
+    button.textContent = label;
+
+    if (uniqueSelected.includes(Number(itemId))) {
+      button.classList.add("is-selected");
+    }
+
+    button.addEventListener("click", () => {
+      const current = getSelectedValues(container);
+      const numericId = Number(itemId);
+      const exists = current.includes(numericId);
+      let nextValues;
+
+      if (exists) {
+        nextValues = current.filter((value) => value !== numericId);
+      } else if (isSingleSelect) {
+        nextValues = [numericId];
+      } else {
+        nextValues = [...current, numericId];
+      }
+
+      renderMultiSelect(container, options, nextValues);
+    });
+
+    container.appendChild(button);
+  });
+}
+
+function populateWaterFormOptions() {
+  populateSingleSelect(
+    $("#waterTypeId"),
+    adminState.waterTypes,
+    "Válassz víztípust",
+    "VizTipusId",
+    "Nev"
+  );
+  populateSingleSelect(
+    $("#editWaterTypeId"),
+    adminState.waterTypes,
+    "Válassz víztípust",
+    "VizTipusId",
+    "Nev"
+  );
+  renderMultiSelect($("#waterCountyIds"), adminState.counties, []);
+  renderMultiSelect($("#editWaterCountyIds"), adminState.counties, []);
+  renderMultiSelect($("#waterSpeciesIds"), adminState.species, []);
+  renderMultiSelect($("#editWaterSpeciesIds"), adminState.species, []);
+}
+
+function getSpeciesFormPayload(prefix = "") {
+  const isEdit = prefix === "edit";
+  const field = (name) => $(`#${prefix}${name}`);
+  const hungarianName = field(isEdit ? "SpeciesHungarianName" : "speciesHungarianName");
+  const latinName = field(isEdit ? "SpeciesLatinName" : "speciesLatinName");
+  const minSize = field(isEdit ? "SpeciesMinSize" : "speciesMinSize");
+  const dailyLimit = field(isEdit ? "SpeciesDailyLimit" : "speciesDailyLimit");
+  const note = field(isEdit ? "SpeciesNote" : "speciesNote");
+  const isProtected = field(isEdit ? "SpeciesProtected" : "speciesProtected");
+
+  return {
+    magyarNev: hungarianName?.value.trim() || "",
+    latinNev: latinName?.value.trim() || "",
+    minMeretCm: normalizeNumberInput(minSize?.value),
+    napiLimit: normalizeNumberInput(dailyLimit?.value),
+    megjegyzes: note?.value.trim() || "",
+    vedett: Boolean(isProtected?.checked),
+  };
+}
+
+function setSpeciesFormError(message, isEdit = false) {
+  const target = isEdit ? $("#editSpeciesFormError") : $("#speciesFormError");
+  if (!target) return;
+  target.textContent = message;
+  target.classList.remove("d-none");
+}
+
+function clearSpeciesFormError(isEdit = false) {
+  const target = isEdit ? $("#editSpeciesFormError") : $("#speciesFormError");
+  if (!target) return;
+  target.textContent = "";
+  target.classList.add("d-none");
+}
+
+function resetSpeciesForm() {
+  const form = $("#speciesForm");
+  if (form) form.reset();
+  const speciesId = $("#speciesId");
+  if (speciesId) speciesId.value = "";
+  clearSpeciesFormError(false);
+}
+
+function fillSpeciesEditForm(species) {
+  const editSpeciesId = $("#editSpeciesId");
+  const editSpeciesHungarianName = $("#editSpeciesHungarianName");
+  const editSpeciesLatinName = $("#editSpeciesLatinName");
+  const editSpeciesMinSize = $("#editSpeciesMinSize");
+  const editSpeciesDailyLimit = $("#editSpeciesDailyLimit");
+  const editSpeciesNote = $("#editSpeciesNote");
+  const editSpeciesProtected = $("#editSpeciesProtected");
+
+  if (editSpeciesId) editSpeciesId.value = species.HalfajId;
+  if (editSpeciesHungarianName) editSpeciesHungarianName.value = species.MagyarNev || "";
+  if (editSpeciesLatinName) editSpeciesLatinName.value = species.LatinNev || "";
+  if (editSpeciesMinSize) editSpeciesMinSize.value = species.MinMeretCm ?? "";
+  if (editSpeciesDailyLimit) editSpeciesDailyLimit.value = species.NapiLimit ?? "";
+  if (editSpeciesNote) editSpeciesNote.value = species.Megjegyzes || "";
+  if (editSpeciesProtected) editSpeciesProtected.checked = Boolean(species.Vedett);
+  clearSpeciesFormError(true);
+}
+
+function renderSpeciesTable() {
+  const tableBody = $("#adminSpeciesTableBody");
+  if (!tableBody) return;
+
+  clearElement(tableBody);
+
+  if (!adminState.species.length) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="3" class="text-center">Nincs megjeleníthető halfaj.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  adminState.species.forEach((species) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>
+        <div class="fw-semibold">${escapeHtml(species.MagyarNev)}</div>
+        <div class="small section-text">${escapeHtml(species.LatinNev || "-")}</div>
+      </td>
+      <td>
+        <div>${escapeHtml(formatSpeciesRules(species))}</div>
+        <div class="small section-text">${escapeHtml(species.Megjegyzes || "")}</div>
+      </td>
+      <td>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-sm btn-outline-info" type="button" onclick="editSpecies(${species.HalfajId})">Szerkesztés</button>
+          <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteSpecies(${species.HalfajId})">Törlés</button>
+        </div>
+      </td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
+
+async function loadSpeciesAdminData() {
+  const species = await apiRequest("/halfajok");
+  adminState.species = Array.isArray(species) ? species : [];
+  renderSpeciesTable();
+  populateWaterFormOptions();
+}
+
+async function handleSpeciesSubmit(event) {
+  event.preventDefault();
+  clearSpeciesFormError(false);
+
+  const payload = getSpeciesFormPayload();
+  if (!payload.magyarNev) {
+    setSpeciesFormError("A magyar név megadása kötelező.");
+    return;
+  }
+
+  if (Number.isNaN(payload.minMeretCm) || Number.isNaN(payload.napiLimit)) {
+    setSpeciesFormError("A minimum méret és a napi limit csak szám lehet.");
+    return;
+  }
+
+  try {
+    await apiRequest("/halfajok", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    resetSpeciesForm();
+    await loadSpeciesAdminData();
+    showAdminFeedback("A halfaj sikeresen mentve.");
+  } catch (error) {
+    setSpeciesFormError(error.message || "Nem sikerült menteni a halfajt.");
+  }
+}
+
+async function handleSpeciesEditSubmit(event) {
+  event.preventDefault();
+  clearSpeciesFormError(true);
+
+  const speciesId = Number($("#editSpeciesId")?.value);
+  const payload = getSpeciesFormPayload("edit");
+
+  if (!speciesId) {
+    setSpeciesFormError("Hiányzik a halfaj azonosítója.", true);
+    return;
+  }
+
+  if (!payload.magyarNev) {
+    setSpeciesFormError("A magyar név megadása kötelező.", true);
+    return;
+  }
+
+  if (Number.isNaN(payload.minMeretCm) || Number.isNaN(payload.napiLimit)) {
+    setSpeciesFormError("A minimum méret és a napi limit csak szám lehet.", true);
+    return;
+  }
+
+  try {
+    await apiRequest(`/halfajok/${speciesId}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    createModalInstance("speciesEditModal")?.hide();
+    await loadSpeciesAdminData();
+    showAdminFeedback("A halfaj sikeresen módosítva.");
+  } catch (error) {
+    setSpeciesFormError(error.message || "Nem sikerült módosítani a halfajt.", true);
+  }
+}
+
+async function editSpecies(speciesId) {
+  const species = adminState.species.find((item) => item.HalfajId === Number(speciesId));
+  if (!species) {
+    showAdminFeedback("A kiválasztott halfaj nem található.", "danger");
+    return;
+  }
+
+  fillSpeciesEditForm(species);
+  createModalInstance("speciesEditModal")?.show();
+}
+
+async function deleteSpecies(speciesId) {
+  if (!window.confirm("Biztosan törölni szeretnéd ezt a halfajt?")) {
+    return;
+  }
+
+  try {
+    await apiRequest(`/halfajok/${speciesId}`, { method: "DELETE" });
+    await loadSpeciesAdminData();
+    showAdminFeedback("A halfaj sikeresen törölve.");
+  } catch (error) {
+    showAdminFeedback(error.message || "Nem sikerült törölni a halfajt.", "danger");
+  }
+}
+
+function getWaterFormPayload(prefix = "") {
+  const isEdit = prefix === "edit";
+  const name = isEdit ? $("#editWaterName") : $("#waterName");
+  const typeId = isEdit ? $("#editWaterTypeId") : $("#waterTypeId");
+  const countyIds = isEdit ? $("#editWaterCountyIds") : $("#waterCountyIds");
+  const speciesIds = isEdit ? $("#editWaterSpeciesIds") : $("#waterSpeciesIds");
+
+  return {
+    nev: name?.value.trim() || "",
+    vizTipusId: Number(typeId?.value),
+    megyeIds: getSelectedValues(countyIds),
+    halfajIds: getSelectedValues(speciesIds),
+  };
+}
+
+function setWaterFormError(message, isEdit = false) {
+  const target = isEdit ? $("#editWaterFormError") : $("#waterFormError");
+  if (!target) return;
+  target.textContent = message;
+  target.classList.remove("d-none");
+}
+
+function clearWaterFormError(isEdit = false) {
+  const target = isEdit ? $("#editWaterFormError") : $("#waterFormError");
+  if (!target) return;
+  target.textContent = "";
+  target.classList.add("d-none");
+}
+
+function resetWaterForm() {
+  const form = $("#waterForm");
+  if (form) form.reset();
+  renderMultiSelect($("#waterCountyIds"), adminState.counties, []);
+  renderMultiSelect($("#waterSpeciesIds"), adminState.species, []);
+  clearWaterFormError(false);
+}
+
+function fillWaterEditForm(water) {
+  const editWaterId = $("#editWaterId");
+  const editWaterName = $("#editWaterName");
+  const editWaterTypeId = $("#editWaterTypeId");
+
+  if (editWaterId) editWaterId.value = water.VizteruletId;
+  if (editWaterName) editWaterName.value = water.Nev || "";
+  if (editWaterTypeId) editWaterTypeId.value = water.VizTipusId || "";
+
+  renderMultiSelect(
+    $("#editWaterCountyIds"),
+    adminState.counties,
+    (water.megyek || []).map((county) => county.MegyeId)
+  );
+  renderMultiSelect(
+    $("#editWaterSpeciesIds"),
+    adminState.species,
+    (water.halfajok || []).map((species) => species.HalfajId)
+  );
+
+  clearWaterFormError(true);
+}
+
+function renderWatersTable() {
+  const tableBody = $("#adminWatersTableBody");
+  if (!tableBody) return;
+
+  clearElement(tableBody);
+
+  if (!adminState.waters.length) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-center">Nincs megjeleníthető vízterület.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  adminState.waters.forEach((water) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${escapeHtml(water.Nev)}</td>
+      <td>${escapeHtml(water.VizTipusNev || "-")}</td>
+      <td>${escapeHtml(water.MegyeNev || "-")}</td>
+      <td>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-sm btn-outline-info" type="button" onclick="editWater(${water.VizteruletId})">Szerkesztés</button>
+          <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteWater(${water.VizteruletId})">Törlés</button>
+        </div>
+      </td>
+    `;
+    tableBody.appendChild(row);
+  });
+}
+
+async function loadWatersAdminData() {
+  const [waters, counties, waterTypes] = await Promise.all([
+    apiRequest("/vizteruletek"),
+    apiRequest("/vizteruletek/megyek"),
+    apiRequest("/vizteruletek/viztipusok"),
+  ]);
+
+  adminState.waters = Array.isArray(waters) ? waters : [];
+  adminState.counties = Array.isArray(counties) ? counties : [];
+  adminState.waterTypes = Array.isArray(waterTypes) ? waterTypes : [];
+  renderWatersTable();
+  populateWaterFormOptions();
+}
+
+async function handleWaterSubmit(event) {
+  event.preventDefault();
+  clearWaterFormError(false);
+
+  const payload = getWaterFormPayload();
+  if (!payload.nev || Number.isNaN(payload.vizTipusId) || payload.megyeIds.length !== 1) {
+    setWaterFormError("A név, a víztípus és pontosan egy megye megadása kötelező.");
+    return;
+  }
+
+  try {
+    await apiRequest("/vizteruletek", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    resetWaterForm();
+    await loadWatersAdminData();
+    showAdminFeedback("A vízterület sikeresen mentve.");
+  } catch (error) {
+    setWaterFormError(error.message || "Nem sikerült menteni a vízterületet.");
+  }
+}
+
+async function handleWaterEditSubmit(event) {
+  event.preventDefault();
+  clearWaterFormError(true);
+
+  const waterId = Number($("#editWaterId")?.value);
+  const payload = getWaterFormPayload("edit");
+
+  if (!waterId) {
+    setWaterFormError("Hiányzik a vízterület azonosítója.", true);
+    return;
+  }
+
+  if (!payload.nev || Number.isNaN(payload.vizTipusId) || payload.megyeIds.length !== 1) {
+    setWaterFormError("A név, a víztípus és pontosan egy megye megadása kötelező.", true);
+    return;
+  }
+
+  try {
+    await apiRequest(`/vizteruletek/${waterId}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+    createModalInstance("waterEditModal")?.hide();
+    await loadWatersAdminData();
+    showAdminFeedback("A vízterület sikeresen módosítva.");
+  } catch (error) {
+    setWaterFormError(error.message || "Nem sikerült módosítani a vízterületet.", true);
+  }
+}
+
+async function editWater(waterId) {
+  try {
+    const waterRelations = await apiRequest(`/vizteruletek/${waterId}/kapcsolatok`);
+    fillWaterEditForm({
+      ...waterRelations.water,
+      megyek: waterRelations.megyek,
+      halfajok: waterRelations.halfajok,
+    });
+    createModalInstance("waterEditModal")?.show();
+  } catch (error) {
+    showAdminFeedback(error.message || "Nem sikerült betölteni a vízterület adatait.", "danger");
+  }
+}
+
+async function deleteWater(waterId) {
+  if (!window.confirm("Biztosan törölni szeretnéd ezt a vízterületet?")) {
+    return;
+  }
+
+  try {
+    await apiRequest(`/vizteruletek/${waterId}`, { method: "DELETE" });
+    await loadWatersAdminData();
+    showAdminFeedback("A vízterület sikeresen törölve.");
+  } catch (error) {
+    showAdminFeedback(error.message || "Nem sikerült törölni a vízterületet.", "danger");
+  }
+}
+
+function renderForumTopicsAdmin() {
+  const topicsList = $("#adminForumTopicsList");
+  if (!topicsList) return;
+
+  clearElement(topicsList);
+
+  if (!adminState.forumTopics.length) {
+    topicsList.innerHTML = `<div class="section-text">Nincs megjeleníthető téma.</div>`;
+    return;
+  }
+
+  adminState.forumTopics.forEach((topic) => {
+    const card = document.createElement("div");
+    card.className = "app-list-item";
+    card.innerHTML = `
+      <div class="d-flex justify-content-between gap-3 flex-wrap">
+        <div>
+          <div class="fw-semibold admin-forum-item-title">${escapeHtml(topic.Cim)}</div>
+          <div class="small section-text">
+            ${escapeHtml(topic.Felhasznalonev)} | ${escapeHtml(formatDateTime(topic.Letrehozva))}
+          </div>
+          <div class="small section-text">${escapeHtml(String(topic.HozzaszolasokSzama || 0))} hozzászólás</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-sm btn-outline-info" type="button" onclick="loadForumRepliesAdmin(${topic.TemaId})">Megnyitás</button>
+          <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteForumTopic(${topic.TemaId})">Törlés</button>
+        </div>
+      </div>
+    `;
+    topicsList.appendChild(card);
+  });
+}
+
+function renderForumRepliesAdmin(topicId, topicTitle) {
+  const title = $("#adminForumRepliesTitle");
+  const repliesList = $("#adminForumRepliesList");
+  if (title) {
+    title.textContent = topicId
+      ? `Hozzászólások: ${topicTitle || "kiválasztott téma"}`
+      : "Hozzászólások";
+  }
+  if (!repliesList) return;
+
+  clearElement(repliesList);
+
+  const replies = topicId ? adminState.forumRepliesByTopic[topicId] || [] : [];
+  if (!replies.length) {
+    repliesList.innerHTML = `<div class="section-text">Nincs megjeleníthető hozzászólás.</div>`;
+    return;
+  }
+
+  replies.forEach((reply) => {
+    const item = document.createElement("div");
+    item.className = "app-list-item";
+    item.innerHTML = `
+      <div class="d-flex justify-content-between gap-3 flex-wrap">
+        <div>
+          <div class="small section-text">${escapeHtml(reply.Felhasznalonev)} | ${escapeHtml(formatDateTime(reply.Letrehozva))}</div>
+          <div class="admin-forum-item-body mt-2">${escapeHtml(reply.Szoveg || "")}</div>
+        </div>
+        <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteForumReply(${reply.HozzaszolasId}, ${reply.TemaId})">Törlés</button>
+      </div>
+    `;
+    repliesList.appendChild(item);
+  });
+}
+
+async function loadForumAdminData() {
+  const topics = await apiRequest("/forum/admin/temak");
+  adminState.forumTopics = Array.isArray(topics) ? topics : [];
+  renderForumTopicsAdmin();
+  renderForumRepliesAdmin(null, "");
+}
+
+async function loadForumRepliesAdmin(topicId) {
+  try {
+    const replies = await apiRequest(`/forum/admin/tema/${topicId}/hozzaszolasok`);
+    adminState.forumRepliesByTopic[topicId] = Array.isArray(replies) ? replies : [];
+    const topic = adminState.forumTopics.find((item) => item.TemaId === Number(topicId));
+    renderForumRepliesAdmin(topicId, topic?.Cim || "");
+  } catch (error) {
+    showAdminFeedback(error.message || "Nem sikerült betölteni a hozzászólásokat.", "danger");
+  }
+}
+
+async function deleteForumTopic(topicId) {
+  if (!window.confirm("Biztosan törölni szeretnéd ezt a fórum témát?")) {
+    return;
+  }
+
+  try {
+    await apiRequest(`/forum/admin/tema/${topicId}`, { method: "DELETE" });
+    delete adminState.forumRepliesByTopic[topicId];
+    await loadForumAdminData();
+    showAdminFeedback("A fórum téma sikeresen törölve.");
+  } catch (error) {
+    showAdminFeedback(error.message || "Nem sikerült törölni a témát.", "danger");
+  }
+}
+
+async function deleteForumReply(replyId, topicId) {
+  if (!window.confirm("Biztosan törölni szeretnéd ezt a hozzászólást?")) {
+    return;
+  }
+
+  try {
+    await apiRequest(`/forum/admin/hozzaszolas/${replyId}`, { method: "DELETE" });
+    await loadForumAdminData();
+    if (topicId) {
+      await loadForumRepliesAdmin(topicId);
+    }
+    showAdminFeedback("A hozzászólás sikeresen törölve.");
+  } catch (error) {
+    showAdminFeedback(error.message || "Nem sikerült törölni a hozzászólást.", "danger");
+  }
+}
+
 /* =========================
    Admin oldal előkészítés
    ========================= */
@@ -703,8 +1417,14 @@ function prepareAdminPage() {
   const usersTableBody = $("#adminUsersTableBody");
   const manageSpeciesButton = $("#manageSpeciesButton");
   const manageWatersButton = $("#manageWatersButton");
-  const manageRelationsButton = $("#manageRelationsButton");
   const moderateForumButton = $("#moderateForumButton");
+  const closePanelButton = $("#closeAdminMasterDataSection");
+  const speciesForm = $("#speciesForm");
+  const speciesResetButton = $("#speciesFormResetButton");
+  const speciesEditForm = $("#speciesEditForm");
+  const waterForm = $("#waterForm");
+  const waterResetButton = $("#waterFormResetButton");
+  const waterEditForm = $("#waterEditForm");
 
   if (!isLoggedIn()) {
     setPendingRedirect("admin.html");
@@ -717,36 +1437,90 @@ function prepareAdminPage() {
     return;
   }
 
+  closeAdminPanel();
+
   if (usersTableBody) {
     clearElement(usersTableBody);
     loadAllUsers();
   }
 
-  const pendingFeatureMessage =
-    "Ez a funkció még nincs elkészítve backend oldalon, ezért egyelőre nem használható.";
-
   if (manageSpeciesButton) {
-    manageSpeciesButton.addEventListener("click", () => {
-      alert(`Halfajok kezelése\n\n${pendingFeatureMessage}`);
+    manageSpeciesButton.addEventListener("click", async () => {
+      openAdminPanel(
+        "species",
+        "Halfajok kezelése",
+        "Új halfaj hozzáadása és a meglévő halfajok szerkesztése."
+      );
+      await loadSpeciesAdminData();
     });
   }
 
   if (manageWatersButton) {
-    manageWatersButton.addEventListener("click", () => {
-      alert(`Vízterületek kezelése\n\n${pendingFeatureMessage}`);
+    manageWatersButton.addEventListener("click", async () => {
+      openAdminPanel(
+        "waters",
+        "Vízterületek kezelése",
+        "Új vízterület létrehozása és a meglévő vízterületek szerkesztése."
+      );
+      if (!adminState.species.length) {
+        await loadSpeciesAdminData();
+      }
+      await loadWatersAdminData();
     });
   }
 
+  const manageRelationsButton = $("#manageRelationsButton");
   if (manageRelationsButton) {
-    manageRelationsButton.addEventListener("click", () => {
-      alert(`Kapcsolatok kezelése\n\n${pendingFeatureMessage}`);
+    manageRelationsButton.addEventListener("click", async () => {
+      openAdminPanel(
+        "waters",
+        "Vízterületek kezelése",
+        "A vízterületekhez tartozó megyék és halfajok itt módosíthatók."
+      );
+      if (!adminState.species.length) {
+        await loadSpeciesAdminData();
+      }
+      await loadWatersAdminData();
     });
   }
 
   if (moderateForumButton) {
-    moderateForumButton.addEventListener("click", () => {
-      alert(`Fórum moderáció\n\n${pendingFeatureMessage}`);
+    moderateForumButton.addEventListener("click", async () => {
+      openAdminPanel(
+        "forum",
+        "Fórum moderáció",
+        "Fórum témák és hozzászólások adminisztrációja."
+      );
+      await loadForumAdminData();
     });
+  }
+
+  if (closePanelButton) {
+    closePanelButton.addEventListener("click", closeAdminPanel);
+  }
+
+  if (speciesForm) {
+    speciesForm.addEventListener("submit", handleSpeciesSubmit);
+  }
+
+  if (speciesResetButton) {
+    speciesResetButton.addEventListener("click", resetSpeciesForm);
+  }
+
+  if (speciesEditForm) {
+    speciesEditForm.addEventListener("submit", handleSpeciesEditSubmit);
+  }
+
+  if (waterForm) {
+    waterForm.addEventListener("submit", handleWaterSubmit);
+  }
+
+  if (waterResetButton) {
+    waterResetButton.addEventListener("click", resetWaterForm);
+  }
+
+  if (waterEditForm) {
+    waterEditForm.addEventListener("submit", handleWaterEditSubmit);
   }
 }
 

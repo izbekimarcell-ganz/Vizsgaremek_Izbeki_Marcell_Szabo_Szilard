@@ -9,6 +9,7 @@ const speciesRoutes = require("./routes/speciesRoutes");
 const catchLogRoutes = require("./routes/catchLogRoutes");
 const forumRoutes = require("./routes/forumRoutes");
 const userRoutes = require("./routes/userRoutes");
+const { poolPromise } = require("./DbConfig");
 
 const app = express();
 
@@ -27,7 +28,40 @@ app.use("/api/fogasnaplo", catchLogRoutes);
 app.use("/api/forum", forumRoutes);
 app.use("/api/users", userRoutes);
 
+async function ensureImageColumns() {
+  try {
+    const pool = await poolPromise;
+    await pool.request().query(`
+      IF EXISTS (
+        SELECT 1
+        FROM sys.columns
+        WHERE object_id = OBJECT_ID(N'dbo.FogasNaplo')
+          AND name = 'FotoUrl'
+          AND max_length <> -1
+      )
+      BEGIN
+        ALTER TABLE dbo.FogasNaplo ALTER COLUMN FotoUrl NVARCHAR(MAX) NULL;
+      END;
+
+      IF EXISTS (
+        SELECT 1
+        FROM sys.columns
+        WHERE object_id = OBJECT_ID(N'dbo.ForumHozzaszolas')
+          AND name = 'KepUrl'
+          AND max_length <> -1
+      )
+      BEGIN
+        ALTER TABLE dbo.ForumHozzaszolas ALTER COLUMN KepUrl NVARCHAR(MAX) NULL;
+      END;
+    `);
+  } catch (error) {
+    console.error("Kep oszlopok ellenorzesi hiba:", error);
+  }
+}
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Szerver fut a ${PORT} porton`);
 });
+
+ensureImageColumns();

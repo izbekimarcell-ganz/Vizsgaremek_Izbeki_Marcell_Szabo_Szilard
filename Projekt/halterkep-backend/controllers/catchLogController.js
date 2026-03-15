@@ -51,7 +51,7 @@ async function createCatch(req, res) {
       .input("fogasIdeje", sql.DateTime2, new Date(fogasIdeje))
       .input("sulyKg", sql.Decimal(5, 2), sulyKg ?? null)
       .input("hosszCm", sql.Int, hosszCm ?? null)
-      .input("fotoUrl", sql.NVarChar(300), fotoUrl || null)
+      .input("fotoUrl", sql.NVarChar(sql.MAX), fotoUrl || null)
       .input("megjegyzes", sql.NVarChar(500), megjegyzes || null)
       .query(`
         INSERT INTO FogasNaplo
