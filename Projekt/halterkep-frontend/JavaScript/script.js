@@ -7,6 +7,54 @@ const APP_CONFIG = {
 
 const IMAGE_UPLOAD_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
+const ADMIN_SHORTCUTS = {
+  species: {
+    href: "admin.html#species",
+    label: "Halfajok kezelése",
+    title: "Halfajok kezelése",
+    description: "Új halfaj hozzáadása és a meglévő halfajok szerkesztése.",
+  },
+  waters: {
+    href: "admin.html#waters",
+    label: "Vízterületek kezelése",
+    title: "Vízterületek kezelése",
+    description: "Új vízterület létrehozása és a meglévő vízterületek szerkesztése.",
+  },
+  forum: {
+    href: "admin.html#forum",
+    label: "Fórum moderáció",
+    title: "Fórum moderáció",
+    description: "Fórum témák és hozzászólások adminisztrációja.",
+  },
+};
+
+const DEFAULT_NAV_ITEMS = [
+  { defaultHref: "vizteruletek.html", defaultLabel: "Vízterületek", adminShortcut: ADMIN_SHORTCUTS.species },
+  { defaultHref: "fogasnaplo.html", defaultLabel: "Fogásnapló", adminShortcut: ADMIN_SHORTCUTS.waters },
+  { defaultHref: "forum.html", defaultLabel: "Fórum", adminShortcut: ADMIN_SHORTCUTS.forum },
+];
+
+const HOME_PAGE_SHORTCUTS = [
+  {
+    defaultHref: "vizteruletek.html",
+    defaultTitle: "Vízterületek",
+    defaultDescription: "Szűrés megye, víztípus és halfaj szerint.",
+    adminShortcut: ADMIN_SHORTCUTS.species,
+  },
+  {
+    defaultHref: "fogasnaplo.html",
+    defaultTitle: "Fogásnapló",
+    defaultDescription: "Saját fogások rögzítése és listázása.",
+    adminShortcut: ADMIN_SHORTCUTS.waters,
+  },
+  {
+    defaultHref: "forum.html",
+    defaultTitle: "Fórum",
+    defaultDescription: "Kérdések, tippek és tapasztalatok megosztása.",
+    adminShortcut: ADMIN_SHORTCUTS.forum,
+  },
+];
+
 /* =========================
    Gyors DOM helper-ek
    ========================= */
@@ -22,9 +70,9 @@ function $all(selector) {
    Betöltés után futó logika
    ========================= */
 document.addEventListener("DOMContentLoaded", () => {
-  setActiveNavLink();
   initializeTheme();
   updateNavbar();
+  setActiveNavLink();
   initializePageHooks();
 });
 
@@ -69,6 +117,9 @@ function initializePageHooks() {
 function setActiveNavLink() {
   const page = document.body.dataset.page;
   const navLinks = $all(".nav-link");
+  const currentHash = window.location.hash || "";
+
+  navLinks.forEach((link) => link.classList.remove("active"));
 
   navLinks.forEach((link) => {
     const href = link.getAttribute("href");
@@ -78,7 +129,10 @@ function setActiveNavLink() {
       (page === "vizteruletek" && href === "vizteruletek.html") ||
       (page === "fogasnaplo" && href === "fogasnaplo.html") ||
       (page === "forum" && href === "forum.html") ||
-      (page === "admin" && href === "admin.html") ||
+      (page === "admin" && (
+        (currentHash && href === `admin.html${currentHash}`) ||
+        (!currentHash && href === "admin.html")
+      )) ||
       (page === "profil" && href === "profil.html")
     ) {
       link.classList.add("active");
@@ -171,6 +225,55 @@ function setText(element, value = "") {
 
 function clearElement(element) {
   if (element) element.innerHTML = "";
+}
+
+function findNavigationLink(possibleHrefs = []) {
+  const links = Array.from($all("#navbarMenu .nav-link"));
+  return links.find((link) => possibleHrefs.includes(link.getAttribute("href"))) || null;
+}
+
+function updateNavigationShortcuts(user = getStoredUser()) {
+  const isAdmin = isAdminUser(user);
+
+  DEFAULT_NAV_ITEMS.forEach((item) => {
+    const link = findNavigationLink([item.defaultHref, item.adminShortcut.href]);
+    if (!link) return;
+
+    link.setAttribute("href", isAdmin ? item.adminShortcut.href : item.defaultHref);
+    link.textContent = isAdmin ? item.adminShortcut.label : item.defaultLabel;
+  });
+}
+
+function updateHomePageShortcuts(user = getStoredUser()) {
+  if (document.body.dataset.page !== "index") {
+    return;
+  }
+
+  const isAdmin = isAdminUser(user);
+
+  HOME_PAGE_SHORTCUTS.forEach((item) => {
+    const link = Array.from(document.querySelectorAll("main .app-card a.btn-outline-info")).find(
+      (anchor) => [item.defaultHref, item.adminShortcut.href].includes(anchor.getAttribute("href"))
+    );
+
+    if (!link) return;
+
+    const cardBody = link.closest(".card-body");
+    const title = cardBody?.querySelector(".card-title");
+    const description = cardBody?.querySelector(".card-text");
+
+    link.setAttribute("href", isAdmin ? item.adminShortcut.href : item.defaultHref);
+
+    if (title) {
+      title.textContent = isAdmin ? item.adminShortcut.title : item.defaultTitle;
+    }
+
+    if (description) {
+      description.textContent = isAdmin
+        ? item.adminShortcut.description
+        : item.defaultDescription;
+    }
+  });
 }
 
 function readFileAsDataUrl(file) {
@@ -840,6 +943,82 @@ function openAdminPanel(panelName, title, description) {
   if (panelName === "species") showElement(panels.species);
   if (panelName === "waters") showElement(panels.waters);
   if (panelName === "forum") showElement(panels.forum);
+}
+
+function updateAdminLocationHash(target = "") {
+  if (document.body.dataset.page !== "admin" || !window.history?.replaceState) {
+    return;
+  }
+
+  const nextHash = target ? `#${target}` : "";
+  const nextUrl = `${window.location.pathname}${window.location.search}${nextHash}`;
+  window.history.replaceState(null, "", nextUrl);
+  setActiveNavLink();
+}
+
+function getAdminTargetFromLocation() {
+  return (window.location.hash || "").replace(/^#/, "").trim().toLowerCase();
+}
+
+async function openAdminTarget(target, syncHash = true) {
+  if (target === "species") {
+    openAdminPanel(
+      "species",
+      "Halfajok kezelése",
+      "Új halfaj hozzáadása és a meglévő halfajok szerkesztése."
+    );
+    if (syncHash) updateAdminLocationHash("species");
+    await loadSpeciesAdminData();
+    return;
+  }
+
+  if (target === "waters") {
+    openAdminPanel(
+      "waters",
+      "Vízterületek kezelése",
+      "Új vízterület létrehozása és a meglévő vízterületek szerkesztése."
+    );
+    if (syncHash) updateAdminLocationHash("waters");
+    if (!adminState.species.length) {
+      await loadSpeciesAdminData();
+    }
+    await loadWatersAdminData();
+    return;
+  }
+
+  if (target === "forum") {
+    openAdminPanel(
+      "forum",
+      "Fórum moderáció",
+      "Fórum témák és hozzászólások adminisztrációja."
+    );
+    if (syncHash) updateAdminLocationHash("forum");
+    await loadForumAdminData();
+    return;
+  }
+
+  closeAdminPanel();
+  if (syncHash) updateAdminLocationHash("");
+}
+
+async function handleAdminTargetChange() {
+  if (document.body.dataset.page !== "admin") {
+    return;
+  }
+
+  const usersSection = $("#adminUsersSection");
+  const target = getAdminTargetFromLocation();
+
+  if (!target || !["species", "waters", "forum"].includes(target)) {
+    showElement(usersSection);
+    closeAdminPanel();
+    setActiveNavLink();
+    return;
+  }
+
+  hideElement(usersSection);
+  await openAdminTarget(target, false);
+  setActiveNavLink();
 }
 
 function normalizeNumberInput(value) {
@@ -1538,42 +1717,28 @@ function prepareAdminPage() {
 
   if (manageSpeciesButton) {
     manageSpeciesButton.addEventListener("click", async () => {
-      openAdminPanel(
-        "species",
-        "Halfajok kezelése",
-        "Új halfaj hozzáadása és a meglévő halfajok szerkesztése."
-      );
-      await loadSpeciesAdminData();
+      await openAdminTarget("species");
     });
   }
 
   if (manageWatersButton) {
     manageWatersButton.addEventListener("click", async () => {
-      openAdminPanel(
-        "waters",
-        "Vízterületek kezelése",
-        "Új vízterület létrehozása és a meglévő vízterületek szerkesztése."
-      );
-      if (!adminState.species.length) {
-        await loadSpeciesAdminData();
-      }
-      await loadWatersAdminData();
+      await openAdminTarget("waters");
     });
   }
 
   if (moderateForumButton) {
     moderateForumButton.addEventListener("click", async () => {
-      openAdminPanel(
-        "forum",
-        "Fórum moderáció",
-        "Fórum témák és hozzászólások adminisztrációja."
-      );
-      await loadForumAdminData();
+      await openAdminTarget("forum");
     });
   }
 
   if (closePanelButton) {
-    closePanelButton.addEventListener("click", closeAdminPanel);
+    closePanelButton.addEventListener("click", () => {
+      closeAdminPanel();
+      showElement($("#adminUsersSection"));
+      updateAdminLocationHash("");
+    });
   }
 
   if (speciesForm) {
@@ -1599,6 +1764,9 @@ function prepareAdminPage() {
   if (waterEditForm) {
     waterEditForm.addEventListener("submit", handleWaterEditSubmit);
   }
+
+  window.addEventListener("hashchange", handleAdminTargetChange);
+  handleAdminTargetChange();
 }
 
 /* =========================
@@ -1803,6 +1971,9 @@ async function updateNavbar() {
   const user = getStoredUser();
   const isAdmin = isAdminUser(user);
 
+  updateNavigationShortcuts(user);
+  updateHomePageShortcuts(user);
+
   if (isLoggedIn()) {
     if (loginNavItem) loginNavItem.classList.add("d-none");
     if (registerNavItem) registerNavItem.classList.add("d-none");
@@ -1818,6 +1989,7 @@ async function updateNavbar() {
   }
 
   updateAccountShortcut(user);
+  setActiveNavLink();
 }
 
 /* =========================

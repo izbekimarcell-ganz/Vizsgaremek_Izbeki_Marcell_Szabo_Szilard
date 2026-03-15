@@ -72,12 +72,12 @@
     <div class="container">
       <div class="mb-4">
         <h1 class="mb-1">Admin felület</h1>
-        <p class="section-text mb-0">Felhasználók és törzsadatok kezelése.</p>
+        <p class="section-text mb-0">Felhasználók kezelése.</p>
       </div>
 
-      <div class="row g-4">
+      <div id="adminUsersSection" class="row g-4">
         <!-- Felhasználók -->
-        <div class="col-lg-7">
+        <div class="col-12">
           <div class="card app-card">
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-center gap-2 mb-3 flex-wrap">
@@ -103,20 +103,6 @@
                     <!-- Dinamikus admin user lista ide -->
                   </tbody>
                 </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Műveletek -->
-        <div class="col-lg-5">
-          <div class="card app-card">
-            <div class="card-body">
-              <h2 class="h5 mb-3">Műveletek</h2>
-              <div class="d-grid gap-3">
-                <button id="manageSpeciesButton" class="btn btn-outline-info" type="button">Halfajok kezelése</button>
-                <button id="manageWatersButton" class="btn btn-outline-info" type="button">Vízterületek kezelése</button>
-                <button id="moderateForumButton" class="btn btn-outline-info" type="button">Fórum moderáció</button>
               </div>
             </div>
           </div>
