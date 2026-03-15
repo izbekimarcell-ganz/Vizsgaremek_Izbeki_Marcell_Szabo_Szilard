@@ -24,5 +24,7 @@
 - Pici redesign(nagyon látszik az ai) **()**
 - Regisztrácónál az emailt és jelszavakat ellenőrizni
 
+## 2026.03.15
 
+- A halakról a leírást fel lehessen hozni pl egy lenyíló ablakban.
 
