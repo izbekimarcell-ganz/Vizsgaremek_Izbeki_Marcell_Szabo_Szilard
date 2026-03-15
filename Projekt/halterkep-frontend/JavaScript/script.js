@@ -442,6 +442,9 @@ async function loadSajatFogasok() {
             ${fogas.Megjegyzes ? `<strong>Megjegyzés:</strong> ${escapeHtml(fogas.Megjegyzes)}` : ""}
           </p>
           ${renderImageHtml(fogas.FotoUrl, "Fogás fotó")}
+          <div class="mt-3 d-flex justify-content-end">
+            <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteCatch(${fogas.FogasId})">Törlés</button>
+          </div>
         </div>
       `;
       catchListContainer.appendChild(card);
@@ -686,7 +689,8 @@ async function loadTopicReplies(temaId) {
     }
 
     if (selectedTopicMeta) {
-      selectedTopicMeta.textContent = `Téma azonosító: ${temaId}`;
+      selectedTopicMeta.textContent = "";
+      selectedTopicMeta.classList.add("d-none");
     }
 
     if (postsList) {
@@ -909,6 +913,20 @@ function getSelectedValues(container) {
     return Array.isArray(values) ? values.map((value) => Number(value)) : [];
   } catch (error) {
     return [];
+  }
+}
+
+async function deleteCatch(fogasId) {
+  if (!window.confirm("Biztosan törölni szeretnéd ezt a fogást?")) {
+    return;
+  }
+
+  try {
+    await apiRequest(`/fogasnaplo/${fogasId}`, { method: "DELETE" });
+    await loadSajatFogasok();
+    alert("A fogás sikeresen törölve.");
+  } catch (error) {
+    alert(error.message || "Nem sikerült törölni a fogást.");
   }
 }
 
@@ -1379,7 +1397,7 @@ function renderForumTopicsAdmin() {
     const card = document.createElement("div");
     card.className = "app-list-item";
     card.innerHTML = `
-      <div class="d-flex justify-content-between gap-3 flex-wrap">
+      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
         <div>
           <div class="fw-semibold admin-forum-item-title">${escapeHtml(topic.Cim)}</div>
           <div class="small section-text">
@@ -1387,7 +1405,7 @@ function renderForumTopicsAdmin() {
           </div>
           <div class="small section-text">${escapeHtml(String(topic.HozzaszolasokSzama || 0))} hozzászólás</div>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="d-flex gap-2 flex-wrap admin-forum-actions">
           <button class="btn btn-sm btn-outline-info" type="button" onclick="loadForumRepliesAdmin(${topic.TemaId})">Megnyitás</button>
           <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteForumTopic(${topic.TemaId})">Törlés</button>
         </div>
@@ -1419,13 +1437,15 @@ function renderForumRepliesAdmin(topicId, topicTitle) {
     const item = document.createElement("div");
     item.className = "app-list-item";
     item.innerHTML = `
-      <div class="d-flex justify-content-between gap-3 flex-wrap">
+      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
         <div>
           <div class="small section-text">${escapeHtml(reply.Felhasznalonev)} | ${escapeHtml(formatDateTime(reply.Letrehozva))}</div>
           ${reply.Szoveg ? `<div class="admin-forum-item-body mt-2">${escapeHtml(reply.Szoveg)}</div>` : ""}
           ${renderImageHtml(reply.KepUrl, "Fórum kép", "img-fluid rounded mt-3")}
         </div>
-        <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteForumReply(${reply.HozzaszolasId}, ${reply.TemaId})">Törlés</button>
+        <div class="admin-forum-actions">
+          <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteForumReply(${reply.HozzaszolasId}, ${reply.TemaId})">Törlés</button>
+        </div>
       </div>
     `;
     repliesList.appendChild(item);

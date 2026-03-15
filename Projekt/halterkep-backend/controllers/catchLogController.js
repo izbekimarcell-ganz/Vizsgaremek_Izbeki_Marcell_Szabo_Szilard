@@ -73,7 +73,47 @@ async function createCatch(req, res) {
   }
 }
 
+async function deleteOwnCatch(req, res) {
+  try {
+    const fogasId = Number.parseInt(req.params.id, 10);
+
+    if (Number.isNaN(fogasId)) {
+      return res.status(400).json({
+        message: "Ervenytelen fogas azonosito.",
+      });
+    }
+
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("fogasId", sql.Int, fogasId)
+      .input("felhasznaloId", sql.Int, req.user.id)
+      .query(`
+        DELETE FROM FogasNaplo
+        OUTPUT DELETED.FogasId
+        WHERE FogasId = @fogasId
+          AND FelhasznaloId = @felhasznaloId
+      `);
+
+    if (!result.recordset.length) {
+      return res.status(404).json({
+        message: "A fogas nem talalhato, vagy nincs jogod torolni.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Fogas sikeresen torolve.",
+    });
+  } catch (error) {
+    console.error("Fogas torlesi hiba:", error);
+    return res.status(500).json({
+      message: "Hiba a fogas torlese kozben.",
+    });
+  }
+}
+
 module.exports = {
   getOwnCatches,
   createCatch,
+  deleteOwnCatch,
 };

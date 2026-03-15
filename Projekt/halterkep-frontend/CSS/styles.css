@@ -360,6 +360,18 @@ body[data-theme="light"] .admin-forum-item {
   display: block;
 }
 
+.admin-forum-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-self: flex-start;
+}
+
+.admin-forum-actions .btn {
+  align-self: flex-start;
+}
+
 .admin-table-actions {
   min-width: 0;
 }
