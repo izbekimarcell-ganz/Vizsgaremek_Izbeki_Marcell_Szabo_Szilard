@@ -9,8 +9,8 @@
 
 ## 2026.03.14
 
-- Törzsadatok funkciók az adminban nem működnek, tehát azt meg kell csinálni **()**
-- A fogásnapló és fórum képfeltöltés megjavítása (nem látszik a kép) **()**
+- Törzsadatok funkciók az adminban nem működnek, tehát azt meg kell csinálni **(KÉSZ)**
+- A fogásnapló és fórum képfeltöltés megjavítása (nem látszik a kép) **(KÉSZ)**
 - Hozzáadni egy új oldalt, ahol lehet böngészni más felhasználókat **()**
 - Lehessen barátkérelmet küldeni **()**
 - Lehessen a fiókot úgy beállítani, hogy csak a barátok lássák és mindenki másnak privát legyen **()**
@@ -26,13 +26,3 @@
 
 
 
-## Összegzés
-
-### Javítandó
-- Törzsadatok funkciók az adminban nem működnek, tehát azt meg kell csinálni **()**
-- A fogásnapló és fórum képfeltöltés megjavítása (nem látszik a kép) **()**
-- A vízterületeknél az információkat pontosítani (a halfajokból csak kevés van feltüntetve, pl. Dunán csak 4 hal van pedig sokkal több van) **()**
-- Regisztrációnál az adatok ellenőrzése **()**
-- Regisztrácónál az emailt és jelszavakat ellenőrizni
-
-### Plusz dolog
