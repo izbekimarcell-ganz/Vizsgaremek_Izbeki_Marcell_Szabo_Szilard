@@ -28,3 +28,6 @@
 
 - A halakról a leírást fel lehessen hozni pl egy lenyíló ablakban.
 
+## 2026.03.17
+
+- Pár dolog az adminnal kapcsolatban. Az admin fiókon le kéne venni a barátkereső gombot és az admin oldalon legyen még 2 gomb a tiltás gomb mellet. Az eggyik gomb a fiók törlése ami csak akkor lehet hogyha tilva van a fiók és legyen egy megnyit gomb ami az adott felhasználó profiljára vissz
