@@ -19,10 +19,9 @@
 - Admin support kérése **()**
 - A főoldal átrendezése **()**
 - Térkép tervezésének és megcsinálásának elkezdése **()**
-- Regisztrációnál az adatok ellenőrzése **()**
+- Regisztrációnál az adatok ellenőrzése **(KÉSZ)**
 - Marketplace csinálás **()**
 - Pici redesign(nagyon látszik az ai) **()**
-- Regisztrácónál az emailt és jelszavakat ellenőrizni
 
 ## 2026.03.15
 
