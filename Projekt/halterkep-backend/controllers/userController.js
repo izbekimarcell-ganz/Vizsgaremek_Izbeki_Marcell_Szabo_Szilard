@@ -81,7 +81,38 @@ async function toggleUserActive(req, res) {
   }
 }
 
+async function searchUsers(req, res) {
+  try {
+    const query = typeof req.query.query === "string" ? req.query.query.trim() : "";
+
+    if (query.length < 1) {
+      return res.status(200).json([]);
+    }
+
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("query", sql.NVarChar(100), `%${query}%`)
+      .query(`
+        SELECT TOP 10 FelhasznaloId, Felhasznalonev
+        FROM Felhasznalo
+        WHERE Aktiv = 1
+          AND Admin = 0
+          AND Felhasznalonev LIKE @query
+        ORDER BY Felhasznalonev ASC
+      `);
+
+    return res.status(200).json(result.recordset);
+  } catch (error) {
+    console.error("Felhasznalo kereses hiba:", error);
+    return res.status(500).json({
+      message: "Hiba a felhasznalo keresesekor.",
+    });
+  }
+}
+
 module.exports = {
   getUsers,
   toggleUserActive,
+  searchUsers,
 };

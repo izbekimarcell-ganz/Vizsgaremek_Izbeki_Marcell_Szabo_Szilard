@@ -39,6 +39,13 @@
 
       <div class="collapse navbar-collapse" id="mainNavbar">
         <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center" id="navbarMenu">
+          <li class="nav-item friend-search-nav">
+            <div class="friend-search-container" id="friendSearchContainer">
+              <button class="friend-search-toggle" id="friendSearchToggle" type="button" aria-label="Barátok keresése">🔍</button>
+              <input id="friendSearchInput" class="form-control app-input friend-search-input" type="text" placeholder="Barátok keresése" autocomplete="off" />
+              <ul id="friendSearchResults" class="friend-search-results d-none"></ul>
+            </div>
+          </li>
           <li class="nav-item"><a class="nav-link" href="index.html">Kezdőlap</a></li>
           <li class="nav-item"><a class="nav-link" href="vizteruletek.html">Vízterületek</a></li>
           <li class="nav-item"><a class="nav-link" href="fogasnaplo.html">Fogásnapló</a></li>
@@ -179,6 +186,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="JavaScript/script.js"></script>
+  <script src="JavaScript/friend-search.js"></script>
 
 </body>
 </html>
