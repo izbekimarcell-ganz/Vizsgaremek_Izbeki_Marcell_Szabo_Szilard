@@ -62,6 +62,27 @@ function $(selector) {
   return document.querySelector(selector);
 }
 
+function getViewedProfileUserId() {
+  const params = new URLSearchParams(window.location.search);
+  const rawUserId = params.get("userId");
+
+  if (!rawUserId) {
+    const storedUserId = sessionStorage.getItem("viewedProfileUserId");
+
+    if (!storedUserId) {
+      return null;
+    }
+
+    sessionStorage.removeItem("viewedProfileUserId");
+    const fallbackUserId = Number(storedUserId);
+    return Number.isInteger(fallbackUserId) && fallbackUserId > 0 ? fallbackUserId : null;
+  }
+
+  sessionStorage.removeItem("viewedProfileUserId");
+  const userId = Number(rawUserId);
+  return Number.isInteger(userId) && userId > 0 ? userId : null;
+}
+
 function $all(selector) {
   return document.querySelectorAll(selector);
 }
@@ -1844,6 +1865,13 @@ async function toggleUserStatus(userId) {
    Profil oldal előkészítés
    ========================= */
 function prepareProfilePage() {
+  const viewedUserId = getViewedProfileUserId();
+
+  if (viewedUserId !== null) {
+    loadUserProfile();
+    return;
+  }
+
   if (!isLoggedIn()) {
     setPendingRedirect("profil.html");
     window.location.href = "login.html";
@@ -2120,27 +2148,60 @@ async function apiRequest(endpoint, options = {}) {
    Profil betöltése
    ========================= */
 async function loadUserProfile() {
+  const profileContent = $("#profileContent");
+  const profileEmpty = $("#profileEmpty");
+  const profileLoading = $("#profileLoading");
+  const profileName = $("#profileName");
+  const profileEmail = $("#profileEmail");
+  const profileEmailSection = $("#profileEmailSection");
+  const profileCreated = $("#profileCreated");
+  const profileRoles = $("#profileRoles");
+  const profilePageTitle = $("#profilePageTitle");
+  const profilePageDescription = document.querySelector("main .container .mb-4 .section-text");
+  const profileActions = $("#profileActions");
+  const profileActionsDivider = $("#profileActionsDivider");
+  const deleteProfileButton = $("#deleteProfileButton");
+  const logoutButton = $("#logoutButton");
+  const profileError = $("#profileError");
+
   try {
-    const user = getStoredUser();
-    const profileContent = $("#profileContent");
-    const profileEmpty = $("#profileEmpty");
-    const profileName = $("#profileName");
-    const profileEmail = $("#profileEmail");
-    const profileCreated = $("#profileCreated");
-    const profileRoles = $("#profileRoles");
-    const deleteProfileButton = $("#deleteProfileButton");
+    const viewedUserId = getViewedProfileUserId();
+    const isExternalProfile = viewedUserId !== null;
+
+    if (profileLoading) profileLoading.classList.remove("d-none");
+    if (profileError) {
+      profileError.classList.add("d-none");
+      profileError.textContent = "";
+    }
+
+    const user = isExternalProfile
+      ? await apiRequest(`/users/${viewedUserId}/profile`, { headers: {} })
+      : getStoredUser();
 
     if (!user) {
+      if (profileLoading) profileLoading.classList.add("d-none");
       if (profileContent) profileContent.classList.add("d-none");
       if (profileEmpty) profileEmpty.classList.remove("d-none");
       return;
     }
 
+    if (profileLoading) profileLoading.classList.add("d-none");
     if (profileContent) profileContent.classList.remove("d-none");
     if (profileEmpty) profileEmpty.classList.add("d-none");
 
+    if (profilePageTitle) {
+      profilePageTitle.textContent = isExternalProfile ? "Felhasznaloi profil" : "Profil";
+    }
+    if (profilePageDescription) {
+      profilePageDescription.textContent = isExternalProfile
+        ? "A kivalasztott felhasznalo nyilvanos profilja."
+        : "Profilinformaciok es beallitasok.";
+    }
     if (profileName) profileName.textContent = user.username || "";
-    if (profileEmail) profileEmail.textContent = user.email || "";
+    if (profileEmail) profileEmail.textContent = isExternalProfile ? "-" : user.email || "";
+    if (profileEmailSection) {
+      profileEmailSection.classList.toggle("d-none", isExternalProfile);
+    }
     if (profileCreated) {
       profileCreated.textContent = user.letrehozva
         ? new Date(user.letrehozva).toLocaleDateString("hu-HU")
@@ -2150,11 +2211,25 @@ async function loadUserProfile() {
       profileRoles.textContent = isAdminUser(user) ? "Admin" : "Felhasználó";
     }
     if (deleteProfileButton) {
-      deleteProfileButton.classList.toggle("d-none", isAdminUser(user));
+      deleteProfileButton.classList.toggle("d-none", isExternalProfile || isAdminUser(user));
+    }
+    if (logoutButton) {
+      logoutButton.classList.toggle("d-none", isExternalProfile);
+    }
+    if (profileActions) {
+      profileActions.classList.toggle("d-none", isExternalProfile);
+    }
+    if (profileActionsDivider) {
+      profileActionsDivider.classList.toggle("d-none", isExternalProfile);
     }
   } catch (error) {
     console.error("Profil betöltési hiba:", error);
-    const profileError = $("#profileError");
+    if (profileLoading) {
+      profileLoading.classList.add("d-none");
+    }
+    if (profileContent) {
+      profileContent.classList.add("d-none");
+    }
     if (profileError) {
       profileError.classList.remove("d-none");
       profileError.textContent = "Hiba a profil betöltése során!";

@@ -27,6 +27,15 @@ function initializeFriendSearch() {
     results.classList.add("d-none");
   }
 
+  function openUserProfile(userId) {
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return;
+    }
+
+    sessionStorage.setItem("viewedProfileUserId", String(userId));
+    window.location.href = `profil.html?userId=${userId}`;
+  }
+
   function renderPanel(contentHtml) {
     results.innerHTML = contentHtml;
     results.classList.remove("d-none");
@@ -47,7 +56,27 @@ function initializeFriendSearch() {
     }
 
     const itemsHtml = users
-      .map((user) => `<li class="friend-search-item">${escapeFriendSearchHtml(user.Felhasznalonev || "")}</li>`)
+      .map((user) => {
+        const userId = Number(user.FelhasznaloId);
+        const username = escapeFriendSearchHtml(user.Felhasznalonev || "");
+
+        if (!Number.isFinite(userId)) {
+          return `<li class="friend-search-item">${username}</li>`;
+        }
+
+        return `
+          <li class="friend-search-item">
+            <button
+              class="friend-search-result-button"
+              type="button"
+              data-user-id="${userId}"
+              aria-label="${username} profiljanak megnyitasa"
+            >
+              ${username}
+            </button>
+          </li>
+        `;
+      })
       .join("");
 
     renderPanel(itemsHtml);
@@ -106,6 +135,17 @@ function initializeFriendSearch() {
     if (!container.contains(event.target)) {
       closeSearch();
     }
+  });
+
+  results.addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-user-id]");
+
+    if (!trigger) {
+      return;
+    }
+
+    const userId = Number(trigger.dataset.userId);
+    openUserProfile(userId);
   });
 }
 

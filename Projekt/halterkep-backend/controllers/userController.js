@@ -111,8 +111,53 @@ async function searchUsers(req, res) {
   }
 }
 
+async function getPublicUserProfile(req, res) {
+  try {
+    const userId = parseInt(req.params.id, 10);
+
+    if (Number.isNaN(userId)) {
+      return res.status(400).json({
+        message: "Ervenytelen felhasznalo azonosito.",
+      });
+    }
+
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("userId", sql.Int, userId)
+      .query(`
+        SELECT FelhasznaloId, Felhasznalonev, Letrehozva
+        FROM Felhasznalo
+        WHERE FelhasznaloId = @userId
+          AND Aktiv = 1
+          AND Admin = 0
+      `);
+
+    const user = result.recordset[0];
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Felhasznalo nem talalhato.",
+      });
+    }
+
+    return res.status(200).json({
+      id: user.FelhasznaloId,
+      username: user.Felhasznalonev,
+      letrehozva: user.Letrehozva,
+      admin: false,
+    });
+  } catch (error) {
+    console.error("Nyilvanos profil lekeresi hiba:", error);
+    return res.status(500).json({
+      message: "Hiba a profil lekeresekor.",
+    });
+  }
+}
+
 module.exports = {
   getUsers,
   toggleUserActive,
   searchUsers,
+  getPublicUserProfile,
 };

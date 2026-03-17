@@ -1,10 +1,11 @@
 const express = require("express");
-const { getUsers, toggleUserActive, searchUsers } = require("../controllers/userController");
+const { getUsers, toggleUserActive, searchUsers, getPublicUserProfile } = require("../controllers/userController");
 const { authenticateToken, requireAdmin } = require("../utils/auth");
 
 const router = express.Router();
 
 router.get("/search", searchUsers);
+router.get("/:id/profile", getPublicUserProfile);
 router.get("/", authenticateToken, requireAdmin, getUsers);
 router.put("/:id/toggle-active", authenticateToken, requireAdmin, toggleUserActive);
 
