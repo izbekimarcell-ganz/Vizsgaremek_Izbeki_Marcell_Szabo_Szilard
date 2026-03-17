@@ -2,6 +2,9 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { sql, poolPromise } = require("../DbConfig");
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d).+$/;
+
 const mapUser = (user) => ({
   id: user.FelhasznaloId,
   username: user.Felhasznalonev,
@@ -11,13 +14,52 @@ const mapUser = (user) => ({
   letrehozva: user.Letrehozva,
 });
 
+const normalizeEmail = (email) => email.trim().toLowerCase();
+
+const validateRegisterInput = ({ email, username, password }) => {
+  const normalizedEmail = normalizeEmail(email);
+  const trimmedUsername = username.trim();
+
+  if (!EMAIL_REGEX.test(normalizedEmail)) {
+    return "Adj meg egy érvényes email címet.";
+  }
+
+  if (trimmedUsername.length < 3 || trimmedUsername.length > 50) {
+    return "A felhasználónév minimum 3, maximum 50 karakter lehet.";
+  }
+
+  if (password.length < 8) {
+    return "A jelszónak legalább 8 karakter hosszúnak kell lennie.";
+  }
+
+  if (!PASSWORD_REGEX.test(password)) {
+    return "A jelszónak tartalmaznia kell legalább egy nagybetűt és egy számot.";
+  }
+
+  return null;
+};
+
 const register = async (req, res) => {
   try {
     const { email, username, password } = req.body;
 
     if (!email || !username || !password) {
       return res.status(400).json({
-        message: "Az email, felhasznalonev es jelszo kotelezo.",
+        message: "Az email, felhasználónév és jelszó kötelező.",
+      });
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+    const trimmedUsername = username.trim();
+    const validationError = validateRegisterInput({
+      email,
+      username,
+      password,
+    });
+
+    if (validationError) {
+      return res.status(400).json({
+        message: validationError,
       });
     }
 
@@ -25,17 +67,25 @@ const register = async (req, res) => {
 
     const existingUser = await pool
       .request()
-      .input("email", sql.NVarChar(100), email)
-      .input("username", sql.NVarChar(50), username)
+      .input("email", sql.NVarChar(100), normalizedEmail)
+      .input("username", sql.NVarChar(50), trimmedUsername)
       .query(`
-        SELECT FelhasznaloId
+        SELECT FelhasznaloId, Email, Felhasznalonev
         FROM Felhasznalo
         WHERE Email = @email OR Felhasznalonev = @username
       `);
 
-    if (existingUser.recordset.length > 0) {
+    const foundUser = existingUser.recordset[0];
+
+    if (foundUser) {
+      if ((foundUser.Email || "").trim().toLowerCase() === normalizedEmail) {
+        return res.status(409).json({
+          message: "Ez az email cím már foglalt.",
+        });
+      }
+
       return res.status(409).json({
-        message: "Az email vagy a felhasznalonev mar foglalt.",
+        message: "Ez a felhasználónév már foglalt.",
       });
     }
 
@@ -43,8 +93,8 @@ const register = async (req, res) => {
 
     const result = await pool
       .request()
-      .input("username", sql.NVarChar(50), username)
-      .input("email", sql.NVarChar(100), email)
+      .input("username", sql.NVarChar(50), trimmedUsername)
+      .input("email", sql.NVarChar(100), normalizedEmail)
       .input("passwordHash", sql.NVarChar(255), passwordHash)
       .query(`
         INSERT INTO Felhasznalo (Felhasznalonev, Email, JelszoHash)
@@ -59,13 +109,20 @@ const register = async (req, res) => {
       `);
 
     return res.status(201).json({
-      message: "Sikeres regisztracio.",
+      message: "Sikeres regisztráció.",
       user: mapUser(result.recordset[0]),
     });
   } catch (error) {
     console.error("Register hiba:", error);
+
+    if (error?.number === 2601 || error?.number === 2627) {
+      return res.status(409).json({
+        message: "Az email cím vagy a felhasználónév már foglalt.",
+      });
+    }
+
     return res.status(500).json({
-      message: "Szerverhiba tortent.",
+      message: "Szerverhiba történt.",
     });
   }
 };
@@ -76,7 +133,7 @@ const login = async (req, res) => {
 
     if (!identifier || !password) {
       return res.status(400).json({
-        message: "Az email vagy felhasznalonev, es a jelszo kotelezo.",
+        message: "Az email vagy felhasználónév, és a jelszó kötelező.",
       });
     }
 
@@ -102,13 +159,13 @@ const login = async (req, res) => {
 
     if (!user) {
       return res.status(401).json({
-        message: "Hibas belepesi adatok.",
+        message: "Hibás belépési adatok.",
       });
     }
 
     if (!user.Aktiv) {
       return res.status(403).json({
-        message: "A fiok inaktiv.",
+        message: "A fiók inaktív.",
       });
     }
 
@@ -116,7 +173,7 @@ const login = async (req, res) => {
 
     if (!helyesJelszo) {
       return res.status(401).json({
-        message: "Hibas belepesi adatok.",
+        message: "Hibás belépési adatok.",
       });
     }
 
@@ -132,14 +189,14 @@ const login = async (req, res) => {
     );
 
     return res.status(200).json({
-      message: "Sikeres bejelentkezes.",
+      message: "Sikeres bejelentkezés.",
       token,
       user: mapUser(user),
     });
   } catch (error) {
     console.error("Login hiba:", error);
     return res.status(500).json({
-      message: "Szerverhiba tortent.",
+      message: "Szerverhiba történt.",
     });
   }
 };
