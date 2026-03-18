@@ -1,31 +1,76 @@
 const { sql, poolPromise } = require("../DbConfig");
 
+async function getCatchesForUserId(userId) {
+  const pool = await poolPromise;
+  const result = await pool
+    .request()
+    .input("userId", sql.Int, userId)
+    .query(`
+      SELECT
+        f.FogasId,
+        f.FogasIdeje,
+        f.SulyKg,
+        f.HosszCm,
+        f.FotoUrl,
+        f.Megjegyzes,
+        h.MagyarNev AS HalfajNev,
+        v.Nev AS VizteruletNev
+      FROM FogasNaplo f
+      INNER JOIN Halfaj h ON h.HalfajId = f.HalfajId
+      INNER JOIN Vizterulet v ON v.VizteruletId = f.VizteruletId
+      WHERE f.FelhasznaloId = @userId
+      ORDER BY f.FogasIdeje DESC, f.FogasId DESC
+    `);
+
+  return result.recordset;
+}
+
 async function getOwnCatches(req, res) {
   try {
-    const pool = await poolPromise;
-    const result = await pool
-      .request()
-      .input("userId", sql.Int, req.user.id)
-      .query(`
-        SELECT
-          f.FogasId,
-          f.FogasIdeje,
-          f.SulyKg,
-          f.HosszCm,
-          f.FotoUrl,
-          f.Megjegyzes,
-          h.MagyarNev AS HalfajNev,
-          v.Nev AS VizteruletNev
-        FROM FogasNaplo f
-        INNER JOIN Halfaj h ON h.HalfajId = f.HalfajId
-        INNER JOIN Vizterulet v ON v.VizteruletId = f.VizteruletId
-        WHERE f.FelhasznaloId = @userId
-        ORDER BY f.FogasIdeje DESC, f.FogasId DESC
-      `);
-
-    return res.status(200).json(result.recordset);
+    const catches = await getCatchesForUserId(req.user.id);
+    return res.status(200).json(catches);
   } catch (error) {
     console.error("Sajat fogasok lekeresi hiba:", error);
+    return res.status(500).json({
+      message: "Hiba a fogasok lekeresekor.",
+    });
+  }
+}
+
+async function getUserProfileCatches(req, res) {
+  try {
+    const userId = Number.parseInt(req.params.userId, 10);
+    const isAdminViewer = Boolean(req.user?.admin);
+
+    if (Number.isNaN(userId)) {
+      return res.status(400).json({
+        message: "Ervenytelen felhasznalo azonosito.",
+      });
+    }
+
+    const pool = await poolPromise;
+    const userResult = await pool
+      .request()
+      .input("userId", sql.Int, userId)
+      .input("isAdminViewer", sql.Bit, isAdminViewer)
+      .query(`
+        SELECT FelhasznaloId
+        FROM Felhasznalo
+        WHERE FelhasznaloId = @userId
+          AND Admin = 0
+          AND (@isAdminViewer = 1 OR Aktiv = 1)
+      `);
+
+    if (!userResult.recordset.length) {
+      return res.status(404).json({
+        message: "Felhasznalo nem talalhato.",
+      });
+    }
+
+    const catches = await getCatchesForUserId(userId);
+    return res.status(200).json(catches);
+  } catch (error) {
+    console.error("Profil fogasok lekeresi hiba:", error);
     return res.status(500).json({
       message: "Hiba a fogasok lekeresekor.",
     });
@@ -114,6 +159,7 @@ async function deleteOwnCatch(req, res) {
 
 module.exports = {
   getOwnCatches,
+  getUserProfileCatches,
   createCatch,
   deleteOwnCatch,
 };

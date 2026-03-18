@@ -333,6 +333,230 @@ function renderImageHtml(src, alt, className = "img-fluid rounded mt-3") {
   return `<img src="${escapeHtml(src)}" class="${escapeHtml(className)}" alt="${escapeHtml(alt)}">`;
 }
 
+async function loadUserProfile() {
+  const profileContent = $("#profileContent");
+  const profileEmpty = $("#profileEmpty");
+  const profileLoading = $("#profileLoading");
+  const profileName = $("#profileName");
+  const profileEmail = $("#profileEmail");
+  const profileEmailSection = $("#profileEmailSection");
+  const profileCreated = $("#profileCreated");
+  const profileRoles = $("#profileRoles");
+  const profilePageTitle = $("#profilePageTitle");
+  const profilePageDescription = document.querySelector("main .container .mb-4 .section-text");
+  const profileActions = $("#profileActions");
+  const profileActionsDivider = $("#profileActionsDivider");
+  const deleteProfileButton = $("#deleteProfileButton");
+  const logoutButton = $("#logoutButton");
+  const profileError = $("#profileError");
+
+  try {
+    const viewedUserId = getViewedProfileUserId();
+    const isExternalProfile = viewedUserId !== null;
+
+    if (profileLoading) profileLoading.classList.remove("d-none");
+    if (profileError) {
+      profileError.classList.add("d-none");
+      profileError.textContent = "";
+    }
+
+    const user = isExternalProfile
+      ? await apiRequest(`/users/${viewedUserId}/profile`)
+      : getStoredUser();
+
+    if (!user) {
+      if (profileLoading) profileLoading.classList.add("d-none");
+      if (profileContent) profileContent.classList.add("d-none");
+      if (profileEmpty) profileEmpty.classList.remove("d-none");
+      hideProfileCatchesSection();
+      return;
+    }
+
+    if (profileLoading) profileLoading.classList.add("d-none");
+    if (profileContent) profileContent.classList.remove("d-none");
+    if (profileEmpty) profileEmpty.classList.add("d-none");
+
+    if (profilePageTitle) {
+      profilePageTitle.textContent = isExternalProfile ? "Felhaszn\u00E1l\u00F3i profil" : "Profil";
+    }
+    if (profilePageDescription) {
+      profilePageDescription.textContent = isExternalProfile
+        ? "A kiv\u00E1lasztott felhaszn\u00E1l\u00F3 nyilv\u00E1nos profilja."
+        : "Profilinform\u00E1ci\u00F3k \u00E9s be\u00E1ll\u00EDt\u00E1sok.";
+    }
+    if (profileName) profileName.textContent = user.username || "";
+    if (profileEmail) profileEmail.textContent = isExternalProfile ? "-" : user.email || "";
+    if (profileEmailSection) {
+      profileEmailSection.classList.toggle("d-none", isExternalProfile);
+    }
+    if (profileCreated) {
+      profileCreated.textContent = user.letrehozva
+        ? new Date(user.letrehozva).toLocaleDateString("hu-HU")
+        : "-";
+    }
+    if (profileRoles) {
+      profileRoles.textContent = isAdminUser(user) ? "Admin" : "Felhaszn\u00E1l\u00F3";
+    }
+    if (deleteProfileButton) {
+      deleteProfileButton.classList.toggle("d-none", isExternalProfile || isAdminUser(user));
+    }
+    if (logoutButton) {
+      logoutButton.classList.toggle("d-none", isExternalProfile);
+    }
+    if (profileActions) {
+      profileActions.classList.toggle("d-none", isExternalProfile);
+    }
+    if (profileActionsDivider) {
+      profileActionsDivider.classList.toggle("d-none", isExternalProfile);
+    }
+
+    await loadProfileCatches(viewedUserId, isExternalProfile);
+  } catch (error) {
+    console.error("Profil bet\u00F6lt\u00E9si hiba:", error);
+    if (profileLoading) {
+      profileLoading.classList.add("d-none");
+    }
+    if (profileContent) {
+      profileContent.classList.add("d-none");
+    }
+    if (profileError) {
+      profileError.classList.remove("d-none");
+      profileError.textContent = "Hiba a profil bet\u00F6lt\u00E9se sor\u00E1n!";
+    }
+    hideProfileCatchesSection();
+  }
+}
+
+async function loadUserProfile() {
+  const profileContent = $("#profileContent");
+  const profileEmpty = $("#profileEmpty");
+  const profileLoading = $("#profileLoading");
+  const profileName = $("#profileName");
+  const profileEmail = $("#profileEmail");
+  const profileEmailSection = $("#profileEmailSection");
+  const profileCreated = $("#profileCreated");
+  const profileRoles = $("#profileRoles");
+  const profilePageTitle = $("#profilePageTitle");
+  const profilePageDescription = document.querySelector("main .container .mb-4 .section-text");
+  const profileActions = $("#profileActions");
+  const profileActionsDivider = $("#profileActionsDivider");
+  const deleteProfileButton = $("#deleteProfileButton");
+  const logoutButton = $("#logoutButton");
+  const profileError = $("#profileError");
+
+  try {
+    const viewedUserId = getViewedProfileUserId();
+    const isExternalProfile = viewedUserId !== null;
+
+    if (profileLoading) profileLoading.classList.remove("d-none");
+    if (profileError) {
+      profileError.classList.add("d-none");
+      profileError.textContent = "";
+    }
+
+    const user = isExternalProfile
+      ? await apiRequest(`/users/${viewedUserId}/profile`)
+      : getStoredUser();
+
+    if (!user) {
+      if (profileLoading) profileLoading.classList.add("d-none");
+      if (profileContent) profileContent.classList.add("d-none");
+      if (profileEmpty) profileEmpty.classList.remove("d-none");
+      hideProfileCatchesSection();
+      return;
+    }
+
+    if (profileLoading) profileLoading.classList.add("d-none");
+    if (profileContent) profileContent.classList.remove("d-none");
+    if (profileEmpty) profileEmpty.classList.add("d-none");
+
+    if (profilePageTitle) {
+      profilePageTitle.textContent = isExternalProfile ? "Felhaszn\u00E1l\u00F3i profil" : "Profil";
+    }
+    if (profilePageDescription) {
+      profilePageDescription.textContent = isExternalProfile
+        ? "A kiv\u00E1lasztott felhaszn\u00E1l\u00F3 nyilv\u00E1nos profilja."
+        : "Profilinform\u00E1ci\u00F3k \u00E9s be\u00E1ll\u00EDt\u00E1sok.";
+    }
+    if (profileName) profileName.textContent = user.username || "";
+    if (profileEmail) profileEmail.textContent = isExternalProfile ? "-" : user.email || "";
+    if (profileEmailSection) {
+      profileEmailSection.classList.toggle("d-none", isExternalProfile);
+    }
+    if (profileCreated) {
+      profileCreated.textContent = user.letrehozva
+        ? new Date(user.letrehozva).toLocaleDateString("hu-HU")
+        : "-";
+    }
+    if (profileRoles) {
+      profileRoles.textContent = isAdminUser(user) ? "Admin" : "Felhaszn\u00E1l\u00F3";
+    }
+    if (deleteProfileButton) {
+      deleteProfileButton.classList.toggle("d-none", isExternalProfile || isAdminUser(user));
+    }
+    if (logoutButton) {
+      logoutButton.classList.toggle("d-none", isExternalProfile);
+    }
+    if (profileActions) {
+      profileActions.classList.toggle("d-none", isExternalProfile);
+    }
+    if (profileActionsDivider) {
+      profileActionsDivider.classList.toggle("d-none", isExternalProfile);
+    }
+
+    await loadProfileCatches(viewedUserId, isExternalProfile);
+  } catch (error) {
+    console.error("Profil bet\u00F6lt\u00E9si hiba:", error);
+    if (profileLoading) {
+      profileLoading.classList.add("d-none");
+    }
+    if (profileContent) {
+      profileContent.classList.add("d-none");
+    }
+    if (profileError) {
+      profileError.classList.remove("d-none");
+      profileError.textContent = "Hiba a profil bet\u00F6lt\u00E9se sor\u00E1n!";
+    }
+    hideProfileCatchesSection();
+  }
+}
+
+function renderCatchCards(container, catches, { allowDelete = false } = {}) {
+  if (!container) {
+    return;
+  }
+
+  clearElement(container);
+
+  catches.forEach((fogas) => {
+    const card = document.createElement("div");
+    card.className = "card mb-3";
+    card.innerHTML = `
+      <div class="card-body">
+        <h5 class="card-title">${escapeHtml(fogas.HalfajNev)}</h5>
+        <p class="card-text">
+          <strong>V\u00EDzter\u00FClet:</strong> ${escapeHtml(fogas.VizteruletNev)}<br>
+          <strong>Id\u0151pont:</strong> ${new Date(fogas.FogasIdeje).toLocaleString("hu-HU")}<br>
+          ${fogas.SulyKg ? `<strong>S\u00FAly:</strong> ${escapeHtml(String(fogas.SulyKg))} kg<br>` : ""}
+          ${fogas.HosszCm ? `<strong>Hossz:</strong> ${escapeHtml(String(fogas.HosszCm))} cm<br>` : ""}
+          ${fogas.Megjegyzes ? `<strong>Megjegyz\u00E9s:</strong> ${escapeHtml(fogas.Megjegyzes)}` : ""}
+        </p>
+        ${renderImageHtml(fogas.FotoUrl, "Fog\u00E1s fot\u00F3")}
+        ${
+          allowDelete
+            ? `
+              <div class="mt-3 d-flex justify-content-end">
+                <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteCatch(${Number(fogas.FogasId)})">T\u00F6rl\u00E9s</button>
+              </div>
+            `
+            : ""
+        }
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
 /* =========================
    Vízterületek oldal előkészítés
    ========================= */
@@ -1996,6 +2220,7 @@ async function updateNavbar() {
   const loginNavItem = $("#loginNavItem");
   const registerNavItem = $("#registerNavItem");
   const logoutNavItem = $("#logoutNavItem");
+  const friendSearchNav = $(".friend-search-nav");
   const user = getStoredUser();
   const isAdmin = isAdminUser(user);
 
@@ -2016,8 +2241,129 @@ async function updateNavbar() {
     if (adminNavItem) adminNavItem.classList.add("d-none");
   }
 
+  if (friendSearchNav) {
+    friendSearchNav.classList.toggle("d-none", isAdmin);
+  }
+
   updateAccountShortcut(user);
   setActiveNavLink();
+}
+
+async function loadAllUsers() {
+  const usersTableBody = $("#adminUsersTableBody");
+  if (!usersTableBody) return;
+
+  try {
+    const data = await apiRequest("/users");
+
+    clearElement(usersTableBody);
+
+    if (data.length === 0) {
+      usersTableBody.innerHTML = `
+        <tr>
+          <td colspan="4" class="text-center">Nincs felhaszn\u00E1l\u00F3</td>
+        </tr>
+      `;
+      return;
+    }
+
+    data.forEach((user) => {
+      const userId = Number(user.FelhasznaloId);
+      const isActive = Boolean(user.Aktiv);
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>${escapeHtml(user.Felhasznalonev)}</td>
+        <td>${escapeHtml(user.Email)}</td>
+        <td>
+          <span class="badge ${isActive ? "bg-success" : "bg-danger"}">
+            ${isActive ? "Akt\u00EDv" : "Tiltva"}
+          </span>
+        </td>
+        <td>
+          <div class="d-flex flex-wrap gap-2 admin-table-actions">
+            <button class="btn btn-sm btn-outline-info admin-table-action-btn" onclick="openAdminUserProfile(${userId})">
+              Megnyit
+            </button>
+            <button class="btn btn-sm btn-warning admin-table-action-btn" onclick="toggleUserStatus(${userId})">
+              ${isActive ? "Tilt\u00E1s" : "Aktiv\u00E1l\u00E1s"}
+            </button>
+            <button
+              class="btn btn-sm ${isActive ? "btn-secondary" : "btn-danger"} admin-table-action-btn"
+              onclick="deleteUserAccount(${userId})"
+              ${isActive ? 'disabled title="Csak tiltott fi\u00F3k t\u00F6r\u00F6lhet\u0151."' : ""}
+            >
+              Fi\u00F3k t\u00F6rl\u00E9se
+            </button>
+          </div>
+        </td>
+      `;
+
+      usersTableBody.appendChild(row);
+    });
+  } catch (error) {
+    console.error("Felhasznalok betoltesi hiba:", error);
+    usersTableBody.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-center text-danger">Hiba t\u00F6rt\u00E9nt az adatok bet\u00F6lt\u00E9se sor\u00E1n</td>
+      </tr>
+    `;
+  }
+}
+
+async function toggleUserStatus(userId) {
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return;
+  }
+
+  if (!confirm("Biztosan m\u00F3dos\u00EDtod a felhaszn\u00E1l\u00F3 \u00E1llapot\u00E1t?")) {
+    return;
+  }
+
+  try {
+    await apiRequest(`/users/${userId}/toggle-active`, {
+      method: "PUT",
+    });
+
+    alert("Felhaszn\u00E1l\u00F3 \u00E1llapota m\u00F3dos\u00EDtva!");
+    await loadAllUsers();
+  } catch (error) {
+    alert(error.message || "Hiba t\u00F6rt\u00E9nt a m\u0171velet sor\u00E1n!");
+  }
+}
+
+function openAdminUserProfile(userId) {
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return;
+  }
+
+  sessionStorage.setItem("viewedProfileUserId", String(userId));
+  window.location.href = `profil.html?userId=${userId}`;
+}
+
+async function deleteUserAccount(userId) {
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    "Biztosan t\u00F6r\u00F6lni szeretn\u00E9d ezt a fi\u00F3kot? Ez csak tiltott fi\u00F3kn\u00E1l enged\u00E9lyezett, \u00E9s a m\u0171velet nem visszavonhat\u00F3."
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    await apiRequest(`/users/${userId}`, {
+      method: "DELETE",
+    });
+
+    alert("A fi\u00F3k sikeresen t\u00F6r\u00F6lve lett.");
+    await loadAllUsers();
+  } catch (error) {
+    alert(error.message || "Nem siker\u00FClt t\u00F6r\u00F6lni a fi\u00F3kot.");
+  }
 }
 
 /* =========================
@@ -2147,6 +2493,368 @@ async function apiRequest(endpoint, options = {}) {
 /* =========================
    Profil betöltése
    ========================= */
+const catchCollections = {
+  own: [],
+  profile: [],
+};
+
+const catchFilterPanelState = {
+  own: false,
+  profile: false,
+};
+
+function getCatchFilterElements(context) {
+  if (context === "profile") {
+    return {
+      wrapper: $("#profileCatchesFilters"),
+      toggle: $("#profileCatchesFiltersToggle"),
+      water: $("#profileCatchFilterWater"),
+      species: $("#profileCatchFilterSpecies"),
+      minSize: $("#profileCatchFilterMinSize"),
+      maxSize: $("#profileCatchFilterMaxSize"),
+      count: $("#profileCatchesCount"),
+      empty: $("#profileCatchesEmpty"),
+      list: $("#profileCatchesList"),
+    };
+  }
+
+  return {
+    wrapper: $("#catchListFilters"),
+    toggle: $("#catchListFiltersToggle"),
+    water: $("#catchFilterWater"),
+    species: $("#catchFilterSpecies"),
+    minSize: $("#catchFilterMinSize"),
+    maxSize: $("#catchFilterMaxSize"),
+    count: $("#catchListCount"),
+    empty: $("#catchListEmpty"),
+    list: $("#catchListContainer"),
+  };
+}
+
+function populateCatchFilterSelect(selectElement, values, placeholder) {
+  if (!selectElement) {
+    return;
+  }
+
+  const previousValue = selectElement.value;
+  const uniqueValues = [...new Set(values.filter((value) => typeof value === "string" && value.trim()))]
+    .sort((a, b) => a.localeCompare(b, "hu"));
+
+  selectElement.innerHTML = "";
+
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = placeholder;
+  selectElement.appendChild(defaultOption);
+
+  uniqueValues.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    selectElement.appendChild(option);
+  });
+
+  selectElement.value = uniqueValues.includes(previousValue) ? previousValue : "";
+}
+
+function bindCatchFilters(context, options = {}) {
+  const elements = getCatchFilterElements(context);
+  if (!elements.wrapper || elements.wrapper.dataset.bound === "true") {
+    return;
+  }
+
+  const handler = () => applyCatchFilters(context, options);
+
+  [elements.water, elements.species].forEach((element) => {
+    if (element) {
+      element.addEventListener("change", handler);
+    }
+  });
+
+  [elements.minSize, elements.maxSize].forEach((element) => {
+    if (element) {
+      element.addEventListener("input", handler);
+    }
+  });
+
+  if (elements.toggle) {
+    elements.toggle.addEventListener("click", () => {
+      toggleCatchFilters(context);
+    });
+  }
+
+  elements.wrapper.dataset.bound = "true";
+}
+
+function getCatchFilters(context) {
+  const elements = getCatchFilterElements(context);
+  return {
+    water: elements.water?.value || "",
+    species: elements.species?.value || "",
+    minSize: elements.minSize?.value ? Number(elements.minSize.value) : null,
+    maxSize: elements.maxSize?.value ? Number(elements.maxSize.value) : null,
+  };
+}
+
+function hasActiveCatchFilters(filters) {
+  return Boolean(filters.water || filters.species || filters.minSize !== null || filters.maxSize !== null);
+}
+
+function updateCatchFiltersToggleLabel(context) {
+  const { toggle } = getCatchFilterElements(context);
+  if (!toggle) {
+    return;
+  }
+
+  const expanded = Boolean(catchFilterPanelState[context]);
+  toggle.setAttribute("aria-expanded", String(expanded));
+  toggle.textContent = expanded ? "Szűrők elrejtése" : "Szűrők";
+}
+
+function updateCatchFiltersVisibility(context) {
+  const elements = getCatchFilterElements(context);
+  const source = Array.isArray(catchCollections[context]) ? catchCollections[context] : [];
+  const hasData = source.length > 0;
+
+  if (elements.toggle) {
+    elements.toggle.classList.toggle("d-none", !hasData);
+  }
+
+  if (elements.wrapper) {
+    elements.wrapper.classList.toggle("d-none", !hasData || !catchFilterPanelState[context]);
+  }
+
+  updateCatchFiltersToggleLabel(context);
+}
+
+function toggleCatchFilters(context) {
+  const source = Array.isArray(catchCollections[context]) ? catchCollections[context] : [];
+  if (!source.length) {
+    return;
+  }
+
+  catchFilterPanelState[context] = !catchFilterPanelState[context];
+  updateCatchFiltersVisibility(context);
+}
+
+function filterCatchesByValues(catches, filters) {
+  return catches.filter((fogas) => {
+    const sizeCm = Number(fogas.HosszCm);
+    const hasSize = Number.isFinite(sizeCm);
+
+    if (filters.water && fogas.VizteruletNev !== filters.water) {
+      return false;
+    }
+
+    if (filters.species && fogas.HalfajNev !== filters.species) {
+      return false;
+    }
+
+    if (filters.minSize !== null && (!hasSize || sizeCm < filters.minSize)) {
+      return false;
+    }
+
+    if (filters.maxSize !== null && (!hasSize || sizeCm > filters.maxSize)) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+function applyCatchFilters(context, options = {}) {
+  const {
+    allowDelete = false,
+    emptyMessage = "Még nincs rögzített fogás.",
+    filteredEmptyMessage = "Nincs a szűrésnek megfelelő fogás.",
+  } = options;
+  const elements = getCatchFilterElements(context);
+  const source = Array.isArray(catchCollections[context]) ? catchCollections[context] : [];
+  const filters = getCatchFilters(context);
+  const filtered = filterCatchesByValues(source, filters);
+
+  if (hasActiveCatchFilters(filters)) {
+    catchFilterPanelState[context] = true;
+  }
+
+  updateCatchFiltersVisibility(context);
+
+  if (elements.count) {
+    elements.count.textContent = source.length
+      ? filtered.length === source.length
+        ? `${source.length} fogás`
+        : `${filtered.length} / ${source.length} fogás`
+      : "";
+  }
+
+  if (elements.empty) {
+    elements.empty.classList.add("d-none");
+    elements.empty.textContent = hasActiveCatchFilters(filters) ? filteredEmptyMessage : emptyMessage;
+  }
+
+  if (elements.list) {
+    clearElement(elements.list);
+  }
+
+  if (!source.length || !filtered.length) {
+    if (elements.empty) {
+      elements.empty.classList.remove("d-none");
+    }
+    return;
+  }
+
+  renderCatchCards(elements.list, filtered, { allowDelete });
+}
+
+function syncCatchFilterOptions(context, catches) {
+  const elements = getCatchFilterElements(context);
+  populateCatchFilterSelect(
+    elements.water,
+    catches.map((fogas) => fogas.VizteruletNev),
+    "Összes hely"
+  );
+  populateCatchFilterSelect(
+    elements.species,
+    catches.map((fogas) => fogas.HalfajNev),
+    "Összes halfaj"
+  );
+}
+
+async function loadSajatFogasok() {
+  const catchListContainer = $("#catchListContainer");
+  const catchListLoading = $("#catchListLoading");
+  const catchListError = $("#catchListError");
+  const catchListEmpty = $("#catchListEmpty");
+  if (!catchListContainer) return;
+
+  try {
+    bindCatchFilters("own", {
+      allowDelete: true,
+      emptyMessage: "Még nincs rögzített fogásod.",
+      filteredEmptyMessage: "Nincs a szűrésnek megfelelő fogás.",
+    });
+    if (catchListLoading) catchListLoading.classList.remove("d-none");
+    if (catchListError) {
+      catchListError.classList.add("d-none");
+      catchListError.textContent = "";
+    }
+    if (catchListEmpty) {
+      catchListEmpty.classList.add("d-none");
+      catchListEmpty.textContent = "Még nincs rögzített fogásod.";
+    }
+
+    const data = await apiRequest("/fogasnaplo/sajat");
+    catchCollections.own = Array.isArray(data) ? data : [];
+    syncCatchFilterOptions("own", catchCollections.own);
+    applyCatchFilters("own", {
+      allowDelete: true,
+      emptyMessage: "Még nincs rögzített fogásod.",
+      filteredEmptyMessage: "Nincs a szűrésnek megfelelő fogás.",
+    });
+  } catch (error) {
+    console.error("Fog\u00E1sok bet\u00F6lt\u00E9si hiba:", error);
+    clearElement(catchListContainer);
+    catchCollections.own = [];
+    catchFilterPanelState.own = false;
+    updateCatchFiltersVisibility("own");
+    if (catchListError) {
+      catchListError.classList.remove("d-none");
+      catchListError.textContent = "Hiba történt az adatok betöltése során.";
+    }
+  } finally {
+    if (catchListLoading) {
+      catchListLoading.classList.add("d-none");
+    }
+  }
+}
+
+function hideProfileCatchesSection() {
+  const section = $("#profileCatchesSection");
+  const filters = $("#profileCatchesFilters");
+  const toggle = $("#profileCatchesFiltersToggle");
+  const count = $("#profileCatchesCount");
+  const loading = $("#profileCatchesLoading");
+  const error = $("#profileCatchesError");
+  const empty = $("#profileCatchesEmpty");
+  const list = $("#profileCatchesList");
+
+  if (section) section.classList.add("d-none");
+  if (filters) filters.classList.add("d-none");
+  if (toggle) toggle.classList.add("d-none");
+  catchFilterPanelState.profile = false;
+  if (count) count.textContent = "";
+  if (loading) loading.classList.add("d-none");
+  if (error) {
+    error.classList.add("d-none");
+    error.textContent = "";
+  }
+  if (empty) {
+    empty.classList.add("d-none");
+    empty.textContent = "";
+  }
+  if (list) clearElement(list);
+}
+
+async function loadProfileCatches(viewedUserId = null, isExternalProfile = false) {
+  const section = $("#profileCatchesSection");
+  const title = $("#profileCatchesTitle");
+  const count = $("#profileCatchesCount");
+  const loading = $("#profileCatchesLoading");
+  const error = $("#profileCatchesError");
+  const empty = $("#profileCatchesEmpty");
+  const list = $("#profileCatchesList");
+
+  if (!section || !loading || !error || !empty || !list) {
+    return;
+  }
+
+  section.classList.remove("d-none");
+  bindCatchFilters("profile", {
+    emptyMessage: isExternalProfile
+      ? "A felhasználónak még nincs rögzített fogása."
+      : "Még nincs rögzített fogásod.",
+    filteredEmptyMessage: "Nincs a szűrésnek megfelelő fogás.",
+  });
+  if (title) {
+    title.textContent = isExternalProfile ? "Fog\u00E1sai" : "Saj\u00E1t fog\u00E1sok";
+  }
+  if (count) {
+    count.textContent = "";
+  }
+  loading.classList.remove("d-none");
+  error.classList.add("d-none");
+  error.textContent = "";
+  empty.classList.add("d-none");
+  empty.textContent = isExternalProfile
+    ? "A felhaszn\u00E1l\u00F3nak m\u00E9g nincs r\u00F6gz\u00EDtett fog\u00E1sa."
+    : "M\u00E9g nincs r\u00F6gz\u00EDtett fog\u00E1sod.";
+  clearElement(list);
+
+  try {
+    const endpoint = isExternalProfile && viewedUserId !== null
+      ? `/fogasnaplo/felhasznalo/${viewedUserId}`
+      : "/fogasnaplo/sajat";
+    const catches = await apiRequest(endpoint);
+    catchCollections.profile = Array.isArray(catches) ? catches : [];
+    syncCatchFilterOptions("profile", catchCollections.profile);
+    applyCatchFilters("profile", {
+      emptyMessage: isExternalProfile
+        ? "A felhasználónak még nincs rögzített fogása."
+        : "Még nincs rögzített fogásod.",
+      filteredEmptyMessage: "Nincs a szűrésnek megfelelő fogás.",
+    });
+  } catch (catchError) {
+    console.error("Profil fog\u00E1sok bet\u00F6lt\u00E9si hiba:", catchError);
+    catchCollections.profile = [];
+    catchFilterPanelState.profile = false;
+    updateCatchFiltersVisibility("profile");
+    error.classList.remove("d-none");
+    error.textContent = "Hiba t\u00F6rt\u00E9nt a fog\u00E1sok bet\u00F6lt\u00E9se sor\u00E1n.";
+  } finally {
+    loading.classList.add("d-none");
+  }
+}
+
 async function loadUserProfile() {
   const profileContent = $("#profileContent");
   const profileEmpty = $("#profileEmpty");
@@ -2175,13 +2883,14 @@ async function loadUserProfile() {
     }
 
     const user = isExternalProfile
-      ? await apiRequest(`/users/${viewedUserId}/profile`, { headers: {} })
+      ? await apiRequest(`/users/${viewedUserId}/profile`)
       : getStoredUser();
 
     if (!user) {
       if (profileLoading) profileLoading.classList.add("d-none");
       if (profileContent) profileContent.classList.add("d-none");
       if (profileEmpty) profileEmpty.classList.remove("d-none");
+      hideProfileCatchesSection();
       return;
     }
 
@@ -2222,6 +2931,7 @@ async function loadUserProfile() {
     if (profileActionsDivider) {
       profileActionsDivider.classList.toggle("d-none", isExternalProfile);
     }
+    await loadProfileCatches(viewedUserId, isExternalProfile);
   } catch (error) {
     console.error("Profil betöltési hiba:", error);
     if (profileLoading) {

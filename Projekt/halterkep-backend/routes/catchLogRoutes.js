@@ -1,10 +1,11 @@
 const express = require("express");
-const { getOwnCatches, createCatch, deleteOwnCatch } = require("../controllers/catchLogController");
-const { authenticateToken } = require("../utils/auth");
+const { getOwnCatches, getUserProfileCatches, createCatch, deleteOwnCatch } = require("../controllers/catchLogController");
+const { authenticateToken, authenticateTokenOptional } = require("../utils/auth");
 
 const router = express.Router();
 
 router.get("/sajat", authenticateToken, getOwnCatches);
+router.get("/felhasznalo/:userId", authenticateTokenOptional, getUserProfileCatches);
 router.post("/", authenticateToken, createCatch);
 router.delete("/:id", authenticateToken, deleteOwnCatch);
 

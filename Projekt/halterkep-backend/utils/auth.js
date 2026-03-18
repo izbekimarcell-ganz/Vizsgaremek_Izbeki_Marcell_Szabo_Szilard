@@ -26,6 +26,22 @@ function authenticateToken(req, res, next) {
   }
 }
 
+function authenticateTokenOptional(req, res, next) {
+  const token = getBearerToken(req);
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (error) {
+    req.user = null;
+  }
+
+  return next();
+}
+
 function requireAdmin(req, res, next) {
   if (!req.user?.admin) {
     return res.status(403).json({
@@ -38,5 +54,6 @@ function requireAdmin(req, res, next) {
 
 module.exports = {
   authenticateToken,
+  authenticateTokenOptional,
   requireAdmin,
 };
