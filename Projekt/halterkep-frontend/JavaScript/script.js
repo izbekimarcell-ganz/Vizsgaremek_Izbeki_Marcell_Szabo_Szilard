@@ -248,6 +248,147 @@ function clearElement(element) {
   if (element) element.innerHTML = "";
 }
 
+function ensureAppDialogElements() {
+  let modalElement = document.getElementById("appDialogModal");
+
+  if (!modalElement) {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div
+        class="modal fade app-dialog-modal"
+        id="appDialogModal"
+        tabindex="-1"
+        aria-labelledby="appDialogTitle"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content app-card">
+            <div class="modal-header">
+              <h5 class="modal-title" id="appDialogTitle">Üzenet</h5>
+            </div>
+            <div class="modal-body">
+              <p id="appDialogMessage" class="mb-0"></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" id="appDialogCancelButton" class="btn btn-outline-light d-none">
+                Mégse
+              </button>
+              <button type="button" id="appDialogConfirmButton" class="btn btn-primary">
+                Rendben
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    modalElement = wrapper.firstElementChild;
+    document.body.appendChild(modalElement);
+  }
+
+  return {
+    modalElement,
+    titleElement: modalElement.querySelector("#appDialogTitle"),
+    messageElement: modalElement.querySelector("#appDialogMessage"),
+    cancelButton: modalElement.querySelector("#appDialogCancelButton"),
+    confirmButton: modalElement.querySelector("#appDialogConfirmButton"),
+  };
+}
+
+function showAppDialog({
+  title = "Üzenet",
+  message = "",
+  confirmLabel = "Rendben",
+  cancelLabel = "Mégse",
+  showCancel = false,
+  confirmButtonClass = "btn-primary",
+}) {
+  if (typeof bootstrap === "undefined") {
+    if (showCancel) {
+      return Promise.resolve(window.confirm(message));
+    }
+
+    window.alert(message);
+    return Promise.resolve(true);
+  }
+
+  const {
+    modalElement,
+    titleElement,
+    messageElement,
+    cancelButton,
+    confirmButton,
+  } = ensureAppDialogElements();
+
+  setText(titleElement, title);
+  setText(messageElement, message);
+  setText(cancelButton, cancelLabel);
+  setText(confirmButton, confirmLabel);
+
+  cancelButton.className = `btn btn-outline-light${showCancel ? "" : " d-none"}`;
+  confirmButton.className = `btn ${confirmButtonClass}`;
+
+  const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+
+  return new Promise((resolve) => {
+    let result = !showCancel;
+
+    const cleanup = () => {
+      confirmButton.removeEventListener("click", handleConfirm);
+      cancelButton.removeEventListener("click", handleCancel);
+      modalElement.removeEventListener("hidden.bs.modal", handleHidden);
+    };
+
+    const handleConfirm = () => {
+      result = true;
+      modalInstance.hide();
+    };
+
+    const handleCancel = () => {
+      result = false;
+      modalInstance.hide();
+    };
+
+    const handleHidden = () => {
+      cleanup();
+      resolve(result);
+    };
+
+    confirmButton.addEventListener("click", handleConfirm);
+    cancelButton.addEventListener("click", handleCancel);
+    modalElement.addEventListener("hidden.bs.modal", handleHidden);
+    modalInstance.show();
+  });
+}
+
+function showAppAlert(message, options = {}) {
+  return showAppDialog({
+    title: options.title || "Üzenet",
+    message,
+    confirmLabel: options.confirmLabel || "Rendben",
+    confirmButtonClass: options.confirmButtonClass || "btn-primary",
+  });
+}
+
+function showAppSuccess(message, options = {}) {
+  return showAppAlert(message, {
+    title: options.title || "Megerősítés",
+    confirmLabel: options.confirmLabel || "Rendben",
+    confirmButtonClass: options.confirmButtonClass || "btn-success",
+  });
+}
+
+function showAppConfirm(message, options = {}) {
+  return showAppDialog({
+    title: options.title || "Megerősítés",
+    message,
+    confirmLabel: options.confirmLabel || "Igen",
+    cancelLabel: options.cancelLabel || "Mégse",
+    showCancel: true,
+    confirmButtonClass: options.confirmButtonClass || "btn-danger",
+  });
+}
+
 function findNavigationLink(possibleHrefs = []) {
   const links = Array.from($all("#navbarMenu .nav-link"));
   return links.find((link) => possibleHrefs.includes(link.getAttribute("href"))) || null;
@@ -689,6 +830,62 @@ async function handleWaterSearch(event) {
 /* =========================
    Vízterület részletek
    ========================= */
+function renderWaterSpeciesDetails(species) {
+  const detailsElement = $("#waterDetailSpeciesInfo");
+  if (!detailsElement) return;
+
+  if (!species) {
+    detailsElement.innerHTML = "";
+    detailsElement.classList.add("d-none");
+    return;
+  }
+
+  detailsElement.classList.remove("d-none");
+
+  const minimumSize =
+    species.MinMeretCm !== null && species.MinMeretCm !== undefined
+      ? `${escapeHtml(String(species.MinMeretCm))} cm`
+      : "Nincs megadva";
+  const dailyLimit =
+    species.NapiLimit !== null && species.NapiLimit !== undefined
+      ? escapeHtml(String(species.NapiLimit))
+      : "Nincs megadva";
+
+  detailsElement.innerHTML = `
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+      <div>
+        <div class="fw-semibold fs-5">${escapeHtml(species.MagyarNev || "-")}</div>
+        <div class="section-text small fst-italic">${escapeHtml(species.LatinNev || "Nincs megadva")}</div>
+      </div>
+      <span class="badge ${species.Vedett ? "bg-warning text-dark" : "bg-secondary"}">
+        ${species.Vedett ? "Védett" : "Nem védett"}
+      </span>
+    </div>
+    <div class="row g-3">
+      <div class="col-sm-6">
+        <div class="section-text small">Minimum méret</div>
+        <div class="fw-semibold">${minimumSize}</div>
+      </div>
+      <div class="col-sm-6">
+        <div class="section-text small">Napi limit</div>
+        <div class="fw-semibold">${dailyLimit}</div>
+      </div>
+      <div class="col-12">
+        <div class="section-text small">Megjegyzés</div>
+        <div>${escapeHtml(species.Megjegyzes || "Nincs megadva")}</div>
+      </div>
+    </div>
+  `;
+}
+
+function setActiveWaterSpeciesButton(activeButton) {
+  $all("#waterDetailSpecies .water-species-chip").forEach((button) => {
+    const isActive = button === activeButton;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
 async function showVizteruletDetails(vizteruletId) {
   try {
     const data = await apiRequest(`/vizteruletek/${vizteruletId}`);
@@ -699,6 +896,7 @@ async function showVizteruletDetails(vizteruletId) {
     const countiesElement = $("#waterDetailCounties");
     const descriptionElement = $("#waterDetailDescription");
     const speciesElement = $("#waterDetailSpecies");
+    const speciesDetailsElement = $("#waterDetailSpeciesInfo");
 
     if (detailsCard) {
       detailsCard.classList.remove("d-none");
@@ -715,20 +913,48 @@ async function showVizteruletDetails(vizteruletId) {
 
     if (speciesElement) {
       clearElement(speciesElement);
+      if (speciesDetailsElement) {
+        clearElement(speciesDetailsElement);
+      }
 
       if (!data.halfajok.length) {
         speciesElement.innerHTML = '<span class="section-text">Nincs rögzített halfaj.</span>';
+        if (speciesDetailsElement) {
+          speciesDetailsElement.classList.add("d-none");
+        }
       } else {
+        renderWaterSpeciesDetails(null);
+
         data.halfajok.forEach((halfaj) => {
-          const badge = document.createElement("span");
-          badge.className = `badge ${halfaj.Vedett ? "bg-warning text-dark" : "bg-info text-dark"}`;
-          badge.textContent = halfaj.MagyarNev;
-          speciesElement.appendChild(badge);
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "btn btn-sm water-species-chip";
+          button.textContent = halfaj.MagyarNev;
+          button.setAttribute("aria-pressed", "false");
+
+          if (halfaj.Vedett) {
+            button.classList.add("is-protected");
+          }
+
+          button.addEventListener("click", () => {
+            const isAlreadyActive = button.classList.contains("is-active");
+
+            if (isAlreadyActive) {
+              setActiveWaterSpeciesButton(null);
+              renderWaterSpeciesDetails(null);
+              return;
+            }
+
+            setActiveWaterSpeciesButton(button);
+            renderWaterSpeciesDetails(halfaj);
+          });
+
+          speciesElement.appendChild(button);
         });
       }
     }
   } catch (error) {
-    alert("Hiba a részletek betöltése során!");
+    showAppAlert("Hiba a részletek betöltése során!", { title: "Hiba" });
   }
 }
 
@@ -861,7 +1087,7 @@ async function handleAddCatch(event) {
       "A fogás képe"
     );
   } catch (error) {
-    alert(error.message);
+    showAppAlert(error.message, { title: "Hiba" });
     return;
   }
   
@@ -876,7 +1102,7 @@ async function handleAddCatch(event) {
   };
 
   if (!catchData.halfajId || !catchData.vizteruletId || !catchData.fogasIdeje) {
-    alert("A halfaj, vízterület és időpont megadása kötelező!");
+    showAppAlert("A halfaj, vízterület és időpont megadása kötelező!", { title: "Hiányzó adat" });
     return;
   }
 
@@ -886,11 +1112,11 @@ async function handleAddCatch(event) {
       body: JSON.stringify(catchData),
     });
 
-    alert("Fogás sikeresen rögzítve!");
+    await showAppSuccess("Fogás sikeresen rögzítve!");
     form.reset();
     loadSajatFogasok();
   } catch (error) {
-    alert(error.message || "Hiba a fogás rögzítése során!");
+    showAppAlert(error.message || "Hiba a fogás rögzítése során!", { title: "Hiba" });
   }
 }
 
@@ -982,17 +1208,17 @@ async function handleCreateTopic(event) {
       "A témához feltöltött kép"
     );
   } catch (error) {
-    alert(error.message);
+    showAppAlert(error.message, { title: "Hiba" });
     return;
   }
 
   if (!cim) {
-    alert("A téma címe kötelező!");
+    showAppAlert("A téma címe kötelező!", { title: "Hiányzó adat" });
     return;
   }
 
   if (!isLoggedIn()) {
-    alert("A művelethez be kell jelentkezned!");
+    showAppAlert("A művelethez be kell jelentkezned!", { title: "Bejelentkezés szükséges" });
     return;
   }
 
@@ -1002,11 +1228,11 @@ async function handleCreateTopic(event) {
       body: JSON.stringify({ cim, szoveg, kepUrl }),
     });
 
-    alert("Téma sikeresen létrehozva!");
+    await showAppSuccess("Téma sikeresen létrehozva!");
     form.reset();
     loadForumTopics();
   } catch (error) {
-    alert(error.message || "Hiba a téma létrehozása során!");
+    showAppAlert(error.message || "Hiba a téma létrehozása során!", { title: "Hiba" });
   }
 }
 
@@ -1070,7 +1296,7 @@ async function loadTopicReplies(temaId) {
       if (temaIdInput) temaIdInput.value = temaId;
     }
   } catch (error) {
-    alert("Hiba a hozzászólások betöltése során!");
+    showAppAlert("Hiba a hozzászólások betöltése során!", { title: "Hiba" });
   }
 }
 
@@ -1091,17 +1317,17 @@ async function handleCreateReply(event) {
       "A hozzászólás képe"
     );
   } catch (error) {
-    alert(error.message);
+    showAppAlert(error.message, { title: "Hiba" });
     return;
   }
 
   if (!temaId || (!szoveg.trim() && !kepUrl)) {
-    alert("A téma mellett legalább szöveg vagy kép megadása kötelező!");
+    showAppAlert("A téma mellett legalább szöveg vagy kép megadása kötelező!", { title: "Hiányzó adat" });
     return;
   }
 
   if (!isLoggedIn()) {
-    alert("A művelethez be kell jelentkezned!");
+    showAppAlert("A művelethez be kell jelentkezned!", { title: "Bejelentkezés szükséges" });
     return;
   }
 
@@ -1111,11 +1337,11 @@ async function handleCreateReply(event) {
       body: JSON.stringify({ temaId, szoveg, kepUrl }),
     });
 
-    alert("Hozzászólás sikeresen létrehozva!");
+    await showAppSuccess("Hozzászólás sikeresen létrehozva!");
     form.reset();
     await loadTopicReplies(temaId);
   } catch (error) {
-    alert(error.message || "Hiba a hozzászólás létrehozása során!");
+    showAppAlert(error.message || "Hiba a hozzászólás létrehozása során!", { title: "Hiba" });
   }
 }
 
@@ -1341,16 +1567,16 @@ function getSelectedValues(container) {
 }
 
 async function deleteCatch(fogasId) {
-  if (!window.confirm("Biztosan törölni szeretnéd ezt a fogást?")) {
+  if (!(await showAppConfirm("Biztosan törölni szeretnéd ezt a fogást?", { confirmLabel: "Törlés" }))) {
     return;
   }
 
   try {
     await apiRequest(`/fogasnaplo/${fogasId}`, { method: "DELETE" });
     await loadSajatFogasok();
-    alert("A fogás sikeresen törölve.");
+    await showAppSuccess("A fogás sikeresen törölve.");
   } catch (error) {
-    alert(error.message || "Nem sikerült törölni a fogást.");
+    showAppAlert(error.message || "Nem sikerült törölni a fogást.", { title: "Hiba" });
   }
 }
 
@@ -1359,6 +1585,15 @@ function renderMultiSelect(container, options, selectedValues = []) {
 
   const uniqueSelected = [...new Set(selectedValues.map((value) => Number(value)).filter((value) => !Number.isNaN(value)))];
   const isSingleSelect = container.dataset.singleSelect === "true";
+  const allowsBudapestPair = container.dataset.allowBudapestPair === "true";
+  const specialCountyIds = new Set(
+    allowsBudapestPair
+      ? options
+          .filter((item) => ["Pest", "Budapest"].includes(String(item.Nev || "").trim()))
+          .map((item) => Number(item.MegyeId ?? item.id ?? item.value))
+          .filter((value) => !Number.isNaN(value))
+      : []
+  );
 
   clearElement(container);
   syncMultiSelectDataset(container, uniqueSelected);
@@ -1392,6 +1627,18 @@ function renderMultiSelect(container, options, selectedValues = []) {
 
       if (exists) {
         nextValues = current.filter((value) => value !== numericId);
+      } else if (isSingleSelect && allowsBudapestPair && specialCountyIds.has(numericId)) {
+        const currentSpecialValues = current.filter((value) => specialCountyIds.has(value));
+
+        if (
+          current.length === 1 &&
+          currentSpecialValues.length === 1 &&
+          currentSpecialValues[0] !== numericId
+        ) {
+          nextValues = [...currentSpecialValues, numericId];
+        } else {
+          nextValues = [numericId];
+        }
       } else if (isSingleSelect) {
         nextValues = [numericId];
       } else {
@@ -1553,7 +1800,8 @@ async function handleSpeciesSubmit(event) {
     });
     resetSpeciesForm();
     await loadSpeciesAdminData();
-    showAdminFeedback("A halfaj sikeresen mentve.");
+    hideAdminFeedback();
+    await showAppSuccess("A halfaj sikeresen mentve.");
   } catch (error) {
     setSpeciesFormError(error.message || "Nem sikerült menteni a halfajt.");
   }
@@ -1588,7 +1836,8 @@ async function handleSpeciesEditSubmit(event) {
     });
     createModalInstance("speciesEditModal")?.hide();
     await loadSpeciesAdminData();
-    showAdminFeedback("A halfaj sikeresen módosítva.");
+    hideAdminFeedback();
+    await showAppSuccess("A halfaj sikeresen módosítva.");
   } catch (error) {
     setSpeciesFormError(error.message || "Nem sikerült módosítani a halfajt.", true);
   }
@@ -1606,14 +1855,15 @@ async function editSpecies(speciesId) {
 }
 
 async function deleteSpecies(speciesId) {
-  if (!window.confirm("Biztosan törölni szeretnéd ezt a halfajt?")) {
+  if (!(await showAppConfirm("Biztosan törölni szeretnéd ezt a halfajt?", { confirmLabel: "Törlés" }))) {
     return;
   }
 
   try {
     await apiRequest(`/halfajok/${speciesId}`, { method: "DELETE" });
     await loadSpeciesAdminData();
-    showAdminFeedback("A halfaj sikeresen törölve.");
+    hideAdminFeedback();
+    await showAppSuccess("A halfaj sikeresen törölve.");
   } catch (error) {
     showAdminFeedback(error.message || "Nem sikerült törölni a halfajt.", "danger");
   }
@@ -1730,8 +1980,8 @@ async function handleWaterSubmit(event) {
   clearWaterFormError(false);
 
   const payload = getWaterFormPayload();
-  if (!payload.nev || Number.isNaN(payload.vizTipusId) || payload.megyeIds.length !== 1) {
-    setWaterFormError("A név, a víztípus és pontosan egy megye megadása kötelező.");
+  if (!payload.nev || Number.isNaN(payload.vizTipusId) || !isAllowedWaterCountySelection(payload.megyeIds)) {
+    setWaterFormError("A név és a víztípus kötelező. Megyeknél egy megye adható meg, kivételként a Pest és Budapest páros.");
     return;
   }
 
@@ -1742,7 +1992,8 @@ async function handleWaterSubmit(event) {
     });
     resetWaterForm();
     await loadWatersAdminData();
-    showAdminFeedback("A vízterület sikeresen mentve.");
+    hideAdminFeedback();
+    await showAppSuccess("A vízterület sikeresen mentve.");
   } catch (error) {
     setWaterFormError(error.message || "Nem sikerült menteni a vízterületet.");
   }
@@ -1760,8 +2011,8 @@ async function handleWaterEditSubmit(event) {
     return;
   }
 
-  if (!payload.nev || Number.isNaN(payload.vizTipusId) || payload.megyeIds.length !== 1) {
-    setWaterFormError("A név, a víztípus és pontosan egy megye megadása kötelező.", true);
+  if (!payload.nev || Number.isNaN(payload.vizTipusId) || !isAllowedWaterCountySelection(payload.megyeIds)) {
+    setWaterFormError("A név és a víztípus kötelező. Megyeknél egy megye adható meg, kivételként a Pest és Budapest páros.", true);
     return;
   }
 
@@ -1772,7 +2023,8 @@ async function handleWaterEditSubmit(event) {
     });
     createModalInstance("waterEditModal")?.hide();
     await loadWatersAdminData();
-    showAdminFeedback("A vízterület sikeresen módosítva.");
+    hideAdminFeedback();
+    await showAppSuccess("A vízterület sikeresen módosítva.");
   } catch (error) {
     setWaterFormError(error.message || "Nem sikerült módosítani a vízterületet.", true);
   }
@@ -1793,14 +2045,15 @@ async function editWater(waterId) {
 }
 
 async function deleteWater(waterId) {
-  if (!window.confirm("Biztosan törölni szeretnéd ezt a vízterületet?")) {
+  if (!(await showAppConfirm("Biztosan törölni szeretnéd ezt a vízterületet?", { confirmLabel: "Törlés" }))) {
     return;
   }
 
   try {
     await apiRequest(`/vizteruletek/${waterId}`, { method: "DELETE" });
     await loadWatersAdminData();
-    showAdminFeedback("A vízterület sikeresen törölve.");
+    hideAdminFeedback();
+    await showAppSuccess("A vízterület sikeresen törölve.");
   } catch (error) {
     showAdminFeedback(error.message || "Nem sikerült törölni a vízterületet.", "danger");
   }
@@ -1895,7 +2148,7 @@ async function loadForumRepliesAdmin(topicId) {
 }
 
 async function deleteForumTopic(topicId) {
-  if (!window.confirm("Biztosan törölni szeretnéd ezt a fórum témát?")) {
+  if (!(await showAppConfirm("Biztosan törölni szeretnéd ezt a fórum témát?", { confirmLabel: "Törlés" }))) {
     return;
   }
 
@@ -1903,14 +2156,15 @@ async function deleteForumTopic(topicId) {
     await apiRequest(`/forum/admin/tema/${topicId}`, { method: "DELETE" });
     delete adminState.forumRepliesByTopic[topicId];
     await loadForumAdminData();
-    showAdminFeedback("A fórum téma sikeresen törölve.");
+    hideAdminFeedback();
+    await showAppSuccess("A fórum téma sikeresen törölve.");
   } catch (error) {
     showAdminFeedback(error.message || "Nem sikerült törölni a témát.", "danger");
   }
 }
 
 async function deleteForumReply(replyId, topicId) {
-  if (!window.confirm("Biztosan törölni szeretnéd ezt a hozzászólást?")) {
+  if (!(await showAppConfirm("Biztosan törölni szeretnéd ezt a hozzászólást?", { confirmLabel: "Törlés" }))) {
     return;
   }
 
@@ -1920,7 +2174,8 @@ async function deleteForumReply(replyId, topicId) {
     if (topicId) {
       await loadForumRepliesAdmin(topicId);
     }
-    showAdminFeedback("A hozzászólás sikeresen törölve.");
+    hideAdminFeedback();
+    await showAppSuccess("A hozzászólás sikeresen törölve.");
   } catch (error) {
     showAdminFeedback(error.message || "Nem sikerült törölni a hozzászólást.", "danger");
   }
@@ -2069,7 +2324,7 @@ async function loadAllUsers() {
    Felhasználó aktiválása/tiltása (Admin)
    ========================= */
 async function toggleUserStatus(userId) {
-  if (!confirm("Biztosan módosítod a felhasználó állapotát?")) {
+  if (!(await showAppConfirm("Biztosan módosítod a felhasználó állapotát?", { confirmLabel: "Módosítás", confirmButtonClass: "btn-warning" }))) {
     return;
   }
 
@@ -2078,10 +2333,10 @@ async function toggleUserStatus(userId) {
       method: "PUT",
     });
 
-    alert("Felhasználó állapota módosítva!");
-    loadAllUsers();
+    await loadAllUsers();
+    await showAppSuccess("Felhasználó állapota módosítva!");
   } catch (error) {
-    alert(error.message || "Hiba történt a művelet során!");
+    showAppAlert(error.message || "Hiba történt a művelet során!", { title: "Hiba" });
   }
 }
 
@@ -2316,7 +2571,7 @@ async function toggleUserStatus(userId) {
     return;
   }
 
-  if (!confirm("Biztosan m\u00F3dos\u00EDtod a felhaszn\u00E1l\u00F3 \u00E1llapot\u00E1t?")) {
+  if (!(await showAppConfirm("Biztosan módosítod a felhasználó állapotát?", { confirmLabel: "Módosítás", confirmButtonClass: "btn-warning" }))) {
     return;
   }
 
@@ -2325,10 +2580,10 @@ async function toggleUserStatus(userId) {
       method: "PUT",
     });
 
-    alert("Felhaszn\u00E1l\u00F3 \u00E1llapota m\u00F3dos\u00EDtva!");
     await loadAllUsers();
+    await showAppSuccess("Felhasználó állapota módosítva!");
   } catch (error) {
-    alert(error.message || "Hiba t\u00F6rt\u00E9nt a m\u0171velet sor\u00E1n!");
+    showAppAlert(error.message || "Hiba történt a művelet során!", { title: "Hiba" });
   }
 }
 
@@ -2346,11 +2601,10 @@ async function deleteUserAccount(userId) {
     return;
   }
 
-  const confirmed = window.confirm(
-    "Biztosan t\u00F6r\u00F6lni szeretn\u00E9d ezt a fi\u00F3kot? Ez csak tiltott fi\u00F3kn\u00E1l enged\u00E9lyezett, \u00E9s a m\u0171velet nem visszavonhat\u00F3."
-  );
-
-  if (!confirmed) {
+  if (!(await showAppConfirm(
+    "Biztosan törölni szeretnéd ezt a fiókot? Ez csak tiltott fióknál engedélyezett, és a művelet nem visszavonható.",
+    { confirmLabel: "Törlés" }
+  ))) {
     return;
   }
 
@@ -2359,10 +2613,10 @@ async function deleteUserAccount(userId) {
       method: "DELETE",
     });
 
-    alert("A fi\u00F3k sikeresen t\u00F6r\u00F6lve lett.");
     await loadAllUsers();
+    await showAppSuccess("A fiók sikeresen törölve lett.");
   } catch (error) {
-    alert(error.message || "Nem siker\u00FClt t\u00F6r\u00F6lni a fi\u00F3kot.");
+    showAppAlert(error.message || "Nem sikerült törölni a fiókot.", { title: "Hiba" });
   }
 }
 
@@ -2383,11 +2637,10 @@ async function handleDeleteProfile() {
     return;
   }
 
-  const confirmed = window.confirm(
-    "Biztosan törölni akarod a profilodat? Ha törlöd a profilt, utána már nem lehet visszahozni."
-  );
-
-  if (!confirmed) {
+  if (!(await showAppConfirm(
+    "Biztosan törölni akarod a profilodat? Ha törlöd a profilt, utána már nem lehet visszahozni.",
+    { confirmLabel: "Profil törlése" }
+  ))) {
     return;
   }
 
@@ -2412,12 +2665,12 @@ async function handleDeleteProfile() {
       );
     }
 
-    alert("A profil sikeresen törölve lett.");
+    await showAppSuccess("A profil sikeresen törölve lett.");
     clearAuthSession();
     window.location.href = "index.html";
   } catch (error) {
     console.error("Profil törlési hiba:", error);
-    alert(error.message || "Nem sikerült törölni a profilt.");
+    showAppAlert(error.message || "Nem sikerült törölni a profilt.", { title: "Hiba" });
   }
 }
 
@@ -2529,6 +2782,26 @@ function getCatchFilterElements(context) {
     empty: $("#catchListEmpty"),
     list: $("#catchListContainer"),
   };
+}
+
+function isAllowedWaterCountySelection(megyeIds = []) {
+  if (!Array.isArray(megyeIds)) {
+    return false;
+  }
+
+  const uniqueIds = [...new Set(megyeIds.map((value) => Number(value)).filter((value) => !Number.isNaN(value)))];
+  if (uniqueIds.length === 1) {
+    return true;
+  }
+
+  if (uniqueIds.length !== 2) {
+    return false;
+  }
+
+  const selectedCounties = adminState.counties.filter((county) => uniqueIds.includes(Number(county.MegyeId)));
+  const selectedNames = new Set(selectedCounties.map((county) => String(county.Nev || "").trim()));
+
+  return selectedNames.size === 2 && selectedNames.has("Pest") && selectedNames.has("Budapest");
 }
 
 function populateCatchFilterSelect(selectElement, values, placeholder) {

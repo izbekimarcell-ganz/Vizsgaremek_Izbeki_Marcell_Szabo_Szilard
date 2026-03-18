@@ -300,6 +300,69 @@ body[data-theme="light"][data-page="fogasnaplo"] .catch-list-scroll-area::-webki
   background: rgba(0, 0, 0, 0.18);
 }
 
+.water-species-chip {
+  border-radius: 999px;
+  border-color: rgba(78, 168, 255, 0.45);
+  background: transparent;
+  color: var(--text);
+}
+
+.water-species-chip:hover {
+  border-color: rgba(78, 168, 255, 0.8);
+  background: rgba(78, 168, 255, 0.12);
+  color: var(--text);
+}
+
+.water-species-chip.is-protected {
+  border-color: rgba(255, 193, 7, 0.55);
+}
+
+.water-species-chip.is-protected:hover {
+  border-color: rgba(255, 193, 7, 0.85);
+  background: rgba(255, 193, 7, 0.14);
+  color: var(--text);
+}
+
+.water-species-chip.is-active {
+  border-color: #4ea8ff;
+  background: #4ea8ff;
+  color: #081320;
+  font-weight: 700;
+}
+
+.water-species-chip.is-active.is-protected {
+  border-color: #f3c64d;
+  background: #f3c64d;
+  color: #2c2400;
+}
+
+.water-species-details {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="light"] .water-species-details {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.app-dialog-modal .modal-content {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.app-dialog-modal .modal-header,
+.app-dialog-modal .modal-footer {
+  border: 0;
+}
+
+.app-dialog-modal .modal-title,
+.app-dialog-modal .modal-body {
+  color: var(--text);
+}
+
 /* =========================
    Form elemek
    ========================= */

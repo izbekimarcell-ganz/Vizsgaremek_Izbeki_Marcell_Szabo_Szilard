@@ -16,7 +16,7 @@ if (registerForm) {
     }
 
     if (password !== confirmPassword) {
-      alert("A két jelszó nem egyezik.");
+      await showAppAlert("A két jelszó nem egyezik.", { title: "Hiba" });
       return;
     }
 
@@ -39,19 +39,20 @@ if (registerForm) {
         : await response.text();
 
       if (!response.ok) {
-        alert(
+        await showAppAlert(
           typeof data === "object" && data?.message
             ? data.message
-            : "Hiba történt regisztráció közben."
+            : "Hiba történt regisztráció közben.",
+          { title: "Hiba" }
         );
         return;
       }
 
-      alert("Sikeres regisztráció!");
+      await showAppSuccess("Sikeres regisztráció!");
       window.location.href = "./login.html";
     } catch (error) {
       console.error("Register fetch hiba:", error);
-      alert("Nem sikerült kapcsolódni a szerverhez.");
+      await showAppAlert("Nem sikerült kapcsolódni a szerverhez.", { title: "Hiba" });
     }
   });
 }

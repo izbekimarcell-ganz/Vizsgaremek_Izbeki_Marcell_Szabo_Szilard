@@ -21,6 +21,38 @@ function mapWaterPayload(body = {}) {
   };
 }
 
+async function hasAllowedCountySelection(connection, megyeIds) {
+  if (!Array.isArray(megyeIds) || !megyeIds.length) {
+    return false;
+  }
+
+  if (megyeIds.length === 1) {
+    return true;
+  }
+
+  if (megyeIds.length !== 2) {
+    return false;
+  }
+
+  const result = await new sql.Request(connection)
+    .input("megyeIdsCsv", sql.NVarChar(100), megyeIds.join(","))
+    .query(`
+      SELECT Nev
+      FROM Megye
+      WHERE MegyeId IN (
+        SELECT TRY_CAST(value AS INT)
+        FROM STRING_SPLIT(@megyeIdsCsv, ',')
+        WHERE value <> ''
+      )
+    `);
+
+  const countyNames = new Set(
+    result.recordset.map((row) => String(row.Nev || "").trim())
+  );
+
+  return countyNames.size === 2 && countyNames.has("Pest") && countyNames.has("Budapest");
+}
+
 async function replaceWaterRelations(transaction, vizteruletId, megyeIds, halfajIds) {
   await new sql.Request(transaction)
     .input("vizteruletId", sql.Int, vizteruletId)
@@ -188,7 +220,7 @@ async function getWaterDetails(req, res) {
             h.Vedett,
             h.MinMeretCm,
             h.NapiLimit,
-            vh.Megjegyzes
+            h.Megjegyzes
           FROM VizteruletHalfaj vh
           INNER JOIN Halfaj h ON h.HalfajId = vh.HalfajId
           WHERE vh.VizteruletId = @vizteruletId
@@ -228,15 +260,24 @@ async function createWater(req, res) {
   try {
     const payload = mapWaterPayload(req.body);
 
-    if (!payload.nev || Number.isNaN(payload.vizTipusId) || payload.megyeIds.length !== 1) {
+    if (!payload.nev || Number.isNaN(payload.vizTipusId)) {
       return res.status(400).json({
-        message: "A nev, a viztipus es pontosan egy megye megadasa kotelezo.",
+        message: "A nev es a viztipus megadasa kotelezo.",
       });
     }
 
     const pool = await poolPromise;
     transaction = new sql.Transaction(pool);
     await transaction.begin();
+
+    const validCountySelection = await hasAllowedCountySelection(transaction, payload.megyeIds);
+
+    if (!validCountySelection) {
+      await transaction.rollback();
+      return res.status(400).json({
+        message: "Pontosan egy megye adhato meg, kivetel a Pest es Budapest paros.",
+      });
+    }
 
     const duplicateExists = await hasDuplicateWater(transaction, payload);
 
@@ -298,15 +339,24 @@ async function updateWater(req, res) {
       });
     }
 
-    if (!payload.nev || Number.isNaN(payload.vizTipusId) || payload.megyeIds.length !== 1) {
+    if (!payload.nev || Number.isNaN(payload.vizTipusId)) {
       return res.status(400).json({
-        message: "A nev, a viztipus es pontosan egy megye megadasa kotelezo.",
+        message: "A nev es a viztipus megadasa kotelezo.",
       });
     }
 
     const pool = await poolPromise;
     transaction = new sql.Transaction(pool);
     await transaction.begin();
+
+    const validCountySelection = await hasAllowedCountySelection(transaction, payload.megyeIds);
+
+    if (!validCountySelection) {
+      await transaction.rollback();
+      return res.status(400).json({
+        message: "Pontosan egy megye adhato meg, kivetel a Pest es Budapest paros.",
+      });
+    }
 
     const duplicateExists = await hasDuplicateWater(transaction, {
       ...payload,

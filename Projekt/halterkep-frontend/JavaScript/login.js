@@ -37,10 +37,11 @@
         : await response.text();
 
       if (!response.ok) {
-        alert(
+        await showAppAlert(
           typeof data === "object" && data?.message
             ? data.message
-            : "Hibás bejelentkezés."
+            : "Hibás bejelentkezés.",
+          { title: "Hiba" }
         );
         return;
       }
@@ -52,14 +53,14 @@
         sessionStorage.setItem("authUser", JSON.stringify(data.user));
       }
 
-      alert("Sikeres bejelentkezés!");
+      await showAppSuccess("Sikeres bejelentkezés!");
       const pendingRedirect =
         typeof consumePendingRedirect === "function" ? consumePendingRedirect() : null;
       const target = pendingRedirect || "./index.html";
       window.location.href = target;
     } catch (error) {
       console.error("Login fetch hiba:", error);
-      alert("Nem sikerült kapcsolódni a szerverhez.");
+      await showAppAlert("Nem sikerült kapcsolódni a szerverhez.", { title: "Hiba" });
     }
 
     form.classList.add("was-validated");
