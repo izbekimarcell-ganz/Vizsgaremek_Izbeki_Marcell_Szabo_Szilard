@@ -42,6 +42,10 @@ const deleteProfile = async (req, res) => {
       await new sql.Request(transaction)
         .input("userId", sql.Int, parseInt(userId, 10))
         .query(`
+          DELETE FROM BaratKerelem
+          WHERE KezdemenyezoFelhasznaloId = @userId
+             OR CimzettFelhasznaloId = @userId;
+
           DELETE FROM ForumHozzaszolas
           WHERE FelhasznaloId = @userId;
 

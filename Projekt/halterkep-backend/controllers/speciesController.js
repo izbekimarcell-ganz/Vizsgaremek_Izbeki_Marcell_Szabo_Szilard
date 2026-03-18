@@ -181,20 +181,38 @@ async function deleteSpecies(req, res) {
 
     const usage = usageResult.recordset[0];
 
-    if (usage.KapcsolatokSzama > 0 || usage.FogasokSzama > 0) {
+    if (usage.FogasokSzama > 0) {
       return res.status(409).json({
-        message: "A halfaj nem torolheto, mert kapcsolodik mas adatokhoz.",
+        message: "A halfaj nem torolheto, mert mar kapcsolodik fogasnaplo bejegyzeshez.",
       });
     }
 
-    const result = await pool
-      .request()
-      .input("halfajId", sql.Int, halfajId)
-      .query(`
-        DELETE FROM Halfaj
-        OUTPUT DELETED.HalfajId
-        WHERE HalfajId = @halfajId
-      `);
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+
+    let result;
+
+    try {
+      await new sql.Request(transaction)
+        .input("halfajId", sql.Int, halfajId)
+        .query(`
+          DELETE FROM VizteruletHalfaj
+          WHERE HalfajId = @halfajId;
+        `);
+
+      result = await new sql.Request(transaction)
+        .input("halfajId", sql.Int, halfajId)
+        .query(`
+          DELETE FROM Halfaj
+          OUTPUT DELETED.HalfajId
+          WHERE HalfajId = @halfajId
+        `);
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
 
     if (!result.recordset.length) {
       return res.status(404).json({

@@ -134,6 +134,10 @@ async function deleteUserByAdmin(req, res) {
       await new sql.Request(transaction)
         .input("userId", sql.Int, userId)
         .query(`
+          DELETE FROM BaratKerelem
+          WHERE KezdemenyezoFelhasznaloId = @userId
+             OR CimzettFelhasznaloId = @userId;
+
           DELETE FROM ForumHozzaszolas
           WHERE FelhasznaloId = @userId;
 

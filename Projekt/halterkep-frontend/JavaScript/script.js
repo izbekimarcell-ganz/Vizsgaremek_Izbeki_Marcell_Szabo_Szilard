@@ -147,6 +147,7 @@ function setActiveNavLink() {
 
     if (
       (page === "index" && href === "index.html") ||
+      (page === "baratok" && href === "baratok.html") ||
       (page === "vizteruletek" && href === "vizteruletek.html") ||
       (page === "fogasnaplo" && href === "fogasnaplo.html") ||
       (page === "forum" && href === "forum.html") ||
@@ -1127,6 +1128,7 @@ function prepareForumPage() {
   const topicForm = $("#forumTopicForm");
   const replyForm = $("#forumReplyForm");
   const topicsList = $("#forumTopicsList");
+  updateForumAuthUi();
 
   if (topicForm) {
     topicForm.addEventListener("submit", handleCreateTopic);
@@ -1233,6 +1235,30 @@ async function handleCreateTopic(event) {
     loadForumTopics();
   } catch (error) {
     showAppAlert(error.message || "Hiba a téma létrehozása során!", { title: "Hiba" });
+  }
+}
+
+function updateForumAuthUi() {
+  const topicForm = $("#forumTopicForm");
+  const replyForm = $("#forumReplyForm");
+  const topicLoginHint = $("#forumTopicLoginHint");
+  const replyLoginHint = $("#forumReplyLoginHint");
+  const loggedIn = isLoggedIn();
+
+  if (topicForm) {
+    topicForm.classList.toggle("d-none", !loggedIn);
+  }
+
+  if (replyForm) {
+    replyForm.classList.toggle("d-none", !loggedIn);
+  }
+
+  if (topicLoginHint) {
+    topicLoginHint.classList.toggle("d-none", loggedIn);
+  }
+
+  if (replyLoginHint) {
+    replyLoginHint.classList.toggle("d-none", loggedIn);
   }
 }
 
@@ -2476,13 +2502,19 @@ async function updateNavbar() {
   const registerNavItem = $("#registerNavItem");
   const logoutNavItem = $("#logoutNavItem");
   const friendSearchNav = $(".friend-search-nav");
+  const catchLogNavLink = findNavigationLink([
+    DEFAULT_NAV_ITEMS[1].defaultHref,
+    DEFAULT_NAV_ITEMS[1].adminShortcut.href,
+  ]);
+  const catchLogNavItem = catchLogNavLink?.closest(".nav-item");
   const user = getStoredUser();
   const isAdmin = isAdminUser(user);
+  const loggedIn = isLoggedIn();
 
   updateNavigationShortcuts(user);
   updateHomePageShortcuts(user);
 
-  if (isLoggedIn()) {
+  if (loggedIn) {
     if (loginNavItem) loginNavItem.classList.add("d-none");
     if (registerNavItem) registerNavItem.classList.add("d-none");
     if (logoutNavItem) logoutNavItem.classList.remove("d-none");
@@ -2496,8 +2528,16 @@ async function updateNavbar() {
     if (adminNavItem) adminNavItem.classList.add("d-none");
   }
 
+  if (catchLogNavItem) {
+    catchLogNavItem.classList.toggle("d-none", !loggedIn);
+  }
+
   if (friendSearchNav) {
-    friendSearchNav.classList.toggle("d-none", isAdmin);
+    friendSearchNav.classList.toggle("d-none", isAdmin || !loggedIn);
+  }
+
+  if (document.body.dataset.page === "forum") {
+    updateForumAuthUi();
   }
 
   updateAccountShortcut(user);

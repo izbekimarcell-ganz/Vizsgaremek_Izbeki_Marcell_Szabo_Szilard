@@ -213,6 +213,96 @@ body[data-theme="light"] .brand-title {
   cursor: pointer;
 }
 
+.friend-notification-nav {
+  position: relative;
+}
+
+.friend-notification-toggle {
+  position: relative;
+  min-width: 2.75rem;
+  border-radius: 0.75rem;
+}
+
+.friend-notification-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.friend-notification-count {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #ff4d4f;
+  color: #fff;
+  font-size: 0.72rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.friend-notification-menu {
+  width: min(92vw, 24rem);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.friend-notification-header {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.friend-notification-list {
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.friend-notification-item,
+.friend-notification-empty,
+.friend-user-card,
+.friend-list-empty {
+  padding: 1rem;
+  color: var(--text);
+}
+
+.friend-notification-item + .friend-notification-item {
+  border-top: 1px solid var(--border);
+}
+
+.friend-notification-empty,
+.friend-list-empty {
+  color: var(--muted);
+}
+
+.friend-user-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.friend-user-card.is-friend {
+  background: rgba(59, 185, 119, 0.12);
+}
+
+body[data-theme="light"] .friend-user-card {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+body[data-theme="light"] .friend-user-card.is-friend {
+  background: rgba(59, 185, 119, 0.16);
+}
+
 /* =========================
    Mobil felső vezérlők
    ========================= */
@@ -638,5 +728,10 @@ body[data-theme="light"] .admin-forum-item {
 @media (max-width: 767.98px) {
   #profileCatchesList {
     grid-template-columns: 1fr;
+  }
+
+  .friend-user-card {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

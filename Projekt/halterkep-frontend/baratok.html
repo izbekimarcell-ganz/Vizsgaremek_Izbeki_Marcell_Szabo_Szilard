@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HalTérkép - Fórum</title>
+  <title>HalTérkép - Barátok</title>
 
   <link rel="icon" type="image/png" href="assets/favicon.png" />
   <link
@@ -12,9 +12,8 @@
   />
   <link rel="stylesheet" href="CSS/styles.css">
 </head>
-<body data-page="forum" data-theme="dark">
+<body data-page="baratok" data-theme="dark">
 
-  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
     <div class="container nav-container">
       <a class="navbar-brand d-flex align-items-center gap-3" href="index.html">
@@ -73,129 +72,67 @@
       </div>
     </div>
   </nav>
-  <!-- Navbar vége -->
 
-  <!-- Fő tartalom -->
   <main class="main-content py-5">
     <div class="container">
       <div class="mb-4">
-        <h1 class="mb-1">Fórum</h1>
-        <p class="section-text mb-0">Témák, hozzászólások és beszélgetések.</p>
+        <h1 class="display-6 fw-bold mb-2">Barátok</h1>
+        <p class="section-text mb-0">Keress felhasználókat, küldj barátkérelmet, és kezeld a meglévő barátaidat.</p>
+      </div>
+
+      <div class="card app-card mb-4">
+        <div class="card-body">
+          <label class="form-label" for="friendsSearchInputPage">Felhasználó keresése</label>
+          <input
+            id="friendsSearchInputPage"
+            class="form-control app-input"
+            type="search"
+            placeholder="Kezdj el gépelni egy felhasználónevet..."
+            autocomplete="off"
+          />
+        </div>
       </div>
 
       <div class="row g-4">
-        <!-- Új téma -->
-        <div class="col-lg-5">
-          <div class="card app-card">
+        <div class="col-lg-6">
+          <div class="card app-card h-100">
             <div class="card-body">
-              <h2 class="h5 mb-3">Új téma</h2>
-
-              <div id="forumTopicLoginHint" class="section-text d-none">
-                Be kell lépni, hogy új témát lehessen írni.
+              <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+                <div>
+                  <h2 class="h5 mb-1">Nem barát felhasználók</h2>
+                  <div class="section-text small">Itt tudsz új barátkérelmet küldeni.</div>
+                </div>
+                <span id="friendsNonFriendsCount" class="badge text-bg-secondary">0</span>
               </div>
-
-              <form id="forumTopicForm" enctype="multipart/form-data" novalidate>
-                <div class="mb-3">
-                  <label class="form-label" for="topicTitle">Cím</label>
-                  <input id="topicTitle" name="cim" type="text" class="form-control app-input" />
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label" for="topicBody">Szöveg</label>
-                  <textarea id="topicBody" name="szoveg" class="form-control app-input" rows="5"></textarea>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label" for="topicImage">Kép</label>
-                  <input id="topicImage" name="kep" type="file" accept="image/*" class="form-control app-input" />
-                </div>
-
-                <button id="createTopicButton" class="btn btn-primary" type="submit">Közzététel</button>
-              </form>
-
-              <div id="forumTopicFormMessage" class="small mt-3"></div>
+              <div id="friendsNonFriendsList" class="d-grid gap-3"></div>
             </div>
           </div>
         </div>
 
-        <!-- Témalisták -->
-        <div class="col-lg-7">
-          <div class="card app-card">
+        <div class="col-lg-6">
+          <div class="card app-card h-100">
             <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center gap-2 mb-3 flex-wrap">
-                <h2 class="h5 mb-0">Témák</h2>
-                <span id="forumTopicsCount" class="section-text small"></span>
+              <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+                <div>
+                  <h2 class="h5 mb-1">Barátok</h2>
+                  <div class="section-text small">Az elfogadott barátaid listája.</div>
+                </div>
+                <span id="friendsListCount" class="badge text-bg-secondary">0</span>
               </div>
-
-              <div id="forumTopicsLoading" class="section-text d-none">Betöltés...</div>
-              <div id="forumTopicsError" class="text-danger d-none"></div>
-              <div id="forumTopicsEmpty" class="section-text d-none">Nincs még fórumtéma.</div>
-
-              <div id="forumTopicsList">
-                <!-- Dinamikus témák ide -->
-              </div>
+              <div id="friendsList" class="d-grid gap-3"></div>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Kiválasztott téma -->
-      <div id="forumSelectedTopicCard" class="card app-card mt-4 d-none">
-        <div class="card-body">
-          <div class="mb-4">
-            <h2 id="selectedTopicTitle" class="h4 mb-2"></h2>
-            <div id="selectedTopicMeta" class="section-text small"></div>
-          </div>
-
-          <div id="forumPostsLoading" class="section-text d-none">Betöltés...</div>
-          <div id="forumPostsError" class="text-danger d-none"></div>
-          <div id="forumPostsEmpty" class="section-text d-none">Még nincs hozzászólás.</div>
-
-          <div id="forumPostsList" class="mb-4">
-            <!-- Dinamikus hozzászólások ide -->
-          </div>
-
-          <hr>
-
-          <h3 class="h5 mb-3">Válasz írása</h3>
-
-          <div id="forumReplyLoginHint" class="section-text d-none mb-3">
-            Be kell lépni, hogy hozzászólást lehessen írni.
-          </div>
-
-          <form id="forumReplyForm" novalidate>
-            <input type="hidden" id="replyTopicId" name="temaId" />
-
-            <div class="mb-3">
-              <label class="form-label" for="replyBody">Hozzászólás</label>
-              <textarea id="replyBody" name="szoveg" class="form-control app-input" rows="4"></textarea>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label" for="replyImage">Kép</label>
-              <input id="replyImage" name="kep" type="file" accept="image/*" class="form-control app-input" />
-            </div>
-
-            <button id="sendReplyButton" class="btn btn-primary" type="submit">Küldés</button>
-          </form>
-
-          <div id="forumReplyFormMessage" class="small mt-3"></div>
-        </div>
-      </div>
-
     </div>
   </main>
-  <!-- Fő tartalom vége -->
 
-  <!-- Footer -->
   <footer class="py-4 border-top border-secondary-subtle app-footer">
     <div class="container text-center footer-text">© HalTérkép</div>
   </footer>
-  <!-- Footer vége -->
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="JavaScript/script.js"></script>
   <script src="JavaScript/friend-search.js"></script>
-
 </body>
 </html>
