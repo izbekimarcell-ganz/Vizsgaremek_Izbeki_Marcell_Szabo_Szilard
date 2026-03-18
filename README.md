@@ -25,4 +25,4 @@
 
 ## 2026.03.15
 
-- A halakról a leírást fel lehessen hozni pl egy lenyíló ablakban.
+- A halakról a leírást fel lehessen hozni pl egy lenyíló ablakban **(KÉSZ)**
