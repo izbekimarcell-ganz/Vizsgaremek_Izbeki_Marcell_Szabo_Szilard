@@ -3,7 +3,7 @@
 ## 2026.03.10
 
 - Profilhoz fogásnapló hozzáadása **(Kész)**
-- Fórumon keresztül más felhasználók profilja megnézhető **()**
+- ~~Fórumon keresztül más felhasználók profilja megnézhető **()**~~
 - Lehessen privátra rakni a profilt **()**
 - Táblázatban a kapcsolatokat átszerkeszteni (pl. a szerepkör beleírása a felhasználóba) **(KÉSZ)**
 
@@ -12,7 +12,7 @@
 - Törzsadatok funkciók az adminban nem működnek, tehát azt meg kell csinálni **(KÉSZ)**
 - A fogásnapló és fórum képfeltöltés megjavítása (nem látszik a kép) **(KÉSZ)**
 - Hozzáadni egy új oldalt, ahol lehet böngészni más felhasználókat **(KÉSZ)**
-- Lehessen barátkérelmet küldeni **()**
+- Lehessen barátkérelmet küldeni **(Kész)**
 - Lehessen a fiókot úgy beállítani, hogy csak a barátok lássák és mindenki másnak privát legyen **()**
 - A vízterületeknél az információkat pontosítani (a halfajokból csak kevés van feltüntetve, pl. Dunán csak 4 hal van pedig sokkal több van) **()**
 - Jelszó újrakérés megcsinálása offline módon is (biztonsági kérdés) **()**
