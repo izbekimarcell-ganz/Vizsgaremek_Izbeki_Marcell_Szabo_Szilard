@@ -18,7 +18,7 @@
 - Jelszó újrakérés megcsinálása offline módon is (biztonsági kérdés) **()**
 - Admin support kérése **()**
 - A főoldal átrendezése **()**
-- Térkép tervezésének és megcsinálásának elkezdése **()**
+- ~~Térkép tervezésének és megcsinálásának elkezdése **()**~~ törölve
 - Regisztrációnál az adatok ellenőrzése **(KÉSZ)**
 - Marketplace csinálás **()**
 - Pici redesign(nagyon látszik az ai) **()**
