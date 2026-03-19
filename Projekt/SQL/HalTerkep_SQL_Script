@@ -48,6 +48,8 @@ CREATE TABLE dbo.Felhasznalo
     Felhasznalonev     NVARCHAR(50)  NOT NULL,
     Email              NVARCHAR(100) NOT NULL,
     JelszoHash         NVARCHAR(255) NOT NULL,
+    BiztonsagiKerdes   NVARCHAR(200) NULL,
+    BiztonsagiValaszHash NVARCHAR(255) NULL,
     Admin              BIT           NOT NULL CONSTRAINT DF_Felhasznalo_Admin DEFAULT (0),
     Privat             BIT           NOT NULL CONSTRAINT DF_Felhasznalo_Privat DEFAULT (0),
     Letrehozva         DATETIME2     NOT NULL CONSTRAINT DF_Felhasznalo_Letrehozva DEFAULT (SYSUTCDATETIME()),
@@ -349,12 +351,14 @@ BEGIN TRY
     IF NOT EXISTS (SELECT 1 FROM dbo.Felhasznalo WHERE Felhasznalonev = N'admin')
     BEGIN
         INSERT INTO dbo.Felhasznalo
-            (Felhasznalonev, Email, JelszoHash, Admin, Letrehozva, Aktiv)
+            (Felhasznalonev, Email, JelszoHash, BiztonsagiKerdes, BiztonsagiValaszHash, Admin, Letrehozva, Aktiv)
         VALUES
             (
                 N'admin',
                 N'admin@gmail.com',
                 N'$2b$10$o17Dedk38RvG6XvHW5NTxO5nrtK3SsgJSO1c4CpYOtulf/b8zS1l2',
+                NULL,
+                NULL,
                 1,
                 SYSUTCDATETIME(),
                 1
@@ -364,12 +368,14 @@ BEGIN TRY
     IF NOT EXISTS (SELECT 1 FROM dbo.Felhasznalo WHERE Felhasznalonev = N'Felhasznalo')
     BEGIN
         INSERT INTO dbo.Felhasznalo
-            (Felhasznalonev, Email, JelszoHash, Admin, Letrehozva, Aktiv)
+            (Felhasznalonev, Email, JelszoHash, BiztonsagiKerdes, BiztonsagiValaszHash, Admin, Letrehozva, Aktiv)
         VALUES
             (
                 N'Felhasznalo',
                 N'felhasznalo@gmail.com',
                 N'$2b$10$eCt7i8Nh7MIGJEnZktn6JuQsu4B2zHpE7.sFKilGmKjsLwvknwZNO',
+                N'Mi volt a beceneved gyerekkorodban?',
+                N'$2b$10$2o9hHes1Mx/BgPbwR1qiLeNsUbgJWv1Yw3iG5FoHCXF84YLYBgUWa',
                 0,
                 SYSUTCDATETIME(),
                 1
@@ -539,4 +545,6 @@ Teszt felhasználó:
 Felhasználónév: Felhasznalo
 Email: felhasznalo@gmail.com
 Jelszó: Felhasznalo123!
+Biztonsági kérdés: Mi volt a beceneved gyerekkorodban?
+Biztonsági válasz: felhasznalo
 */

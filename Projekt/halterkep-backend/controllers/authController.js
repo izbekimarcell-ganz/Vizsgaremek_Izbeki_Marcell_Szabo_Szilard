@@ -4,6 +4,14 @@ const { sql, poolPromise } = require("../DbConfig");
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d).+$/;
+const SECURITY_QUESTIONS = [
+  "Mi volt a beceneved gyerekkorodban?",
+  "Mi volt az elso haziallatod neve?",
+  "Mi a kedvenc filmed cime?",
+  "Mi annak a varosnak a neve, ahol altalanos iskolaba jartal?",
+  "Mi volt a kedvenc tantargyad gyerekkorodban?",
+  "Mi az edesanyad keresztneve?",
+];
 
 const mapUser = (user) => ({
   id: user.FelhasznaloId,
@@ -15,38 +23,57 @@ const mapUser = (user) => ({
   private: Boolean(user.Privat),
 });
 
-const normalizeEmail = (email) => email.trim().toLowerCase();
+const normalizeEmail = (email = "") => email.trim().toLowerCase();
+const normalizeSecurityAnswer = (answer = "") =>
+  answer.trim().toLowerCase().replace(/\s+/g, " ");
 
-const validateRegisterInput = ({ email, username, password }) => {
+function validatePassword(password) {
+  if (password.length < 8) {
+    return "A jelszonak legalabb 8 karakter hosszu kell legyen.";
+  }
+
+  if (!PASSWORD_REGEX.test(password)) {
+    return "A jelszonak tartalmaznia kell legalabb egy nagybetut es egy szamot.";
+  }
+
+  return null;
+}
+
+function validateRegisterInput({ email, username, password, securityQuestion, securityAnswer }) {
   const normalizedEmail = normalizeEmail(email);
   const trimmedUsername = username.trim();
 
   if (!EMAIL_REGEX.test(normalizedEmail)) {
-    return "Adj meg egy érvényes email címet.";
+    return "Adj meg egy ervenyes email cimet.";
   }
 
   if (trimmedUsername.length < 3 || trimmedUsername.length > 50) {
-    return "A felhasználónév minimum 3, maximum 50 karakter lehet.";
+    return "A felhasznalonev minimum 3, maximum 50 karakter lehet.";
   }
 
-  if (password.length < 8) {
-    return "A jelszónak legalább 8 karakter hosszúnak kell lennie.";
+  const passwordError = validatePassword(password);
+  if (passwordError) {
+    return passwordError;
   }
 
-  if (!PASSWORD_REGEX.test(password)) {
-    return "A jelszónak tartalmaznia kell legalább egy nagybetűt és egy számot.";
+  if (!SECURITY_QUESTIONS.includes(securityQuestion)) {
+    return "Valassz egy ervenyes biztonsagi kerdest.";
+  }
+
+  if (normalizeSecurityAnswer(securityAnswer).length < 2) {
+    return "Adj meg egy biztonsagi valaszt is.";
   }
 
   return null;
-};
+}
 
-const register = async (req, res) => {
+async function register(req, res) {
   try {
-    const { email, username, password } = req.body;
+    const { email, username, password, securityQuestion, securityAnswer } = req.body;
 
-    if (!email || !username || !password) {
+    if (!email || !username || !password || !securityQuestion || !securityAnswer) {
       return res.status(400).json({
-        message: "Az email, felhasználónév és jelszó kötelező.",
+        message: "Az email, felhasznalonev, jelszo, biztonsagi kerdes es valasz kotelezo.",
       });
     }
 
@@ -56,6 +83,8 @@ const register = async (req, res) => {
       email,
       username,
       password,
+      securityQuestion,
+      securityAnswer,
     });
 
     if (validationError) {
@@ -65,7 +94,6 @@ const register = async (req, res) => {
     }
 
     const pool = await poolPromise;
-
     const existingUser = await pool
       .request()
       .input("email", sql.NVarChar(100), normalizedEmail)
@@ -81,24 +109,28 @@ const register = async (req, res) => {
     if (foundUser) {
       if ((foundUser.Email || "").trim().toLowerCase() === normalizedEmail) {
         return res.status(409).json({
-          message: "Ez az email cím már foglalt.",
+          message: "Ez az email cim mar foglalt.",
         });
       }
 
       return res.status(409).json({
-        message: "Ez a felhasználónév már foglalt.",
+        message: "Ez a felhasznalonev mar foglalt.",
       });
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const securityAnswerHash = await bcrypt.hash(normalizeSecurityAnswer(securityAnswer), 10);
 
     const result = await pool
       .request()
       .input("username", sql.NVarChar(50), trimmedUsername)
       .input("email", sql.NVarChar(100), normalizedEmail)
       .input("passwordHash", sql.NVarChar(255), passwordHash)
+      .input("securityQuestion", sql.NVarChar(200), securityQuestion)
+      .input("securityAnswerHash", sql.NVarChar(255), securityAnswerHash)
       .query(`
-        INSERT INTO Felhasznalo (Felhasznalonev, Email, JelszoHash)
+        INSERT INTO Felhasznalo
+          (Felhasznalonev, Email, JelszoHash, BiztonsagiKerdes, BiztonsagiValaszHash)
         OUTPUT
           INSERTED.FelhasznaloId,
           INSERTED.Felhasznalonev,
@@ -107,11 +139,12 @@ const register = async (req, res) => {
           INSERTED.Aktiv,
           INSERTED.Letrehozva,
           INSERTED.Privat
-        VALUES (@username, @email, @passwordHash)
+        VALUES
+          (@username, @email, @passwordHash, @securityQuestion, @securityAnswerHash)
       `);
 
     return res.status(201).json({
-      message: "Sikeres regisztráció.",
+      message: "Sikeres regisztracio.",
       user: mapUser(result.recordset[0]),
     });
   } catch (error) {
@@ -119,31 +152,31 @@ const register = async (req, res) => {
 
     if (error?.number === 2601 || error?.number === 2627) {
       return res.status(409).json({
-        message: "Az email cím vagy a felhasználónév már foglalt.",
+        message: "Az email cim vagy a felhasznalonev mar foglalt.",
       });
     }
 
     return res.status(500).json({
-      message: "Szerverhiba történt.",
+      message: "Szerverhiba tortent.",
     });
   }
-};
+}
 
-const login = async (req, res) => {
+async function login(req, res) {
   try {
     const { identifier, password } = req.body;
 
     if (!identifier || !password) {
       return res.status(400).json({
-        message: "Az email vagy felhasználónév, és a jelszó kötelező.",
+        message: "Az email vagy felhasznalonev es a jelszo kotelezo.",
       });
     }
 
+    const normalizedIdentifier = identifier.trim();
     const pool = await poolPromise;
-
     const result = await pool
       .request()
-      .input("identifier", sql.NVarChar(100), identifier)
+      .input("identifier", sql.NVarChar(100), normalizedIdentifier)
       .query(`
         SELECT
           FelhasznaloId,
@@ -162,21 +195,21 @@ const login = async (req, res) => {
 
     if (!user) {
       return res.status(401).json({
-        message: "Hibás belépési adatok.",
+        message: "Hibas belepesi adatok.",
       });
     }
 
     if (!user.Aktiv) {
       return res.status(403).json({
-        message: "A fiók inaktív.",
+        message: "A fiok inaktiv.",
       });
     }
 
-    const helyesJelszo = await bcrypt.compare(password, user.JelszoHash);
+    const isCorrectPassword = await bcrypt.compare(password, user.JelszoHash);
 
-    if (!helyesJelszo) {
+    if (!isCorrectPassword) {
       return res.status(401).json({
-        message: "Hibás belépési adatok.",
+        message: "Hibas belepesi adatok.",
       });
     }
 
@@ -192,19 +225,156 @@ const login = async (req, res) => {
     );
 
     return res.status(200).json({
-      message: "Sikeres bejelentkezés.",
+      message: "Sikeres bejelentkezes.",
       token,
       user: mapUser(user),
     });
   } catch (error) {
     console.error("Login hiba:", error);
     return res.status(500).json({
-      message: "Szerverhiba történt.",
+      message: "Szerverhiba tortent.",
     });
   }
-};
+}
+
+async function getForgotPasswordQuestion(req, res) {
+  try {
+    const identifier = typeof req.body?.identifier === "string" ? req.body.identifier.trim() : "";
+
+    if (!identifier) {
+      return res.status(400).json({
+        message: "Add meg a felhasznalonevet vagy email cimet.",
+      });
+    }
+
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("identifier", sql.NVarChar(100), identifier)
+      .query(`
+        SELECT FelhasznaloId, Admin, BiztonsagiKerdes, BiztonsagiValaszHash
+        FROM Felhasznalo
+        WHERE Email = @identifier OR Felhasznalonev = @identifier
+      `);
+
+    const user = result.recordset[0];
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Nem talalhato ilyen felhasznalo.",
+      });
+    }
+
+    if (user.Admin) {
+      return res.status(403).json({
+        message: "Az admin fiok jelszava itt nem allithato vissza.",
+      });
+    }
+
+    if (!user.BiztonsagiKerdes || !user.BiztonsagiValaszHash) {
+      return res.status(400).json({
+        message: "Ehhez a fiokhoz nincs beallitva biztonsagi kerdes.",
+      });
+    }
+
+    return res.status(200).json({
+      question: user.BiztonsagiKerdes,
+    });
+  } catch (error) {
+    console.error("Biztonsagi kerdes lekeresi hiba:", error);
+    return res.status(500).json({
+      message: "Szerverhiba tortent.",
+    });
+  }
+}
+
+async function resetPasswordWithSecurityQuestion(req, res) {
+  try {
+    const identifier = typeof req.body?.identifier === "string" ? req.body.identifier.trim() : "";
+    const securityAnswer = typeof req.body?.securityAnswer === "string" ? req.body.securityAnswer : "";
+    const newPassword = typeof req.body?.newPassword === "string" ? req.body.newPassword : "";
+
+    if (!identifier || !securityAnswer || !newPassword) {
+      return res.status(400).json({
+        message: "Az azonosito, a biztonsagi valasz es az uj jelszo kotelezo.",
+      });
+    }
+
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      return res.status(400).json({
+        message: passwordError,
+      });
+    }
+
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("identifier", sql.NVarChar(100), identifier)
+      .query(`
+        SELECT FelhasznaloId, Admin, BiztonsagiValaszHash
+        FROM Felhasznalo
+        WHERE Email = @identifier OR Felhasznalonev = @identifier
+      `);
+
+    const user = result.recordset[0];
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Nem talalhato ilyen felhasznalo.",
+      });
+    }
+
+    if (user.Admin) {
+      return res.status(403).json({
+        message: "Az admin fiok jelszava itt nem allithato vissza.",
+      });
+    }
+
+    if (!user.BiztonsagiValaszHash) {
+      return res.status(400).json({
+        message: "Ehhez a fiokhoz nincs beallitva biztonsagi kerdes.",
+      });
+    }
+
+    const isCorrectAnswer = await bcrypt.compare(
+      normalizeSecurityAnswer(securityAnswer),
+      user.BiztonsagiValaszHash
+    );
+
+    if (!isCorrectAnswer) {
+      return res.status(401).json({
+        message: "A biztonsagi valasz nem egyezik.",
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await pool
+      .request()
+      .input("userId", sql.Int, user.FelhasznaloId)
+      .input("passwordHash", sql.NVarChar(255), passwordHash)
+      .query(`
+        UPDATE Felhasznalo
+        SET JelszoHash = @passwordHash
+        WHERE FelhasznaloId = @userId
+      `);
+
+    return res.status(200).json({
+      message: "A jelszo sikeresen modosult.",
+    });
+  } catch (error) {
+    console.error("Jelszo visszaallitas hiba:", error);
+    return res.status(500).json({
+      message: "Szerverhiba tortent.",
+    });
+  }
+}
 
 module.exports = {
   register,
   login,
+  getForgotPasswordQuestion,
+  resetPasswordWithSecurityQuestion,
+  SECURITY_QUESTIONS,
 };

@@ -596,18 +596,18 @@ body[data-theme="light"] .profile-calendar-day {
 }
 
 body[data-theme="light"] .profile-calendar-day.has-catches {
-  background: #f3fbf4;
-  border-color: rgba(56, 142, 60, 0.34);
-  box-shadow: inset 0 0 0 1px rgba(56, 142, 60, 0.1);
+  background: #ddf3e1;
+  border-color: rgba(46, 125, 50, 0.68);
+  box-shadow: inset 0 0 0 1px rgba(46, 125, 50, 0.22);
 }
 
 body[data-theme="light"] .profile-calendar-day.is-manually-marked {
-  border-color: rgba(56, 142, 60, 0.34);
-  box-shadow: inset 0 0 0 1px rgba(56, 142, 60, 0.1);
+  border-color: rgba(46, 125, 50, 0.68);
+  box-shadow: inset 0 0 0 1px rgba(46, 125, 50, 0.22);
 }
 
 body[data-theme="light"] .profile-calendar-day.is-manually-marked:not(.has-catches) {
-  background: #f3fbf4;
+  background: #ddf3e1;
 }
 
 .profile-calendar-day.is-selected {
@@ -617,9 +617,9 @@ body[data-theme="light"] .profile-calendar-day.is-manually-marked:not(.has-catch
 }
 
 body[data-theme="light"] .profile-calendar-day.is-selected {
-  background: #eef6ff;
-  border-color: rgba(31, 117, 216, 0.6);
-  box-shadow: inset 0 0 0 1px rgba(31, 117, 216, 0.12);
+  background: #d3e9ff;
+  border-color: rgba(25, 103, 210, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(25, 103, 210, 0.26);
 }
 
 .profile-calendar-day.has-catches.is-selected,
@@ -633,11 +633,11 @@ body[data-theme="light"] .profile-calendar-day.is-selected {
 
 body[data-theme="light"] .profile-calendar-day.has-catches.is-selected,
 body[data-theme="light"] .profile-calendar-day.is-manually-marked.is-selected {
-  background: #f3fbf4;
-  border-color: rgba(31, 117, 216, 0.6);
+  background: #daf1df;
+  border-color: rgba(25, 103, 210, 0.92);
   box-shadow:
-    inset 0 0 0 1px rgba(56, 142, 60, 0.1),
-    0 0 0 1px rgba(31, 117, 216, 0.08);
+    inset 0 0 0 1px rgba(46, 125, 50, 0.22),
+    0 0 0 1px rgba(25, 103, 210, 0.18);
 }
 
 .profile-calendar-day-number {

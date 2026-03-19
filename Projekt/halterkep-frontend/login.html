@@ -120,6 +120,83 @@
                 </div>
               </form>
 
+              <div class="border-top border-secondary-subtle mt-4 pt-4">
+                <div class="text-center mb-3">
+                  <button
+                    id="forgotPasswordToggle"
+                    class="btn btn-link text-primary text-decoration-none p-0"
+                    type="button"
+                  >
+                    Elfelejtetted a jelszavad?
+                  </button>
+                </div>
+
+                <div id="forgotPasswordPanel" class="d-none">
+                  <form id="forgotLookupForm" novalidate>
+                    <div class="mb-3">
+                      <label class="form-label" for="forgotIdentifier">Felhasználónév vagy Email</label>
+                      <input
+                        id="forgotIdentifier"
+                        name="elfelejtettAzonosito"
+                        class="form-control app-input"
+                        required
+                        autocomplete="username"
+                      />
+                    </div>
+
+                    <button class="btn btn-outline-primary w-100" type="submit">
+                      Biztonsági kérdés betöltése
+                    </button>
+                  </form>
+
+                  <form id="forgotResetForm" class="d-none mt-4" novalidate>
+                    <div class="mb-3">
+                      <label class="form-label">Biztonsági kérdés</label>
+                      <div id="forgotQuestionText" class="form-control app-input py-3" aria-live="polite"></div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label" for="forgotSecurityAnswer">Válasz</label>
+                      <input
+                        id="forgotSecurityAnswer"
+                        name="elfelejtettValasz"
+                        class="form-control app-input"
+                        required
+                        autocomplete="off"
+                      />
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label" for="forgotNewPassword">Új jelszó</label>
+                      <input
+                        id="forgotNewPassword"
+                        name="ujJelszo"
+                        type="password"
+                        class="form-control app-input"
+                        required
+                        autocomplete="new-password"
+                      />
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label" for="forgotNewPasswordConfirm">Új jelszó megerősítése</label>
+                      <input
+                        id="forgotNewPasswordConfirm"
+                        name="ujJelszoConfirm"
+                        type="password"
+                        class="form-control app-input"
+                        required
+                        autocomplete="new-password"
+                      />
+                    </div>
+
+                    <button class="btn btn-primary w-100" type="submit">
+                      Új jelszó mentése
+                    </button>
+                  </form>
+                </div>
+              </div>
+
               <div id="loginMessage" class="alert mt-3 d-none"></div>
             </div>
           </div>

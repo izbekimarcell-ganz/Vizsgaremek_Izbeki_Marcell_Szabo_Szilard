@@ -1,4 +1,4 @@
-﻿const registerForm = document.getElementById("registerForm");
+const registerForm = document.getElementById("registerForm");
 
 if (registerForm) {
   registerForm.addEventListener("submit", async (event) => {
@@ -9,6 +9,8 @@ if (registerForm) {
     const username = document.getElementById("registerUsername").value.trim();
     const password = document.getElementById("registerPassword").value;
     const confirmPassword = document.getElementById("registerPasswordConfirm").value;
+    const securityQuestion = document.getElementById("registerSecurityQuestion").value;
+    const securityAnswer = document.getElementById("registerSecurityAnswer").value.trim();
 
     if (!registerForm.checkValidity()) {
       registerForm.classList.add("was-validated");
@@ -16,7 +18,7 @@ if (registerForm) {
     }
 
     if (password !== confirmPassword) {
-      await showAppAlert("A két jelszó nem egyezik.", { title: "Hiba" });
+      await showAppAlert("A ket jelszo nem egyezik.", { title: "Hiba" });
       return;
     }
 
@@ -30,6 +32,8 @@ if (registerForm) {
           email,
           username,
           password,
+          securityQuestion,
+          securityAnswer,
         }),
       });
 
@@ -42,18 +46,17 @@ if (registerForm) {
         await showAppAlert(
           typeof data === "object" && data?.message
             ? data.message
-            : "Hiba történt regisztráció közben.",
+            : "Hiba tortent regisztracio kozben.",
           { title: "Hiba" }
         );
         return;
       }
 
-      await showAppSuccess("Sikeres regisztráció!");
+      await showAppSuccess("Sikeres regisztracio!");
       window.location.href = "./login.html";
     } catch (error) {
       console.error("Register fetch hiba:", error);
-      await showAppAlert("Nem sikerült kapcsolódni a szerverhez.", { title: "Hiba" });
+      await showAppAlert("Nem sikerult kapcsolodni a szerverhez.", { title: "Hiba" });
     }
   });
 }
-
