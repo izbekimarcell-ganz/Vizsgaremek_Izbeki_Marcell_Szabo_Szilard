@@ -55,6 +55,9 @@ const deleteProfile = async (req, res) => {
           DELETE FROM FogasNaplo
           WHERE FelhasznaloId = @userId;
 
+          DELETE FROM HorgaszNap
+          WHERE FelhasznaloId = @userId;
+
           DELETE FROM Felhasznalo
           WHERE FelhasznaloId = @userId;
         `);

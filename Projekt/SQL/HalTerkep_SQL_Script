@@ -21,6 +21,7 @@ GO
 IF OBJECT_ID(N'dbo.ForumHozzaszolas', N'U') IS NOT NULL DROP TABLE dbo.ForumHozzaszolas;
 IF OBJECT_ID(N'dbo.ForumTema', N'U') IS NOT NULL DROP TABLE dbo.ForumTema;
 
+IF OBJECT_ID(N'dbo.HorgaszNap', N'U') IS NOT NULL DROP TABLE dbo.HorgaszNap;
 IF OBJECT_ID(N'dbo.FogasNaplo', N'U') IS NOT NULL DROP TABLE dbo.FogasNaplo;
 IF OBJECT_ID(N'dbo.BaratKerelem', N'U') IS NOT NULL DROP TABLE dbo.BaratKerelem;
 
@@ -31,7 +32,7 @@ IF OBJECT_ID(N'dbo.Vizterulet', N'U') IS NOT NULL DROP TABLE dbo.Vizterulet;
 IF OBJECT_ID(N'dbo.VizTipus', N'U') IS NOT NULL DROP TABLE dbo.VizTipus;
 
 IF OBJECT_ID(N'dbo.Megye', N'U') IS NOT NULL DROP TABLE dbo.Megye;
-IF OBJECT_ID(N'dbo.Halfaj', N'U') IS NOT NULL DROP TABLE dbo.Halfaj;
+IF OBJECT_ID(N'dbo.Halfaj', N'U') IS NOT NULL DROP TABLE dbo.Halafaj;
 
 IF OBJECT_ID(N'dbo.Felhasznalo', N'U') IS NOT NULL DROP TABLE dbo.Felhasznalo;
 GO
@@ -190,6 +191,22 @@ CREATE INDEX IX_FogasNaplo_FelhasznaloId ON dbo.FogasNaplo(FelhasznaloId);
 CREATE INDEX IX_FogasNaplo_HalfajId      ON dbo.FogasNaplo(HalfajId);
 CREATE INDEX IX_FogasNaplo_VizteruletId  ON dbo.FogasNaplo(VizteruletId);
 CREATE INDEX IX_FogasNaplo_FogasIdeje    ON dbo.FogasNaplo(FogasIdeje);
+GO
+
+CREATE TABLE dbo.HorgaszNap
+(
+    HorgaszNapId    INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_HorgaszNap PRIMARY KEY,
+    FelhasznaloId   INT NOT NULL,
+    Datum           DATE NOT NULL,
+    Megjegyzes      NVARCHAR(500) NULL,
+    Letrehozva      DATETIME2 NOT NULL CONSTRAINT DF_HorgaszNap_Letrehozva DEFAULT (SYSUTCDATETIME()),
+
+    CONSTRAINT FK_HorgaszNap_Felhasznalo FOREIGN KEY (FelhasznaloId) REFERENCES dbo.Felhasznalo(FelhasznaloId),
+    CONSTRAINT UQ_HorgaszNap_Felhasznalo_Datum UNIQUE (FelhasznaloId, Datum)
+);
+GO
+
+CREATE INDEX IX_HorgaszNap_Felhasznalo_Datum ON dbo.HorgaszNap(FelhasznaloId, Datum);
 GO
 
 /* =========================================================

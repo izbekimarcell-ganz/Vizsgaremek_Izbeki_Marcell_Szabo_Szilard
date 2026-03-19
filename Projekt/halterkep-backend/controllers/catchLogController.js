@@ -99,7 +99,7 @@ async function createCatch(req, res) {
           (FelhasznaloId, HalfajId, VizteruletId, FogasIdeje, SulyKg, HosszCm, FotoUrl, Megjegyzes)
         OUTPUT INSERTED.FogasId
         VALUES
-          (@felhasznaloId, @halfajId, @vizteruletId, @fogasIdeje, @sulyKg, @hosszCm, @fotoUrl, @megjegyzes)
+          (@felhasznaloId, @halfajId, @vizteruletId, @fogasIdeje, @sulyKg, @hosszCm, @fotoUrl, @megjegyzes);
       `);
 
     return res.status(201).json({

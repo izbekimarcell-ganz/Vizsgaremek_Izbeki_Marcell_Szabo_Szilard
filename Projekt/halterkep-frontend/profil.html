@@ -197,6 +197,32 @@
                     <input id="profileCatchFilterMaxSize" type="number" min="0" class="form-control form-control-sm app-input" placeholder="pl. 80" />
                   </div>
                 </div>
+                <div id="profileFishingCalendar" class="profile-fishing-calendar d-none">
+                  <div class="profile-calendar-toolbar">
+                    <button id="profileCalendarPrev" class="btn btn-outline-light btn-sm" type="button" aria-label="Előző hónap">
+                      &lsaquo;
+                    </button>
+                    <div id="profileCalendarMonthLabel" class="fw-semibold"></div>
+                    <button id="profileCalendarNext" class="btn btn-outline-light btn-sm" type="button" aria-label="Következő hónap">
+                      &rsaquo;
+                    </button>
+                  </div>
+                  <div class="profile-calendar-weekdays" aria-hidden="true">
+                    <span>H</span>
+                    <span>K</span>
+                    <span>Sze</span>
+                    <span>Cs</span>
+                    <span>P</span>
+                    <span>Szo</span>
+                    <span>V</span>
+                  </div>
+                  <div id="profileCalendarGrid" class="profile-calendar-grid"></div>
+                  <div id="profileCalendarMonthEmpty" class="section-text small mt-3 d-none">
+                    Ebben a hónapban nincs rögzített horgásznap.
+                  </div>
+                  <div id="profileCalendarSelectedDate" class="fw-semibold mt-3 d-none"></div>
+                  <div id="profileCalendarDayCatches" class="profile-calendar-day-catches mt-3"></div>
+                </div>
                 <div id="profileCatchesList"></div>
               </div>
             </div>

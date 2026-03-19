@@ -390,6 +390,103 @@ function showAppConfirm(message, options = {}) {
   });
 }
 
+function showAppTextPrompt({
+  title = "Megjegyzés",
+  label = "Megjegyzés",
+  initialValue = "",
+  placeholder = "",
+  confirmLabel = "Mentés",
+}) {
+  if (typeof bootstrap === "undefined") {
+    const fallbackValue = window.prompt(label, initialValue);
+    return Promise.resolve(fallbackValue === null ? null : String(fallbackValue));
+  }
+
+  let modalElement = document.getElementById("appTextPromptModal");
+
+  if (!modalElement) {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div
+        class="modal fade app-dialog-modal"
+        id="appTextPromptModal"
+        tabindex="-1"
+        aria-labelledby="appTextPromptTitle"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content app-card">
+            <div class="modal-header">
+              <h5 class="modal-title" id="appTextPromptTitle">Megjegyzés</h5>
+            </div>
+            <div class="modal-body">
+              <label id="appTextPromptLabel" class="form-label" for="appTextPromptInput">Megjegyzés</label>
+              <textarea id="appTextPromptInput" class="form-control app-input" rows="4" maxlength="500"></textarea>
+            </div>
+            <div class="modal-footer">
+              <button type="button" id="appTextPromptCancelButton" class="btn btn-outline-light">Mégse</button>
+              <button type="button" id="appTextPromptConfirmButton" class="btn btn-primary">Mentés</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    modalElement = wrapper.firstElementChild;
+    document.body.appendChild(modalElement);
+  }
+
+  const titleElement = modalElement.querySelector("#appTextPromptTitle");
+  const labelElement = modalElement.querySelector("#appTextPromptLabel");
+  const inputElement = modalElement.querySelector("#appTextPromptInput");
+  const cancelButton = modalElement.querySelector("#appTextPromptCancelButton");
+  const confirmButton = modalElement.querySelector("#appTextPromptConfirmButton");
+
+  setText(titleElement, title);
+  setText(labelElement, label);
+  setText(confirmButton, confirmLabel);
+  inputElement.value = initialValue || "";
+  inputElement.placeholder = placeholder || "";
+
+  const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+
+  return new Promise((resolve) => {
+    let result = null;
+
+    const cleanup = () => {
+      confirmButton.removeEventListener("click", handleConfirm);
+      cancelButton.removeEventListener("click", handleCancel);
+      modalElement.removeEventListener("hidden.bs.modal", handleHidden);
+    };
+
+    const handleConfirm = () => {
+      result = inputElement.value;
+      modalInstance.hide();
+    };
+
+    const handleCancel = () => {
+      result = null;
+      modalInstance.hide();
+    };
+
+    const handleHidden = () => {
+      cleanup();
+      resolve(result);
+    };
+
+    confirmButton.addEventListener("click", handleConfirm);
+    cancelButton.addEventListener("click", handleCancel);
+    modalElement.addEventListener("hidden.bs.modal", handleHidden);
+    modalInstance.show();
+
+    setTimeout(() => {
+      inputElement.focus();
+      inputElement.selectionStart = inputElement.value.length;
+      inputElement.selectionEnd = inputElement.value.length;
+    }, 50);
+  });
+}
+
 function findNavigationLink(possibleHrefs = []) {
   const links = Array.from($all("#navbarMenu .nav-link"));
   return links.find((link) => possibleHrefs.includes(link.getAttribute("href"))) || null;
@@ -592,6 +689,9 @@ async function loadUserProfile() {
   const deleteProfileButton = $("#deleteProfileButton");
   const logoutButton = $("#logoutButton");
   const profileError = $("#profileError");
+  const profilePrivateNotice = $("#profilePrivateNotice");
+  const profilePrivacySection = $("#profilePrivacySection");
+  const profilePrivateToggle = $("#profilePrivateToggle");
 
   try {
     const viewedUserId = getViewedProfileUserId();
@@ -601,6 +701,10 @@ async function loadUserProfile() {
     if (profileError) {
       profileError.classList.add("d-none");
       profileError.textContent = "";
+    }
+    if (profilePrivateNotice) {
+      profilePrivateNotice.classList.add("d-none");
+      profilePrivateNotice.textContent = "Privát fiók.";
     }
 
     const user = isExternalProfile
@@ -2879,6 +2983,654 @@ const catchFilterPanelState = {
   profile: false,
 };
 
+const profileCalendarState = {
+  catches: [],
+  manualDays: [],
+  currentMonth: null,
+  selectedDateKey: "",
+  isOwnProfile: false,
+  menuOpenDateKey: "",
+};
+
+function getCatchDateKey(dateValue) {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getMonthStart(date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function getDateFromDateKey(dateKey) {
+  return new Date(`${dateKey}T12:00:00`);
+}
+
+function isSameMonth(dateA, dateB) {
+  return dateA.getFullYear() === dateB.getFullYear() && dateA.getMonth() === dateB.getMonth();
+}
+
+function formatProfileCalendarMonth(date) {
+  return date.toLocaleDateString("hu-HU", {
+    year: "numeric",
+    month: "long",
+  });
+}
+
+function formatProfileCalendarSelectedDate(dateKey) {
+  const date = getDateFromDateKey(dateKey);
+  return date.toLocaleDateString("hu-HU", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  });
+}
+
+function normalizeFishingDayEntries(days = []) {
+  if (!Array.isArray(days)) {
+    return [];
+  }
+
+  const entriesByDate = new Map();
+
+  days.forEach((entry) => {
+    const dateKey = typeof entry === "string"
+      ? normalizeDateKey(entry)
+      : normalizeDateKey(entry?.Datum || entry?.datum);
+
+    if (!dateKey) {
+      return;
+    }
+
+    const note = typeof entry?.Megjegyzes === "string"
+      ? entry.Megjegyzes
+      : typeof entry?.megjegyzes === "string"
+        ? entry.megjegyzes
+        : "";
+
+    entriesByDate.set(dateKey, {
+      Datum: dateKey,
+      Megjegyzes: note.trim(),
+    });
+  });
+
+  return [...entriesByDate.values()].sort((a, b) => a.Datum.localeCompare(b.Datum, "hu"));
+}
+
+function normalizeDateKey(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const trimmed = value.trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : "";
+}
+
+function buildProfileCalendarData(catches = [], manualDays = []) {
+  const catchesByDate = new Map();
+  const normalizedManualDays = normalizeFishingDayEntries(manualDays);
+  const manualDaysByDate = new Map(normalizedManualDays.map((entry) => [entry.Datum, entry]));
+  const manualDayKeys = new Set(manualDaysByDate.keys());
+
+  catches.forEach((fogas) => {
+    const dateKey = getCatchDateKey(fogas.FogasIdeje);
+
+    if (!dateKey) {
+      return;
+    }
+
+    if (!catchesByDate.has(dateKey)) {
+      catchesByDate.set(dateKey, []);
+    }
+
+    catchesByDate.get(dateKey).push(fogas);
+  });
+
+  const markedDateKeys = [...new Set([...catchesByDate.keys(), ...manualDayKeys])].sort();
+
+  return {
+    catchesByDate,
+    manualDaysByDate,
+    manualDayKeys,
+    markedDateKeys,
+  };
+}
+
+function clearProfileFishingCalendar() {
+  const calendar = $("#profileFishingCalendar");
+  const monthLabel = $("#profileCalendarMonthLabel");
+  const monthEmpty = $("#profileCalendarMonthEmpty");
+  const selectedDate = $("#profileCalendarSelectedDate");
+  const dayCatches = $("#profileCalendarDayCatches");
+  const grid = $("#profileCalendarGrid");
+  const prevButton = $("#profileCalendarPrev");
+  const nextButton = $("#profileCalendarNext");
+
+  profileCalendarState.catches = [];
+  profileCalendarState.manualDays = [];
+  profileCalendarState.currentMonth = null;
+  profileCalendarState.selectedDateKey = "";
+  profileCalendarState.isOwnProfile = false;
+  profileCalendarState.menuOpenDateKey = "";
+
+  if (calendar) {
+    calendar.classList.add("d-none");
+  }
+  if (monthLabel) {
+    monthLabel.textContent = "";
+  }
+  if (monthEmpty) {
+    monthEmpty.classList.add("d-none");
+  }
+  if (selectedDate) {
+    selectedDate.classList.add("d-none");
+    selectedDate.textContent = "";
+  }
+  if (dayCatches) {
+    clearElement(dayCatches);
+  }
+  if (grid) {
+    clearElement(grid);
+  }
+  if (prevButton) {
+    prevButton.disabled = true;
+  }
+  if (nextButton) {
+    nextButton.disabled = true;
+  }
+}
+
+async function toggleProfileFishingDay(dateKey, removeMark = false) {
+  const normalizedDateKey = normalizeDateKey(dateKey);
+
+  if (!normalizedDateKey) {
+    return;
+  }
+
+  try {
+    const response = await apiRequest(`/horgasznapok/${normalizedDateKey}`, {
+      method: removeMark ? "DELETE" : "PUT",
+    });
+
+    const currentManualDays = new Map(
+      (profileCalendarState.manualDays || []).map((entry) => [entry.Datum, entry])
+    );
+    if (removeMark) {
+      currentManualDays.delete(normalizedDateKey);
+    } else {
+      currentManualDays.set(normalizedDateKey, {
+        Datum: normalizedDateKey,
+        Megjegyzes: currentManualDays.get(normalizedDateKey)?.Megjegyzes || "",
+      });
+    }
+
+    profileCalendarState.manualDays = [...currentManualDays.values()].sort((a, b) => a.Datum.localeCompare(b.Datum, "hu"));
+    profileCalendarState.selectedDateKey = normalizedDateKey;
+    profileCalendarState.menuOpenDateKey = "";
+    renderProfileFishingCalendar(profileCalendarState.catches, profileCalendarState.manualDays, {
+      isOwnProfile: profileCalendarState.isOwnProfile,
+      keepMonth: true,
+    });
+    await showAppSuccess(
+      response?.message || (removeMark ? "A horgásznap jelölése törölve." : "A horgásznap jelölése elmentve.")
+    );
+  } catch (error) {
+    showAppAlert(error.message || "Nem sikerült módosítani a horgásznap jelölését.", {
+      title: "Hiba",
+    });
+  }
+}
+
+function getManualFishingDayEntry(dateKey) {
+  const normalizedDateKey = normalizeDateKey(dateKey);
+
+  if (!normalizedDateKey) {
+    return null;
+  }
+
+  return (profileCalendarState.manualDays || []).find((entry) => entry.Datum === normalizedDateKey) || null;
+}
+
+async function editProfileFishingDayNote(dateKey) {
+  const normalizedDateKey = normalizeDateKey(dateKey);
+
+  if (!normalizedDateKey) {
+    return;
+  }
+
+  const existingEntry = getManualFishingDayEntry(normalizedDateKey);
+  const noteValue = await showAppTextPrompt({
+    title: "Megjegyzés",
+    label: `${formatProfileCalendarSelectedDate(normalizedDateKey)} megjegyzése`,
+    initialValue: existingEntry?.Megjegyzes || "",
+    placeholder: "Írj megjegyzést ehhez a naphoz...",
+    confirmLabel: "Mentés",
+  });
+
+  if (noteValue === null) {
+    return;
+  }
+
+  try {
+    const response = await apiRequest(`/horgasznapok/${normalizedDateKey}/megjegyzes`, {
+      method: "PUT",
+      body: JSON.stringify({
+        megjegyzes: noteValue,
+      }),
+    });
+
+    const nextManualDays = new Map(
+      (profileCalendarState.manualDays || []).map((entry) => [entry.Datum, entry])
+    );
+    const savedNote = typeof response?.megjegyzes === "string" ? response.megjegyzes.trim() : "";
+
+    if (savedNote) {
+      nextManualDays.set(normalizedDateKey, {
+        Datum: normalizedDateKey,
+        Megjegyzes: savedNote,
+      });
+    } else {
+      nextManualDays.delete(normalizedDateKey);
+    }
+
+    profileCalendarState.manualDays = [...nextManualDays.values()].sort((a, b) => a.Datum.localeCompare(b.Datum, "hu"));
+    profileCalendarState.selectedDateKey = normalizedDateKey;
+    profileCalendarState.menuOpenDateKey = "";
+    renderProfileFishingCalendar(profileCalendarState.catches, profileCalendarState.manualDays, {
+      isOwnProfile: profileCalendarState.isOwnProfile,
+      keepMonth: true,
+    });
+
+    await showAppSuccess(response?.message || "A megjegyzés sikeresen mentve.");
+  } catch (error) {
+    showAppAlert(error.message || "Nem sikerült menteni a megjegyzést.", {
+      title: "Hiba",
+    });
+  }
+}
+
+function renderProfileCalendarDayDetails(dayCatches, selectedDateKey, isManualOnly = false, dayNote = "") {
+  const selectedDate = $("#profileCalendarSelectedDate");
+  const dayCatchesContainer = $("#profileCalendarDayCatches");
+
+  if (!selectedDate || !dayCatchesContainer) {
+    return;
+  }
+
+  clearElement(dayCatchesContainer);
+
+  if (!selectedDateKey) {
+    selectedDate.classList.add("d-none");
+    selectedDate.textContent = "";
+    return;
+  }
+
+  const catches = Array.isArray(dayCatches) ? dayCatches : [];
+  selectedDate.classList.remove("d-none");
+  selectedDate.textContent = catches.length
+    ? `${formatProfileCalendarSelectedDate(selectedDateKey)} - ${catches.length} fogás`
+    : isManualOnly
+      ? `${formatProfileCalendarSelectedDate(selectedDateKey)} - Horgásznap`
+      : formatProfileCalendarSelectedDate(selectedDateKey);
+
+  if (!catches.length && !isManualOnly) {
+    const note = document.createElement("div");
+    note.className = "profile-calendar-catch-card profile-calendar-manual-note";
+    note.innerHTML = `
+      <div class="fw-semibold mb-1">Nincs még jelölés</div>
+      <div class="small">Ehhez a naphoz még nincs rögzített fogás vagy külön megjelölt horgásznap.</div>
+    `;
+    dayCatchesContainer.appendChild(note);
+    return;
+  }
+
+  if (!catches.length && isManualOnly) {
+    const note = document.createElement("div");
+    note.className = "profile-calendar-catch-card profile-calendar-manual-note";
+    note.innerHTML = `
+      <div class="fw-semibold mb-1">Horgászattal töltött nap</div>
+      ${dayNote ? `<div class="small"><strong>Megjegyzés:</strong> ${escapeHtml(dayNote)}</div>` : ""}
+    `;
+    dayCatchesContainer.appendChild(note);
+    return;
+  }
+
+  catches
+    .slice()
+    .sort((a, b) => new Date(a.FogasIdeje) - new Date(b.FogasIdeje))
+    .forEach((fogas) => {
+      const card = document.createElement("div");
+      card.className = "profile-calendar-catch-card";
+      card.innerHTML = `
+        <div class="fw-semibold mb-1">${escapeHtml(fogas.HalfajNev || "Ismeretlen halfaj")}</div>
+        <div class="profile-calendar-catch-meta mb-2">
+          ${new Date(fogas.FogasIdeje).toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" })}
+        </div>
+        <div class="small">
+          <div><strong>Hely:</strong> ${escapeHtml(fogas.VizteruletNev || "-")}</div>
+          ${fogas.SulyKg ? `<div><strong>Súly:</strong> ${escapeHtml(String(fogas.SulyKg))} kg</div>` : ""}
+          ${fogas.HosszCm ? `<div><strong>Hossz:</strong> ${escapeHtml(String(fogas.HosszCm))} cm</div>` : ""}
+          ${fogas.Megjegyzes ? `<div><strong>Megjegyzés:</strong> ${escapeHtml(fogas.Megjegyzes)}</div>` : ""}
+        </div>
+      `;
+      dayCatchesContainer.appendChild(card);
+    });
+
+  if (dayNote) {
+    const note = document.createElement("div");
+    note.className = "profile-calendar-catch-card profile-calendar-manual-note";
+    note.innerHTML = `
+      <div class="fw-semibold mb-1">Napi megjegyzés</div>
+      <div class="small">${escapeHtml(dayNote)}</div>
+    `;
+    dayCatchesContainer.appendChild(note);
+  }
+}
+
+function renderProfileFishingCalendar(catches = [], manualDays = [], options = {}) {
+  const calendar = $("#profileFishingCalendar");
+  const monthLabel = $("#profileCalendarMonthLabel");
+  const grid = $("#profileCalendarGrid");
+  const monthEmpty = $("#profileCalendarMonthEmpty");
+  const prevButton = $("#profileCalendarPrev");
+  const nextButton = $("#profileCalendarNext");
+
+  if (!calendar || !monthLabel || !grid || !monthEmpty || !prevButton || !nextButton) {
+    return;
+  }
+
+  const { isOwnProfile = false, keepMonth = false } = options;
+
+  if (!Array.isArray(catches)) {
+    clearProfileFishingCalendar();
+    return;
+  }
+
+  profileCalendarState.catches = catches.slice();
+  profileCalendarState.manualDays = normalizeFishingDayEntries(manualDays);
+  profileCalendarState.isOwnProfile = Boolean(isOwnProfile);
+
+  const { catchesByDate, manualDaysByDate, manualDayKeys, markedDateKeys } = buildProfileCalendarData(
+    profileCalendarState.catches,
+    profileCalendarState.manualDays
+  );
+
+  if (!markedDateKeys.length && !profileCalendarState.isOwnProfile) {
+    clearProfileFishingCalendar();
+    return;
+  }
+
+  const todayMonth = getMonthStart(new Date());
+  const minMonth = markedDateKeys.length
+    ? getMonthStart(getDateFromDateKey(markedDateKeys[0]))
+    : new Date(todayMonth);
+  const maxMonth = markedDateKeys.length
+    ? getMonthStart(getDateFromDateKey(markedDateKeys[markedDateKeys.length - 1]))
+    : new Date(todayMonth);
+
+  if (!profileCalendarState.currentMonth || !keepMonth) {
+    profileCalendarState.currentMonth = markedDateKeys.length ? new Date(maxMonth) : new Date(todayMonth);
+  }
+
+  if (!profileCalendarState.isOwnProfile && profileCalendarState.currentMonth < minMonth) {
+    profileCalendarState.currentMonth = new Date(minMonth);
+  }
+
+  if (!profileCalendarState.isOwnProfile && profileCalendarState.currentMonth > maxMonth) {
+    profileCalendarState.currentMonth = new Date(maxMonth);
+  }
+
+  const monthMarkedKeys = markedDateKeys.filter((dateKey) =>
+    isSameMonth(getDateFromDateKey(dateKey), profileCalendarState.currentMonth)
+  );
+
+  const hasSelectedDateInCurrentMonth = profileCalendarState.selectedDateKey
+    && isSameMonth(getDateFromDateKey(profileCalendarState.selectedDateKey), profileCalendarState.currentMonth);
+
+  if (!profileCalendarState.selectedDateKey) {
+    profileCalendarState.selectedDateKey = monthMarkedKeys[0] || "";
+  } else if (!hasSelectedDateInCurrentMonth) {
+    profileCalendarState.selectedDateKey = monthMarkedKeys[0] || "";
+  }
+
+  calendar.classList.remove("d-none");
+  monthLabel.textContent = formatProfileCalendarMonth(profileCalendarState.currentMonth);
+  monthEmpty.classList.toggle("d-none", monthMarkedKeys.length > 0);
+  prevButton.disabled = !profileCalendarState.isOwnProfile && profileCalendarState.currentMonth <= minMonth;
+  nextButton.disabled = !profileCalendarState.isOwnProfile && profileCalendarState.currentMonth >= maxMonth;
+
+  clearElement(grid);
+
+  const firstDayOfMonth = new Date(
+    profileCalendarState.currentMonth.getFullYear(),
+    profileCalendarState.currentMonth.getMonth(),
+    1
+  );
+  const firstDayIndex = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
+  const daysInMonth = new Date(
+    profileCalendarState.currentMonth.getFullYear(),
+    profileCalendarState.currentMonth.getMonth() + 1,
+    0
+  ).getDate();
+
+  for (let index = 0; index < firstDayIndex; index += 1) {
+    const placeholder = document.createElement("button");
+    placeholder.type = "button";
+    placeholder.className = "profile-calendar-day is-empty";
+    placeholder.disabled = true;
+    placeholder.setAttribute("aria-hidden", "true");
+    grid.appendChild(placeholder);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const dateKey = `${profileCalendarState.currentMonth.getFullYear()}-${String(profileCalendarState.currentMonth.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const dayCatchList = catchesByDate.get(dateKey) || [];
+    const manualDayEntry = manualDaysByDate.get(dateKey) || null;
+    const isManualDay = manualDayKeys.has(dateKey);
+    const isMarkedDay = dayCatchList.length > 0 || isManualDay;
+    const dayWrapper = document.createElement("div");
+    dayWrapper.className = "profile-calendar-day-wrapper";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "profile-calendar-day";
+
+    if (dayCatchList.length) {
+      button.classList.add("has-catches");
+    }
+    if (isManualDay) {
+      button.classList.add("is-manually-marked");
+    }
+    if (profileCalendarState.selectedDateKey === dateKey) {
+      button.classList.add("is-selected");
+    }
+    if (!profileCalendarState.isOwnProfile && !isMarkedDay) {
+      button.disabled = true;
+    }
+
+    button.innerHTML = `
+      <span class="profile-calendar-day-number">${day}</span>
+      ${
+        dayCatchList.length
+          ? `<span class="profile-calendar-day-count">${dayCatchList.length} fogás</span>`
+          : isManualDay
+            ? `<span class="profile-calendar-day-count">Horgásznap</span>`
+            : ""
+      }
+    `;
+
+    button.addEventListener("click", () => {
+      if (!profileCalendarState.isOwnProfile && !isMarkedDay) {
+        return;
+      }
+
+      profileCalendarState.selectedDateKey = dateKey;
+      profileCalendarState.menuOpenDateKey = "";
+      renderProfileFishingCalendar(profileCalendarState.catches, profileCalendarState.manualDays, {
+        isOwnProfile: profileCalendarState.isOwnProfile,
+        keepMonth: true,
+      });
+    });
+
+    dayWrapper.appendChild(button);
+
+    if (profileCalendarState.isOwnProfile) {
+      const menu = document.createElement("div");
+      menu.className = "profile-calendar-day-menu";
+
+      const toggleButton = document.createElement("button");
+      toggleButton.type = "button";
+      toggleButton.className = "profile-calendar-day-menu-toggle";
+      toggleButton.setAttribute("aria-label", `${day}. nap menüje`);
+      toggleButton.setAttribute("aria-expanded", String(profileCalendarState.menuOpenDateKey === dateKey));
+      toggleButton.textContent = "+";
+      toggleButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        profileCalendarState.menuOpenDateKey = profileCalendarState.menuOpenDateKey === dateKey ? "" : dateKey;
+        renderProfileFishingCalendar(profileCalendarState.catches, profileCalendarState.manualDays, {
+          isOwnProfile: profileCalendarState.isOwnProfile,
+          keepMonth: true,
+        });
+      });
+
+      const panel = document.createElement("div");
+      panel.className = "profile-calendar-day-menu-panel";
+      panel.classList.toggle("d-none", profileCalendarState.menuOpenDateKey !== dateKey);
+
+      const actionButton = document.createElement("button");
+      actionButton.type = "button";
+      actionButton.className = "profile-calendar-day-menu-action";
+
+      if (dayCatchList.length) {
+        actionButton.disabled = true;
+        actionButton.textContent = "Fogás miatt automatikus jelölés";
+      } else if (isManualDay) {
+        actionButton.textContent = "Jelölés törlése";
+        actionButton.addEventListener("click", async (event) => {
+          event.stopPropagation();
+          await toggleProfileFishingDay(dateKey, true);
+        });
+      } else {
+        actionButton.textContent = "Horgásznap jelölése";
+        actionButton.addEventListener("click", async (event) => {
+          event.stopPropagation();
+          await toggleProfileFishingDay(dateKey, false);
+        });
+      }
+
+      const noteButton = document.createElement("button");
+      noteButton.type = "button";
+      noteButton.className = "profile-calendar-day-menu-action";
+
+      if (isMarkedDay) {
+        noteButton.textContent = manualDayEntry?.Megjegyzes ? "Megjegyzés szerkesztése" : "Megjegyzés hozzáadása";
+        noteButton.addEventListener("click", async (event) => {
+          event.stopPropagation();
+          await editProfileFishingDayNote(dateKey);
+        });
+      } else {
+        noteButton.textContent = "Megjegyzés hozzáadása";
+        noteButton.disabled = true;
+      }
+
+      panel.appendChild(actionButton);
+      panel.appendChild(noteButton);
+      menu.appendChild(toggleButton);
+      menu.appendChild(panel);
+      dayWrapper.appendChild(menu);
+    }
+
+    grid.appendChild(dayWrapper);
+  }
+
+  renderProfileCalendarDayDetails(
+    profileCalendarState.selectedDateKey ? catchesByDate.get(profileCalendarState.selectedDateKey) || [] : [],
+    profileCalendarState.selectedDateKey,
+    Boolean(profileCalendarState.selectedDateKey) &&
+      manualDayKeys.has(profileCalendarState.selectedDateKey) &&
+      !(catchesByDate.get(profileCalendarState.selectedDateKey) || []).length,
+    manualDaysByDate.get(profileCalendarState.selectedDateKey)?.Megjegyzes || ""
+  );
+}
+
+function changeProfileCalendarMonth(delta) {
+  if (!profileCalendarState.currentMonth) {
+    return;
+  }
+
+  profileCalendarState.currentMonth = new Date(
+    profileCalendarState.currentMonth.getFullYear(),
+    profileCalendarState.currentMonth.getMonth() + delta,
+    1
+  );
+  profileCalendarState.menuOpenDateKey = "";
+
+  renderProfileFishingCalendar(profileCalendarState.catches, profileCalendarState.manualDays, {
+    isOwnProfile: profileCalendarState.isOwnProfile,
+    keepMonth: true,
+  });
+}
+
+function bindProfileCalendarMenuDismiss() {
+  if (document.body.dataset.profileCalendarMenuBound === "true") {
+    return;
+  }
+
+  document.addEventListener("click", (event) => {
+    if (!profileCalendarState.menuOpenDateKey) {
+      return;
+    }
+
+    if (event.target.closest(".profile-calendar-day-menu")) {
+      return;
+    }
+
+    profileCalendarState.menuOpenDateKey = "";
+    renderProfileFishingCalendar(profileCalendarState.catches, profileCalendarState.manualDays, {
+      isOwnProfile: profileCalendarState.isOwnProfile,
+      keepMonth: true,
+    });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !profileCalendarState.menuOpenDateKey) {
+      return;
+    }
+
+    profileCalendarState.menuOpenDateKey = "";
+    renderProfileFishingCalendar(profileCalendarState.catches, profileCalendarState.manualDays, {
+      isOwnProfile: profileCalendarState.isOwnProfile,
+      keepMonth: true,
+    });
+  });
+
+  document.body.dataset.profileCalendarMenuBound = "true";
+}
+
+function bindProfileFishingCalendarControls() {
+  const prevButton = $("#profileCalendarPrev");
+  const nextButton = $("#profileCalendarNext");
+
+  bindProfileCalendarMenuDismiss();
+
+  if (prevButton && prevButton.dataset.bound !== "true") {
+    prevButton.addEventListener("click", () => changeProfileCalendarMonth(-1));
+    prevButton.dataset.bound = "true";
+  }
+
+  if (nextButton && nextButton.dataset.bound !== "true") {
+    nextButton.addEventListener("click", () => changeProfileCalendarMonth(1));
+    nextButton.dataset.bound = "true";
+  }
+}
+
 function getCatchFilterElements(context) {
   if (context === "profile") {
     return {
@@ -3075,6 +3827,14 @@ function applyCatchFilters(context, options = {}) {
 
   updateCatchFiltersVisibility(context);
 
+  if (context === "profile") {
+    bindProfileFishingCalendarControls();
+    renderProfileFishingCalendar(source, profileCalendarState.manualDays, {
+      isOwnProfile: profileCalendarState.isOwnProfile,
+      keepMonth: true,
+    });
+  }
+
   if (elements.count) {
     elements.count.textContent = source.length
       ? filtered.length === source.length
@@ -3189,6 +3949,7 @@ function hideProfileCatchesSection() {
     empty.textContent = "";
   }
   if (list) clearElement(list);
+  clearProfileFishingCalendar();
 }
 
 async function loadProfileCatches(viewedUserId = null, isExternalProfile = false) {
@@ -3225,13 +3986,23 @@ async function loadProfileCatches(viewedUserId = null, isExternalProfile = false
     ? "A felhaszn\u00E1l\u00F3nak m\u00E9g nincs r\u00F6gz\u00EDtett fog\u00E1sa."
     : "M\u00E9g nincs r\u00F6gz\u00EDtett fog\u00E1sod.";
   clearElement(list);
+  clearProfileFishingCalendar();
 
   try {
-    const endpoint = isExternalProfile && viewedUserId !== null
+    const catchesEndpoint = isExternalProfile && viewedUserId !== null
       ? `/fogasnaplo/felhasznalo/${viewedUserId}`
       : "/fogasnaplo/sajat";
-    const catches = await apiRequest(endpoint);
+    const fishingDaysEndpoint = isExternalProfile && viewedUserId !== null
+      ? `/horgasznapok/felhasznalo/${viewedUserId}`
+      : "/horgasznapok/sajat";
+    const [catches, fishingDays] = await Promise.all([
+      apiRequest(catchesEndpoint),
+      apiRequest(fishingDaysEndpoint),
+    ]);
+
     catchCollections.profile = Array.isArray(catches) ? catches : [];
+    profileCalendarState.manualDays = normalizeFishingDayEntries(fishingDays);
+    profileCalendarState.isOwnProfile = !isExternalProfile;
     syncCatchFilterOptions("profile", catchCollections.profile);
     applyCatchFilters("profile", {
       emptyMessage: isExternalProfile
@@ -3242,6 +4013,8 @@ async function loadProfileCatches(viewedUserId = null, isExternalProfile = false
   } catch (catchError) {
     console.error("Profil fog\u00E1sok bet\u00F6lt\u00E9si hiba:", catchError);
     catchCollections.profile = [];
+    profileCalendarState.manualDays = [];
+    profileCalendarState.isOwnProfile = !isExternalProfile;
     catchFilterPanelState.profile = false;
     updateCatchFiltersVisibility("profile");
     error.classList.remove("d-none");
