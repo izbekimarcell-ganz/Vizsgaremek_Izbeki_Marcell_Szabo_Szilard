@@ -1,4 +1,4 @@
-const { sql, poolPromise } = require("../DbConfig");
+﻿const { sql, poolPromise } = require("../DbConfig");
 
 function normalizeOptionalNumber(value) {
   if (value === undefined || value === null || value === "") {
@@ -33,7 +33,7 @@ async function getSpecies(req, res) {
   } catch (error) {
     console.error("Halfajok lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a halfajok lekeresekor.",
+      message: "Hiba a halfajok lekérésekor.",
     });
   }
 }
@@ -44,13 +44,13 @@ async function createSpecies(req, res) {
 
     if (!payload.magyarNev) {
       return res.status(400).json({
-        message: "A magyar nev megadasa kotelezo.",
+        message: "A magyar név megadása kötelező.",
       });
     }
 
     if (Number.isNaN(payload.minMeretCm) || Number.isNaN(payload.napiLimit)) {
       return res.status(400).json({
-        message: "A meret es a napi limit csak szam lehet.",
+        message: "A méret és a napi limit csak szám lehet.",
       });
     }
 
@@ -77,13 +77,13 @@ async function createSpecies(req, res) {
       `);
 
     return res.status(201).json({
-      message: "Halfaj sikeresen letrehozva.",
+      message: "Halfaj sikeresen létrehozva.",
       species: result.recordset[0],
     });
   } catch (error) {
     console.error("Halfaj letrehozasi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a halfaj letrehozasakor.",
+      message: "Hiba a halfaj létrehozásakor.",
     });
   }
 }
@@ -95,19 +95,19 @@ async function updateSpecies(req, res) {
 
     if (Number.isNaN(halfajId)) {
       return res.status(400).json({
-        message: "Ervenytelen halfaj azonosito.",
+        message: "Érvénytelen halfaj azonosító.",
       });
     }
 
     if (!payload.magyarNev) {
       return res.status(400).json({
-        message: "A magyar nev megadasa kotelezo.",
+        message: "A magyar név megadása kötelező.",
       });
     }
 
     if (Number.isNaN(payload.minMeretCm) || Number.isNaN(payload.napiLimit)) {
       return res.status(400).json({
-        message: "A meret es a napi limit csak szam lehet.",
+        message: "A méret és a napi limit csak szám lehet.",
       });
     }
 
@@ -143,18 +143,18 @@ async function updateSpecies(req, res) {
 
     if (!result.recordset.length) {
       return res.status(404).json({
-        message: "Halfaj nem talalhato.",
+        message: "Halfaj nem található.",
       });
     }
 
     return res.status(200).json({
-      message: "Halfaj sikeresen modositva.",
+      message: "Halfaj sikeresen módosítva.",
       species: result.recordset[0],
     });
   } catch (error) {
     console.error("Halfaj modositasi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a halfaj modositasakor.",
+      message: "Hiba a halfaj módosításakor.",
     });
   }
 }
@@ -165,7 +165,7 @@ async function deleteSpecies(req, res) {
 
     if (Number.isNaN(halfajId)) {
       return res.status(400).json({
-        message: "Ervenytelen halfaj azonosito.",
+        message: "Érvénytelen halfaj azonosító.",
       });
     }
 
@@ -183,7 +183,7 @@ async function deleteSpecies(req, res) {
 
     if (usage.FogasokSzama > 0) {
       return res.status(409).json({
-        message: "A halfaj nem torolheto, mert mar kapcsolodik fogasnaplo bejegyzeshez.",
+        message: "A halfaj nem törölhető, mert már kapcsolódik fogásnapló bejegyzéshez.",
       });
     }
 
@@ -216,17 +216,17 @@ async function deleteSpecies(req, res) {
 
     if (!result.recordset.length) {
       return res.status(404).json({
-        message: "Halfaj nem talalhato.",
+        message: "Halfaj nem található.",
       });
     }
 
     return res.status(200).json({
-      message: "Halfaj sikeresen torolve.",
+      message: "Halfaj sikeresen törölve.",
     });
   } catch (error) {
     console.error("Halfaj torlesi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a halfaj torlesekor.",
+      message: "Hiba a halfaj törlésekor.",
     });
   }
 }
@@ -237,3 +237,5 @@ module.exports = {
   updateSpecies,
   deleteSpecies,
 };
+
+

@@ -66,3 +66,4 @@
     form.classList.add("was-validated");
   });
 })();
+

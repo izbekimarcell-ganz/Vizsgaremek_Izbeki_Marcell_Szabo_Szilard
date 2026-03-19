@@ -1,4 +1,4 @@
-const bcrypt = require("bcrypt");
+﻿const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { sql, poolPromise } = require("../DbConfig");
 
@@ -205,3 +205,4 @@ module.exports = {
   register,
   login,
 };
+

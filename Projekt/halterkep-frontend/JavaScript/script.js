@@ -1,4 +1,4 @@
-/* =========================
+﻿/* =========================
    Alap konfiguráció
    ========================= */
 const APP_CONFIG = {
@@ -699,9 +699,6 @@ function renderCatchCards(container, catches, { allowDelete = false } = {}) {
   });
 }
 
-/* =========================
-   Vízterületek oldal előkészítés
-   ========================= */
 function prepareWatersPage() {
   const form = $("#waterFiltersForm");
   const resultsTableBody = $("#waterResultsTableBody");
@@ -714,7 +711,7 @@ function prepareWatersPage() {
     clearElement(resultsTableBody);
     loadVizteruletek();
   }
-  
+
   // Szűrők betöltése
   loadFilterOptions();
 }
@@ -3259,3 +3256,6 @@ async function loadUserProfile() {
     }
   }
 }
+
+
+

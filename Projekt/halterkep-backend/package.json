@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "halterkep-backend",
   "version": "1.0.0",
   "description": "",
@@ -19,3 +19,4 @@
     "mssql": "^12.2.0"
   }
 }
+

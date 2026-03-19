@@ -1,4 +1,4 @@
-const { sql, poolPromise } = require("../DbConfig");
+﻿const { sql, poolPromise } = require("../DbConfig");
 
 function normalizeOptionalNumberList(values) {
   if (!Array.isArray(values)) {
@@ -166,7 +166,7 @@ async function getWaters(req, res) {
   } catch (error) {
     console.error("Vizteruletek lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a vizteruletek lekeresekor.",
+      message: "Hiba a vízterületek lekérésekor.",
     });
   }
 }
@@ -177,7 +177,7 @@ async function getWaterDetails(req, res) {
 
     if (Number.isNaN(vizteruletId)) {
       return res.status(400).json({
-        message: "Ervenytelen vizterulet azonosito.",
+        message: "Érvénytelen vízterület azonosító.",
       });
     }
 
@@ -204,7 +204,7 @@ async function getWaterDetails(req, res) {
 
     if (!vizterulet) {
       return res.status(404).json({
-        message: "Vizterulet nem talalhato.",
+        message: "Vízterület nem található.",
       });
     }
 
@@ -249,7 +249,7 @@ async function getWaterDetails(req, res) {
   } catch (error) {
     console.error("Vizterulet reszletek hiba:", error);
     return res.status(500).json({
-      message: "Hiba a vizterulet reszleteinek lekeresekor.",
+      message: "Hiba a vízterület részleteinek lekérésekor.",
     });
   }
 }
@@ -262,7 +262,7 @@ async function createWater(req, res) {
 
     if (!payload.nev || Number.isNaN(payload.vizTipusId)) {
       return res.status(400).json({
-        message: "A nev es a viztipus megadasa kotelezo.",
+        message: "A név és a víztípus megadása kötelező.",
       });
     }
 
@@ -275,7 +275,7 @@ async function createWater(req, res) {
     if (!validCountySelection) {
       await transaction.rollback();
       return res.status(400).json({
-        message: "Pontosan egy megye adhato meg, kivetel a Pest es Budapest paros.",
+        message: "Pontosan egy megye adható meg, kivétel a Pest és Budapest páros.",
       });
     }
 
@@ -284,7 +284,7 @@ async function createWater(req, res) {
     if (duplicateExists) {
       await transaction.rollback();
       return res.status(409).json({
-        message: "Van mar ilyen vizterulet.",
+        message: "Van már ilyen vízterület.",
       });
     }
 
@@ -307,7 +307,7 @@ async function createWater(req, res) {
     await transaction.commit();
 
     return res.status(201).json({
-      message: "Vizterulet sikeresen letrehozva.",
+      message: "Vízterület sikeresen létrehozva.",
       water,
     });
   } catch (error) {
@@ -321,7 +321,7 @@ async function createWater(req, res) {
 
     console.error("Vizterulet letrehozasi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a vizterulet letrehozasakor.",
+      message: "Hiba a vízterület létrehozásakor.",
     });
   }
 }
@@ -335,13 +335,13 @@ async function updateWater(req, res) {
 
     if (Number.isNaN(vizteruletId)) {
       return res.status(400).json({
-        message: "Ervenytelen vizterulet azonosito.",
+        message: "Érvénytelen vízterület azonosító.",
       });
     }
 
     if (!payload.nev || Number.isNaN(payload.vizTipusId)) {
       return res.status(400).json({
-        message: "A nev es a viztipus megadasa kotelezo.",
+        message: "A név és a víztípus megadása kötelező.",
       });
     }
 
@@ -354,7 +354,7 @@ async function updateWater(req, res) {
     if (!validCountySelection) {
       await transaction.rollback();
       return res.status(400).json({
-        message: "Pontosan egy megye adhato meg, kivetel a Pest es Budapest paros.",
+        message: "Pontosan egy megye adható meg, kivétel a Pest és Budapest páros.",
       });
     }
 
@@ -366,7 +366,7 @@ async function updateWater(req, res) {
     if (duplicateExists) {
       await transaction.rollback();
       return res.status(409).json({
-        message: "Van mar ilyen vizterulet.",
+        message: "Van már ilyen vízterület.",
       });
     }
 
@@ -386,7 +386,7 @@ async function updateWater(req, res) {
     if (!result.recordset.length) {
       await transaction.rollback();
       return res.status(404).json({
-        message: "Vizterulet nem talalhato.",
+        message: "Vízterület nem található.",
       });
     }
 
@@ -399,7 +399,7 @@ async function updateWater(req, res) {
     await transaction.commit();
 
     return res.status(200).json({
-      message: "Vizterulet sikeresen modositva.",
+      message: "Vízterület sikeresen módosítva.",
       water: result.recordset[0],
     });
   } catch (error) {
@@ -413,7 +413,7 @@ async function updateWater(req, res) {
 
     console.error("Vizterulet modositasi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a vizterulet modositasakor.",
+      message: "Hiba a vízterület módosításakor.",
     });
   }
 }
@@ -426,7 +426,7 @@ async function deleteWater(req, res) {
 
     if (Number.isNaN(vizteruletId)) {
       return res.status(400).json({
-        message: "Ervenytelen vizterulet azonosito.",
+        message: "Érvénytelen vízterület azonosító.",
       });
     }
 
@@ -446,7 +446,7 @@ async function deleteWater(req, res) {
     if (usage.FogasokSzama > 0) {
       await transaction.rollback();
       return res.status(409).json({
-        message: "A vizterulet nem torolheto, mert kapcsolodik mas adatokhoz.",
+        message: "A vízterület nem törölhető, mert kapcsolódik más adatokhoz.",
       });
     }
 
@@ -471,14 +471,14 @@ async function deleteWater(req, res) {
     if (!result.recordset.length) {
       await transaction.rollback();
       return res.status(404).json({
-        message: "Vizterulet nem talalhato.",
+        message: "Vízterület nem található.",
       });
     }
 
     await transaction.commit();
 
     return res.status(200).json({
-      message: "Vizterulet sikeresen torolve.",
+      message: "Vízterület sikeresen törölve.",
     });
   } catch (error) {
     if (transaction) {
@@ -491,7 +491,7 @@ async function deleteWater(req, res) {
 
     console.error("Vizterulet torlesi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a vizterulet torlesekor.",
+      message: "Hiba a vízterület törlésekor.",
     });
   }
 }
@@ -502,7 +502,7 @@ async function getWaterRelations(req, res) {
 
     if (Number.isNaN(vizteruletId)) {
       return res.status(400).json({
-        message: "Ervenytelen vizterulet azonosito.",
+        message: "Érvénytelen vízterület azonosító.",
       });
     }
 
@@ -542,7 +542,7 @@ async function getWaterRelations(req, res) {
 
     if (!water) {
       return res.status(404).json({
-        message: "Vizterulet nem talalhato.",
+        message: "Vízterület nem található.",
       });
     }
 
@@ -554,7 +554,7 @@ async function getWaterRelations(req, res) {
   } catch (error) {
     console.error("Vizterulet kapcsolatok lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a kapcsolatok lekeresekor.",
+      message: "Hiba a kapcsolatok lekérésekor.",
     });
   }
 }
@@ -569,7 +569,7 @@ async function updateWaterRelations(req, res) {
 
     if (Number.isNaN(vizteruletId)) {
       return res.status(400).json({
-        message: "Ervenytelen vizterulet azonosito.",
+        message: "Érvénytelen vízterület azonosító.",
       });
     }
 
@@ -588,7 +588,7 @@ async function updateWaterRelations(req, res) {
     if (!waterExists.recordset.length) {
       await transaction.rollback();
       return res.status(404).json({
-        message: "Vizterulet nem talalhato.",
+        message: "Vízterület nem található.",
       });
     }
 
@@ -610,7 +610,7 @@ async function updateWaterRelations(req, res) {
 
     console.error("Kapcsolatok mentesi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a kapcsolatok mentese soran.",
+      message: "Hiba a kapcsolatok mentése során.",
     });
   }
 }
@@ -628,7 +628,7 @@ async function getCounties(req, res) {
   } catch (error) {
     console.error("Megyek lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a megyek lekeresekor.",
+      message: "Hiba a megyék lekérésekor.",
     });
   }
 }
@@ -646,7 +646,7 @@ async function getWaterTypes(req, res) {
   } catch (error) {
     console.error("Viztipusok lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a viztipusok lekeresekor.",
+      message: "Hiba a víztípusok lekérésekor.",
     });
   }
 }
@@ -662,3 +662,5 @@ module.exports = {
   getWaterRelations,
   updateWaterRelations,
 };
+
+

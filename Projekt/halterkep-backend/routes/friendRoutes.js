@@ -1,4 +1,4 @@
-const express = require("express");
+﻿const express = require("express");
 const {
   getFriendOverview,
   sendFriendRequest,
@@ -17,3 +17,4 @@ router.put("/requests/:id/respond", authenticateToken, respondToFriendRequest);
 router.delete("/relations/:userId", authenticateToken, removeFriend);
 
 module.exports = router;
+

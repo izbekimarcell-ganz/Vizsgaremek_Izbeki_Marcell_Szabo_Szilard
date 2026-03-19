@@ -1,4 +1,4 @@
-const { sql, poolPromise } = require("../DbConfig");
+﻿const { sql, poolPromise } = require("../DbConfig");
 
 async function getExistingFriendRequest(connection, userId, otherUserId) {
   const lowId = Math.min(userId, otherUserId);
@@ -102,7 +102,7 @@ async function getFriendOverview(req, res) {
   } catch (error) {
     console.error("Barat attekintes lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a baratok lekeresekor.",
+      message: "Hiba a barátok lekérésekor.",
     });
   }
 }
@@ -120,13 +120,13 @@ async function sendFriendRequest(req, res) {
 
     if (Number.isNaN(targetUserId) || targetUserId <= 0) {
       return res.status(400).json({
-        message: "Ervenytelen cel felhasznalo.",
+        message: "Érvénytelen cél felhasználó.",
       });
     }
 
     if (senderUserId === targetUserId) {
       return res.status(400).json({
-        message: "Magadnak nem kuldhetsz baratkerelmet.",
+        message: "Magadnak nem küldhetsz barátkérelmet.",
       });
     }
 
@@ -153,7 +153,7 @@ async function sendFriendRequest(req, res) {
     if (existingRequest) {
       if (existingRequest.Allapot === "accepted") {
         return res.status(409).json({
-          message: "Ez a felhasznalo mar a baratod.",
+          message: "Ez a felhasználó már a barátod.",
         });
       }
 
@@ -212,7 +212,7 @@ async function sendFriendRequest(req, res) {
   } catch (error) {
     console.error("Baratkeres kuldesi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a baratkeres kuldesekor.",
+      message: "Hiba a barátkérés küldésekor.",
     });
   }
 }
@@ -250,7 +250,7 @@ async function getFriendNotifications(req, res) {
   } catch (error) {
     console.error("Barat ertesitesek lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba az ertesitesek lekeresekor.",
+      message: "Hiba az értesítések lekérésekor.",
     });
   }
 }
@@ -269,13 +269,13 @@ async function respondToFriendRequest(req, res) {
 
     if (Number.isNaN(requestId) || requestId <= 0) {
       return res.status(400).json({
-        message: "Ervenytelen kerelem azonosito.",
+        message: "Érvénytelen kérelem azonosító.",
       });
     }
 
     if (!["accept", "reject"].includes(action)) {
       return res.status(400).json({
-        message: "Ervenytelen muvelet.",
+        message: "Érvénytelen művelet.",
       });
     }
 
@@ -295,13 +295,13 @@ async function respondToFriendRequest(req, res) {
 
     if (!requestRow) {
       return res.status(404).json({
-        message: "Baratkerelem nem talalhato.",
+        message: "Barátkérelem nem található.",
       });
     }
 
     if (requestRow.Allapot !== "pending") {
       return res.status(400).json({
-        message: "Ez a baratkerelem mar feldolgozasra kerult.",
+        message: "Ez a barátkérelem már feldolgozásra került.",
       });
     }
 
@@ -325,7 +325,7 @@ async function respondToFriendRequest(req, res) {
   } catch (error) {
     console.error("Baratkeres valasz hiba:", error);
     return res.status(500).json({
-      message: "Hiba a baratkeres feldolgozasakor.",
+      message: "Hiba a barátkérés feldolgozásakor.",
     });
   }
 }
@@ -382,3 +382,5 @@ module.exports = {
   respondToFriendRequest,
   removeFriend,
 };
+
+

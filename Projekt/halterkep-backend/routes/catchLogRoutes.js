@@ -1,4 +1,4 @@
-const express = require("express");
+﻿const express = require("express");
 const { getOwnCatches, getUserProfileCatches, createCatch, deleteOwnCatch } = require("../controllers/catchLogController");
 const { authenticateToken, authenticateTokenOptional } = require("../utils/auth");
 
@@ -10,3 +10,4 @@ router.post("/", authenticateToken, createCatch);
 router.delete("/:id", authenticateToken, deleteOwnCatch);
 
 module.exports = router;
+

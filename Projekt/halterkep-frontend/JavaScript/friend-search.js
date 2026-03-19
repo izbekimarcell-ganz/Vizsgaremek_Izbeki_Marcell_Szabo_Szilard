@@ -1,4 +1,4 @@
-const FRIENDS_CONFIG = {
+﻿const FRIENDS_CONFIG = {
   apiBaseUrl: "http://localhost:4000/api",
 };
 
@@ -561,3 +561,4 @@ function initializeFriendsFeature() {
 }
 
 document.addEventListener("DOMContentLoaded", initializeFriendsFeature);
+

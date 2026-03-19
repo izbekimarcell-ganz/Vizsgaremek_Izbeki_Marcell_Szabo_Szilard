@@ -1,4 +1,4 @@
-const jwt = require("jsonwebtoken");
+﻿const jwt = require("jsonwebtoken");
 
 function getBearerToken(req) {
   const authHeader = req.headers.authorization || "";
@@ -57,3 +57,4 @@ module.exports = {
   authenticateTokenOptional,
   requireAdmin,
 };
+

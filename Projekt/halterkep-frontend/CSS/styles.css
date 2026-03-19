@@ -1,4 +1,4 @@
-/* =========================
+﻿/* =========================
    Alap változók - sötét mód
    ========================= */
 :root {
@@ -499,13 +499,6 @@ body[data-theme="light"] .form-select.app-input option {
   height: 100%;
 }
 
-.map-placeholder {
-  min-height: 260px;
-  border: 1px dashed var(--border);
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.04);
-}
-
 /* =========================
    Listaelemek
    ========================= */
@@ -735,3 +728,4 @@ body[data-theme="light"] .admin-forum-item {
     align-items: stretch;
   }
 }
+

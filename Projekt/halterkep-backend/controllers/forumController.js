@@ -1,4 +1,4 @@
-const { sql, poolPromise } = require("../DbConfig");
+﻿const { sql, poolPromise } = require("../DbConfig");
 
 async function getTopics(req, res) {
   try {
@@ -21,7 +21,7 @@ async function getTopics(req, res) {
   } catch (error) {
     console.error("Forum temak lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a forum temak lekeresekor.",
+      message: "Hiba a fórum témák lekérésekor.",
     });
   }
 }
@@ -34,7 +34,7 @@ async function createTopic(req, res) {
 
   if (!normalizedTitle) {
     return res.status(400).json({
-      message: "A tema cime kotelezo.",
+      message: "A téma címe kötelező.",
     });
   }
 
@@ -70,7 +70,7 @@ async function createTopic(req, res) {
       await transaction.commit();
 
       return res.status(201).json({
-        message: "Tema sikeresen letrehozva.",
+        message: "Téma sikeresen létrehozva.",
         temaId,
       });
     } catch (error) {
@@ -80,7 +80,7 @@ async function createTopic(req, res) {
   } catch (error) {
     console.error("Tema letrehozasi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a tema letrehozasa kozben.",
+      message: "Hiba a téma létrehozása közben.",
     });
   }
 }
@@ -91,7 +91,7 @@ async function getTopicReplies(req, res) {
 
     if (Number.isNaN(temaId)) {
       return res.status(400).json({
-        message: "Ervenytelen tema azonosito.",
+        message: "Érvénytelen téma azonosító.",
       });
     }
 
@@ -117,7 +117,7 @@ async function getTopicReplies(req, res) {
   } catch (error) {
     console.error("Hozzaszolasok lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a hozzaszolasok lekeresekor.",
+      message: "Hiba a hozzászólások lekérésekor.",
     });
   }
 }
@@ -130,7 +130,7 @@ async function createReply(req, res) {
 
     if (!temaId || (!normalizedText && !normalizedImageUrl)) {
       return res.status(400).json({
-        message: "A tema es legalabb szoveg vagy kep kotelezo.",
+        message: "A téma és legalább szöveg vagy kép kötelező.",
       });
     }
 
@@ -148,13 +148,13 @@ async function createReply(req, res) {
       `);
 
     return res.status(201).json({
-      message: "Hozzaszolas sikeresen letrehozva.",
+      message: "Hozzászólás sikeresen létrehozva.",
       hozzaszolasId: result.recordset[0].HozzaszolasId,
     });
   } catch (error) {
     console.error("Hozzaszolas letrehozasi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a hozzaszolas letrehozasa kozben.",
+      message: "Hiba a hozzászólás létrehozása közben.",
     });
   }
 }
@@ -180,7 +180,7 @@ async function getTopicsForAdmin(req, res) {
   } catch (error) {
     console.error("Admin forum temak lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a forum temak admin lekeresekor.",
+      message: "Hiba a fórum témák admin lekérésekor.",
     });
   }
 }
@@ -191,7 +191,7 @@ async function getRepliesForAdmin(req, res) {
 
     if (Number.isNaN(temaId)) {
       return res.status(400).json({
-        message: "Ervenytelen tema azonosito.",
+        message: "Érvénytelen téma azonosító.",
       });
     }
 
@@ -217,7 +217,7 @@ async function getRepliesForAdmin(req, res) {
   } catch (error) {
     console.error("Admin hozzaszolasok lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a hozzaszolasok admin lekeresekor.",
+      message: "Hiba a hozzászólások admin lekérésekor.",
     });
   }
 }
@@ -228,7 +228,7 @@ async function deleteTopic(req, res) {
 
     if (Number.isNaN(temaId)) {
       return res.status(400).json({
-        message: "Ervenytelen tema azonosito.",
+        message: "Érvénytelen téma azonosító.",
       });
     }
 
@@ -244,17 +244,17 @@ async function deleteTopic(req, res) {
 
     if (!result.recordset.length) {
       return res.status(404).json({
-        message: "Tema nem talalhato.",
+        message: "Téma nem található.",
       });
     }
 
     return res.status(200).json({
-      message: "Tema sikeresen torolve.",
+      message: "Téma sikeresen törölve.",
     });
   } catch (error) {
     console.error("Tema torlesi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a tema torlesekor.",
+      message: "Hiba a téma törlésekor.",
     });
   }
 }
@@ -265,7 +265,7 @@ async function deleteReply(req, res) {
 
     if (Number.isNaN(hozzaszolasId)) {
       return res.status(400).json({
-        message: "Ervenytelen hozzaszolas azonosito.",
+        message: "Érvénytelen hozzászólás azonosító.",
       });
     }
 
@@ -281,17 +281,17 @@ async function deleteReply(req, res) {
 
     if (!result.recordset.length) {
       return res.status(404).json({
-        message: "Hozzaszolas nem talalhato.",
+        message: "Hozzászólás nem található.",
       });
     }
 
     return res.status(200).json({
-      message: "Hozzaszolas sikeresen torolve.",
+      message: "Hozzászólás sikeresen törölve.",
     });
   } catch (error) {
     console.error("Hozzaszolas torlesi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a hozzaszolas torlesekor.",
+      message: "Hiba a hozzászólás törlésekor.",
     });
   }
 }
@@ -306,3 +306,5 @@ module.exports = {
   deleteTopic,
   deleteReply,
 };
+
+

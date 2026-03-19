@@ -1,4 +1,4 @@
-const { sql, poolPromise } = require("../DbConfig");
+﻿const { sql, poolPromise } = require("../DbConfig");
 
 async function getCatchesForUserId(userId) {
   const pool = await poolPromise;
@@ -32,7 +32,7 @@ async function getOwnCatches(req, res) {
   } catch (error) {
     console.error("Sajat fogasok lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a fogasok lekeresekor.",
+      message: "Hiba a fogások lekérésekor.",
     });
   }
 }
@@ -44,7 +44,7 @@ async function getUserProfileCatches(req, res) {
 
     if (Number.isNaN(userId)) {
       return res.status(400).json({
-        message: "Ervenytelen felhasznalo azonosito.",
+        message: "Érvénytelen felhasználó azonosító.",
       });
     }
 
@@ -63,7 +63,7 @@ async function getUserProfileCatches(req, res) {
 
     if (!userResult.recordset.length) {
       return res.status(404).json({
-        message: "Felhasznalo nem talalhato.",
+        message: "Felhasználó nem található.",
       });
     }
 
@@ -72,7 +72,7 @@ async function getUserProfileCatches(req, res) {
   } catch (error) {
     console.error("Profil fogasok lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a fogasok lekeresekor.",
+      message: "Hiba a fogások lekérésekor.",
     });
   }
 }
@@ -83,7 +83,7 @@ async function createCatch(req, res) {
 
     if (!halfajId || !vizteruletId || !fogasIdeje) {
       return res.status(400).json({
-        message: "A halfaj, a vizterulet es a fogas ideje kotelezo.",
+        message: "A halfaj, a vízterület és a fogás ideje kötelező.",
       });
     }
 
@@ -107,13 +107,13 @@ async function createCatch(req, res) {
       `);
 
     return res.status(201).json({
-      message: "Fogas sikeresen rogzitve.",
+      message: "Fogás sikeresen rögzítve.",
       fogasId: result.recordset[0].FogasId,
     });
   } catch (error) {
     console.error("Fogas rogzitese hiba:", error);
     return res.status(500).json({
-      message: "Hiba a fogas rogzitese kozben.",
+      message: "Hiba a fogás rögzítése közben.",
     });
   }
 }
@@ -124,7 +124,7 @@ async function deleteOwnCatch(req, res) {
 
     if (Number.isNaN(fogasId)) {
       return res.status(400).json({
-        message: "Ervenytelen fogas azonosito.",
+        message: "Érvénytelen fogás azonosító.",
       });
     }
 
@@ -142,17 +142,17 @@ async function deleteOwnCatch(req, res) {
 
     if (!result.recordset.length) {
       return res.status(404).json({
-        message: "A fogas nem talalhato, vagy nincs jogod torolni.",
+        message: "A fogás nem található, vagy nincs jogod törölni.",
       });
     }
 
     return res.status(200).json({
-      message: "Fogas sikeresen torolve.",
+      message: "Fogás sikeresen törölve.",
     });
   } catch (error) {
     console.error("Fogas torlesi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a fogas torlese kozben.",
+      message: "Hiba a fogás törlése közben.",
     });
   }
 }
@@ -163,3 +163,5 @@ module.exports = {
   createCatch,
   deleteOwnCatch,
 };
+
+

@@ -1,4 +1,4 @@
-const express = require("express");
+﻿const express = require("express");
 const {
   getWaters,
   getWaterDetails,
@@ -25,3 +25,4 @@ router.delete("/:id", authenticateToken, requireAdmin, deleteWater);
 router.get("/:id", getWaterDetails);
 
 module.exports = router;
+

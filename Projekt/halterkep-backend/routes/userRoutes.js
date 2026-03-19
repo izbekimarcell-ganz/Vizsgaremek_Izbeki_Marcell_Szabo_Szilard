@@ -1,4 +1,4 @@
-const express = require("express");
+﻿const express = require("express");
 const { getUsers, toggleUserActive, searchUsers, getPublicUserProfile, deleteUserByAdmin } = require("../controllers/userController");
 const { authenticateToken, authenticateTokenOptional, requireAdmin } = require("../utils/auth");
 
@@ -11,3 +11,4 @@ router.delete("/:id", authenticateToken, requireAdmin, deleteUserByAdmin);
 router.put("/:id/toggle-active", authenticateToken, requireAdmin, toggleUserActive);
 
 module.exports = router;
+

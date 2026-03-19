@@ -1,4 +1,4 @@
-const { sql, poolPromise } = require("../DbConfig");
+﻿const { sql, poolPromise } = require("../DbConfig");
 
 const deleteProfile = async (req, res) => {
   try {
@@ -7,13 +7,13 @@ const deleteProfile = async (req, res) => {
 
     if (!userId) {
       return res.status(401).json({
-        message: "Bejelentkezes szukseges.",
+        message: "Bejelentkezés szükséges.",
       });
     }
 
     if (isAdmin) {
       return res.status(403).json({
-        message: "Admin fiok nem torolheto innen.",
+        message: "Admin fiók nem törölhető innen.",
       });
     }
 
@@ -31,7 +31,7 @@ const deleteProfile = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        message: "Felhasznalo nem talalhato.",
+        message: "Felhasználó nem található.",
       });
     }
 
@@ -66,7 +66,7 @@ const deleteProfile = async (req, res) => {
     }
 
     return res.status(200).json({
-      message: "Profil sikeresen torolve.",
+      message: "Profil sikeresen törölve.",
       deletedUser: {
         id: user.FelhasznaloId,
         username: user.Felhasznalonev,
@@ -75,7 +75,7 @@ const deleteProfile = async (req, res) => {
   } catch (error) {
     console.error("Profil torlesi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a profil torlesekor.",
+      message: "Hiba a profil törlésekor.",
     });
   }
 };
@@ -83,3 +83,5 @@ const deleteProfile = async (req, res) => {
 module.exports = {
   deleteProfile,
 };
+
+

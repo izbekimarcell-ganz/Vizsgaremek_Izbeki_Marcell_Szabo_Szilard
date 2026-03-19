@@ -1,4 +1,4 @@
-const { sql, poolPromise } = require("../DbConfig");
+﻿const { sql, poolPromise } = require("../DbConfig");
 
 async function getUsers(req, res) {
   try {
@@ -14,7 +14,7 @@ async function getUsers(req, res) {
   } catch (error) {
     console.error("Felhasznalok lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a felhasznalok lekeresekor.",
+      message: "Hiba a felhasználók lekérésekor.",
     });
   }
 }
@@ -25,13 +25,13 @@ async function toggleUserActive(req, res) {
 
     if (Number.isNaN(userId)) {
       return res.status(400).json({
-        message: "Ervenytelen felhasznalo azonosito.",
+        message: "Érvénytelen felhasználó azonosító.",
       });
     }
 
     if (userId === req.user.id) {
       return res.status(400).json({
-        message: "A sajat fiokod allapota innen nem modositthato.",
+        message: "A saját fiókod állapota innen nem módosítható.",
       });
     }
 
@@ -49,13 +49,13 @@ async function toggleUserActive(req, res) {
 
     if (!user) {
       return res.status(404).json({
-        message: "Felhasznalo nem talalhato.",
+        message: "Felhasználó nem található.",
       });
     }
 
     if (user.Admin) {
       return res.status(403).json({
-        message: "Admin fiok allapota itt nem modositthato.",
+        message: "Admin fiók állapota itt nem módosítható.",
       });
     }
 
@@ -70,13 +70,13 @@ async function toggleUserActive(req, res) {
       `);
 
     return res.status(200).json({
-      message: "Felhasznalo allapota modositva.",
+      message: "Felhasználó állapota módosítva.",
       user: result.recordset[0],
     });
   } catch (error) {
     console.error("Felhasznalo allapot modositasi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a felhasznalo allapotanak modositasakor.",
+      message: "Hiba a felhasználó állapotának módosításakor.",
     });
   }
 }
@@ -197,7 +197,7 @@ async function searchUsers(req, res) {
   } catch (error) {
     console.error("Felhasznalo kereses hiba:", error);
     return res.status(500).json({
-      message: "Hiba a felhasznalo keresesekor.",
+      message: "Hiba a felhasználó keresésekor.",
     });
   }
 }
@@ -209,7 +209,7 @@ async function getPublicUserProfile(req, res) {
 
     if (Number.isNaN(userId)) {
       return res.status(400).json({
-        message: "Ervenytelen felhasznalo azonosito.",
+        message: "Érvénytelen felhasználó azonosító.",
       });
     }
 
@@ -230,7 +230,7 @@ async function getPublicUserProfile(req, res) {
 
     if (!user) {
       return res.status(404).json({
-        message: "Felhasznalo nem talalhato.",
+        message: "Felhasználó nem található.",
       });
     }
 
@@ -244,7 +244,7 @@ async function getPublicUserProfile(req, res) {
   } catch (error) {
     console.error("Nyilvanos profil lekeresi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a profil lekeresekor.",
+      message: "Hiba a profil lekérésekor.",
     });
   }
 }
@@ -256,3 +256,5 @@ module.exports = {
   searchUsers,
   getPublicUserProfile,
 };
+
+
