@@ -48,6 +48,7 @@ CREATE TABLE dbo.Felhasznalo
     Email              NVARCHAR(100) NOT NULL,
     JelszoHash         NVARCHAR(255) NOT NULL,
     Admin              BIT           NOT NULL CONSTRAINT DF_Felhasznalo_Admin DEFAULT (0),
+    Privat             BIT           NOT NULL CONSTRAINT DF_Felhasznalo_Privat DEFAULT (0),
     Letrehozva         DATETIME2     NOT NULL CONSTRAINT DF_Felhasznalo_Letrehozva DEFAULT (SYSUTCDATETIME()),
     Aktiv              BIT           NOT NULL CONSTRAINT DF_Felhasznalo_Aktiv DEFAULT (1)
 );

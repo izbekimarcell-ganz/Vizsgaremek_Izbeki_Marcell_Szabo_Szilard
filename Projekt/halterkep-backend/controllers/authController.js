@@ -1,4 +1,4 @@
-﻿const bcrypt = require("bcrypt");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { sql, poolPromise } = require("../DbConfig");
 
@@ -12,6 +12,7 @@ const mapUser = (user) => ({
   admin: Boolean(user.Admin),
   aktiv: Boolean(user.Aktiv),
   letrehozva: user.Letrehozva,
+  private: Boolean(user.Privat),
 });
 
 const normalizeEmail = (email) => email.trim().toLowerCase();
@@ -104,7 +105,8 @@ const register = async (req, res) => {
           INSERTED.Email,
           INSERTED.Admin,
           INSERTED.Aktiv,
-          INSERTED.Letrehozva
+          INSERTED.Letrehozva,
+          INSERTED.Privat
         VALUES (@username, @email, @passwordHash)
       `);
 
@@ -150,7 +152,8 @@ const login = async (req, res) => {
           JelszoHash,
           Admin,
           Aktiv,
-          Letrehozva
+          Letrehozva,
+          Privat
         FROM Felhasznalo
         WHERE Email = @identifier OR Felhasznalonev = @identifier
       `);
@@ -205,4 +208,3 @@ module.exports = {
   register,
   login,
 };
-

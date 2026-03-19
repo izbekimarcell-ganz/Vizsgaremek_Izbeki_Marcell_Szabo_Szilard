@@ -491,6 +491,9 @@ async function loadUserProfile() {
   const deleteProfileButton = $("#deleteProfileButton");
   const logoutButton = $("#logoutButton");
   const profileError = $("#profileError");
+  const profilePrivateNotice = $("#profilePrivateNotice");
+  const profilePrivacySection = $("#profilePrivacySection");
+  const profilePrivateToggle = $("#profilePrivateToggle");
 
   try {
     const viewedUserId = getViewedProfileUserId();
@@ -500,6 +503,10 @@ async function loadUserProfile() {
     if (profileError) {
       profileError.classList.add("d-none");
       profileError.textContent = "";
+    }
+    if (profilePrivateNotice) {
+      profilePrivateNotice.classList.add("d-none");
+      profilePrivateNotice.textContent = "Privát fiók.";
     }
 
     const user = isExternalProfile
@@ -2366,8 +2373,52 @@ async function toggleUserStatus(userId) {
 /* =========================
    Profil oldal előkészítés
    ========================= */
+async function handleProfilePrivacyToggle(event) {
+  const toggle = event?.target;
+
+  if (!toggle || getViewedProfileUserId() !== null) {
+    return;
+  }
+
+  const previousValue = !toggle.checked;
+  toggle.disabled = true;
+
+  try {
+    const response = await apiRequest("/users/me/privacy", {
+      method: "PUT",
+      body: JSON.stringify({
+        private: toggle.checked,
+      }),
+    });
+
+    const updatedUser = response?.user || { private: toggle.checked };
+    updateStoredUser(updatedUser);
+    await showAppSuccess(response?.message || "A profil láthatósága módosítva.");
+  } catch (error) {
+    toggle.checked = previousValue;
+    showAppAlert(error.message || "Nem sikerült módosítani a profil láthatóságát.", {
+      title: "Hiba",
+    });
+  } finally {
+    toggle.disabled = false;
+  }
+}
+
+function bindProfilePrivacyToggle() {
+  const toggle = $("#profilePrivateToggle");
+
+  if (!toggle || toggle.dataset.bound === "true") {
+    return;
+  }
+
+  toggle.addEventListener("change", handleProfilePrivacyToggle);
+  toggle.dataset.bound = "true";
+}
+
 function prepareProfilePage() {
   const viewedUserId = getViewedProfileUserId();
+
+  bindProfilePrivacyToggle();
 
   if (viewedUserId !== null) {
     loadUserProfile();
@@ -2437,8 +2488,40 @@ function getStoredUser() {
   }
 }
 
+function updateStoredUser(partialUser = {}) {
+  const currentUser = getStoredUser();
+
+  if (!currentUser) {
+    return null;
+  }
+
+  const updatedUser = {
+    ...currentUser,
+    ...partialUser,
+  };
+
+  if (localStorage.getItem("authUser") || localStorage.getItem("user")) {
+    localStorage.setItem("authUser", JSON.stringify(updatedUser));
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  }
+
+  if (sessionStorage.getItem("authUser") || sessionStorage.getItem("user")) {
+    sessionStorage.setItem("authUser", JSON.stringify(updatedUser));
+    sessionStorage.setItem("user", JSON.stringify(updatedUser));
+  }
+
+  return updatedUser;
+}
+
 function isAdminUser(user = getStoredUser()) {
   return Boolean(user && (user.admin === true || user.Admin === true));
+}
+
+function isPrivateProfileEnabled(user = getStoredUser()) {
+  return Boolean(
+    user &&
+    (user.private === true || user.Private === true || user.Privat === true)
+  );
 }
 
 function getDefaultPostLoginTarget(user = getStoredUser()) {
@@ -2766,11 +2849,14 @@ async function apiRequest(endpoint, options = {}) {
       : await response.text();
 
     if (!response.ok) {
-      throw new Error(
+      const requestError = new Error(
         typeof data === "object" && data?.message
           ? data.message
           : "Hiba történt a kérés során."
       );
+      requestError.status = response.status;
+      requestError.data = data;
+      throw requestError;
     }
 
     return data;
@@ -3209,12 +3295,12 @@ async function loadUserProfile() {
     if (profileEmpty) profileEmpty.classList.add("d-none");
 
     if (profilePageTitle) {
-      profilePageTitle.textContent = isExternalProfile ? "Felhasznaloi profil" : "Profil";
+      profilePageTitle.textContent = isExternalProfile ? "Felhasználói profil" : "Profil";
     }
     if (profilePageDescription) {
       profilePageDescription.textContent = isExternalProfile
-        ? "A kivalasztott felhasznalo nyilvanos profilja."
-        : "Profilinformaciok es beallitasok.";
+        ? "A kiválasztott felhasználó profilja."
+        : "Profilinformációk és beállítások.";
     }
     if (profileName) profileName.textContent = user.username || "";
     if (profileEmail) profileEmail.textContent = isExternalProfile ? "-" : user.email || "";
@@ -3228,6 +3314,13 @@ async function loadUserProfile() {
     }
     if (profileRoles) {
       profileRoles.textContent = isAdminUser(user) ? "Admin" : "Felhasználó";
+    }
+    if (profilePrivacySection) {
+      profilePrivacySection.classList.toggle("d-none", isExternalProfile);
+    }
+    if (profilePrivateToggle) {
+      profilePrivateToggle.checked = !isExternalProfile && isPrivateProfileEnabled(user);
+      profilePrivateToggle.disabled = isExternalProfile;
     }
     if (deleteProfileButton) {
       deleteProfileButton.classList.toggle("d-none", isExternalProfile || isAdminUser(user));
@@ -3250,6 +3343,22 @@ async function loadUserProfile() {
     if (profileContent) {
       profileContent.classList.add("d-none");
     }
+    if (profileEmpty) {
+      profileEmpty.classList.add("d-none");
+    }
+    hideProfileCatchesSection();
+
+    if (error?.status === 403 && error?.data?.privateProfile && profilePrivateNotice) {
+      if (profilePageTitle) {
+        profilePageTitle.textContent = "Felhasználói profil";
+      }
+      if (profilePageDescription) {
+        profilePageDescription.textContent = "A kiválasztott felhasználó profilja.";
+      }
+      profilePrivateNotice.classList.remove("d-none");
+      return;
+    }
+
     if (profileError) {
       profileError.classList.remove("d-none");
       profileError.textContent = "Hiba a profil betöltése során!";

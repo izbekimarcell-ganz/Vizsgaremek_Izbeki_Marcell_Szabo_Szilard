@@ -1,4 +1,5 @@
-﻿const { sql, poolPromise } = require("../DbConfig");
+const { sql, poolPromise } = require("../DbConfig");
+const { getProfileVisibility } = require("../utils/profileVisibility");
 
 async function getCatchesForUserId(userId) {
   const pool = await poolPromise;
@@ -40,7 +41,6 @@ async function getOwnCatches(req, res) {
 async function getUserProfileCatches(req, res) {
   try {
     const userId = Number.parseInt(req.params.userId, 10);
-    const isAdminViewer = Boolean(req.user?.admin);
 
     if (Number.isNaN(userId)) {
       return res.status(400).json({
@@ -48,22 +48,18 @@ async function getUserProfileCatches(req, res) {
       });
     }
 
-    const pool = await poolPromise;
-    const userResult = await pool
-      .request()
-      .input("userId", sql.Int, userId)
-      .input("isAdminViewer", sql.Bit, isAdminViewer)
-      .query(`
-        SELECT FelhasznaloId
-        FROM Felhasznalo
-        WHERE FelhasznaloId = @userId
-          AND Admin = 0
-          AND (@isAdminViewer = 1 OR Aktiv = 1)
-      `);
+    const profileAccess = await getProfileVisibility(userId, req.user);
 
-    if (!userResult.recordset.length) {
+    if (!profileAccess) {
       return res.status(404).json({
         message: "Felhasználó nem található.",
+      });
+    }
+
+    if (!profileAccess.canView) {
+      return res.status(403).json({
+        message: "Privát fiók.",
+        privateProfile: true,
       });
     }
 
@@ -163,5 +159,3 @@ module.exports = {
   createCatch,
   deleteOwnCatch,
 };
-
-

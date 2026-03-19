@@ -1,4 +1,5 @@
-﻿const { sql, poolPromise } = require("../DbConfig");
+const { sql, poolPromise } = require("../DbConfig");
+const { getProfileVisibility } = require("../utils/profileVisibility");
 
 async function getUsers(req, res) {
   try {
@@ -205,7 +206,6 @@ async function searchUsers(req, res) {
 async function getPublicUserProfile(req, res) {
   try {
     const userId = parseInt(req.params.id, 10);
-    const isAdminViewer = Boolean(req.user?.admin);
 
     if (Number.isNaN(userId)) {
       return res.status(400).json({
@@ -213,17 +213,60 @@ async function getPublicUserProfile(req, res) {
       });
     }
 
+    const profileAccess = await getProfileVisibility(userId, req.user);
+
+    if (!profileAccess) {
+      return res.status(404).json({
+        message: "Felhasználó nem található.",
+      });
+    }
+
+    if (!profileAccess.canView) {
+      return res.status(403).json({
+        message: "Privát fiók.",
+        privateProfile: true,
+      });
+    }
+
+    const { user, isFriend, isPrivate } = profileAccess;
+
+    return res.status(200).json({
+      id: user.FelhasznaloId,
+      username: user.Felhasznalonev,
+      letrehozva: user.Letrehozva,
+      aktiv: Boolean(user.Aktiv),
+      admin: false,
+      private: isPrivate,
+      isFriend,
+    });
+  } catch (error) {
+    console.error("Nyilvanos profil lekeresi hiba:", error);
+    return res.status(500).json({
+      message: "Hiba a profil lekérésekor.",
+    });
+  }
+}
+
+async function updateOwnProfilePrivacy(req, res) {
+  try {
+    const isPrivate = Boolean(req.body?.private);
     const pool = await poolPromise;
     const result = await pool
       .request()
-      .input("userId", sql.Int, userId)
-      .input("isAdminViewer", sql.Bit, isAdminViewer)
+      .input("userId", sql.Int, req.user.id)
+      .input("private", sql.Bit, isPrivate)
       .query(`
-        SELECT FelhasznaloId, Felhasznalonev, Letrehozva, Aktiv
-        FROM Felhasznalo
+        UPDATE Felhasznalo
+        SET Privat = @private
+        OUTPUT
+          INSERTED.FelhasznaloId,
+          INSERTED.Felhasznalonev,
+          INSERTED.Email,
+          INSERTED.Admin,
+          INSERTED.Aktiv,
+          INSERTED.Letrehozva,
+          INSERTED.Privat
         WHERE FelhasznaloId = @userId
-          AND Admin = 0
-          AND (@isAdminViewer = 1 OR Aktiv = 1)
       `);
 
     const user = result.recordset[0];
@@ -235,16 +278,23 @@ async function getPublicUserProfile(req, res) {
     }
 
     return res.status(200).json({
-      id: user.FelhasznaloId,
-      username: user.Felhasznalonev,
-      letrehozva: user.Letrehozva,
-      aktiv: Boolean(user.Aktiv),
-      admin: false,
+      message: isPrivate
+        ? "A profil sikeresen privátra állítva."
+        : "A profil sikeresen nyilvánosra állítva.",
+      user: {
+        id: user.FelhasznaloId,
+        username: user.Felhasznalonev,
+        email: user.Email,
+        admin: Boolean(user.Admin),
+        aktiv: Boolean(user.Aktiv),
+        letrehozva: user.Letrehozva,
+        private: Boolean(user.Privat),
+      },
     });
   } catch (error) {
-    console.error("Nyilvanos profil lekeresi hiba:", error);
+    console.error("Profil lathatosag modositasi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a profil lekérésekor.",
+      message: "Hiba a profil láthatóságának módosításakor.",
     });
   }
 }
@@ -255,6 +305,5 @@ module.exports = {
   deleteUserByAdmin,
   searchUsers,
   getPublicUserProfile,
+  updateOwnProfilePrivacy,
 };
-
-
