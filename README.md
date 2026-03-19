@@ -15,7 +15,7 @@
 - ~~Lehessen barátkérelmet küldeni~~ **(Kész)**
 - ~~Lehessen a fiókot úgy beállítani, hogy csak a barátok lássák és mindenki másnak privát legyen~~ **(KÉSZ)**
 - A vízterületeknél az információkat pontosítani (a halfajokból csak kevés van feltüntetve, pl. Dunán csak 4 hal van pedig sokkal több van) **()**
-- Jelszó újrakérés megcsinálása offline módon is (biztonsági kérdés) **()**
+- Jelszó újrakérés megcsinálása offline (biztonsági kérdés) **()**
 - Admin support kérése **()**
 - A főoldal átrendezése **()**
 - ~~Térkép tervezésének és megcsinálásának elkezdése~~ **(Törölve)**
@@ -29,4 +29,5 @@
 
 ## 2026.03.19
 
-- Egy naptár hozzáadása a profilban ahová lehet jelölni a horgászattal töltött napokat és még hozzá lehet csatolni a naphoz az azon a napon fogott fogásokat **()**
+- ~~Egy naptár hozzáadása a profilban ahová lehet jelölni a horgászattal töltött napokat és még hozzá lehet csatolni a naphoz az azon a napon fogott fogásokat~~ **(KÉSZ)**
+- A profilt lehessen jobban testreszabni(pl. profilkép, bemutatkozás, profil leírás, stb.) **()**
