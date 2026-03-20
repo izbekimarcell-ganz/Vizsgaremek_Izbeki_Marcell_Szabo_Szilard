@@ -148,6 +148,9 @@ async function deleteUserByAdmin(req, res) {
           DELETE FROM ForumReport
           WHERE FelhasznaloId = @userId;
 
+          DELETE FROM MarketplaceHirdetes
+          WHERE FelhasznaloId = @userId;
+
           DELETE FROM FogasNaplo
           WHERE FelhasznaloId = @userId;
 

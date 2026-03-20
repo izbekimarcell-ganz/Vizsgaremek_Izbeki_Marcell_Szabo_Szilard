@@ -21,6 +21,9 @@ GO
 IF OBJECT_ID(N'dbo.ForumHozzaszolas', N'U') IS NOT NULL DROP TABLE dbo.ForumHozzaszolas;
 IF OBJECT_ID(N'dbo.ForumTema', N'U') IS NOT NULL DROP TABLE dbo.ForumTema;
 IF OBJECT_ID(N'dbo.ForumReport', N'U') IS NOT NULL DROP TABLE dbo.ForumReport;
+IF OBJECT_ID(N'dbo.MarketplaceHirdetesKep', N'U') IS NOT NULL DROP TABLE dbo.MarketplaceHirdetesKep;
+IF OBJECT_ID(N'dbo.MarketplaceHirdetes', N'U') IS NOT NULL DROP TABLE dbo.MarketplaceHirdetes;
+IF OBJECT_ID(N'dbo.MarketplaceKategoria', N'U') IS NOT NULL DROP TABLE dbo.MarketplaceKategoria;
 
 IF OBJECT_ID(N'dbo.HorgaszNap', N'U') IS NOT NULL DROP TABLE dbo.HorgaszNap;
 IF OBJECT_ID(N'dbo.FogasNaplo', N'U') IS NOT NULL DROP TABLE dbo.FogasNaplo;
@@ -282,6 +285,76 @@ CREATE INDEX IX_ForumReport_FelhasznaloMessages
 GO
 
 /* =========================================================
+   6.5) Marketplace
+   ========================================================= */
+
+CREATE TABLE dbo.MarketplaceKategoria
+(
+    MarketplaceKategoriaId INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_MarketplaceKategoria PRIMARY KEY,
+    Kod                    NVARCHAR(30)  NOT NULL,
+    Nev                    NVARCHAR(100) NOT NULL,
+    Sorrend                INT           NOT NULL,
+    Aktiv                  BIT           NOT NULL CONSTRAINT DF_MarketplaceKategoria_Aktiv DEFAULT (1)
+);
+GO
+
+CREATE UNIQUE INDEX UX_MarketplaceKategoria_Kod ON dbo.MarketplaceKategoria(Kod);
+CREATE UNIQUE INDEX UX_MarketplaceKategoria_Nev ON dbo.MarketplaceKategoria(Nev);
+GO
+
+CREATE TABLE dbo.MarketplaceHirdetes
+(
+    MarketplaceHirdetesId  INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_MarketplaceHirdetes PRIMARY KEY,
+    FelhasznaloId          INT            NOT NULL,
+    MarketplaceKategoriaId INT            NOT NULL,
+    Cim                    NVARCHAR(150)  NOT NULL,
+    Leiras                 NVARCHAR(2000) NOT NULL,
+    ArFt                   INT            NOT NULL,
+    Telepules              NVARCHAR(100)  NOT NULL,
+    Kiemelt                BIT            NOT NULL CONSTRAINT DF_MarketplaceHirdetes_Kiemelt DEFAULT (0),
+    Letrehozva             DATETIME2      NOT NULL CONSTRAINT DF_MarketplaceHirdetes_Letrehozva DEFAULT (SYSUTCDATETIME()),
+    Aktiv                  BIT            NOT NULL CONSTRAINT DF_MarketplaceHirdetes_Aktiv DEFAULT (1),
+
+    CONSTRAINT CK_MarketplaceHirdetes_ArFt CHECK (ArFt >= 0),
+    CONSTRAINT FK_MarketplaceHirdetes_Felhasznalo
+        FOREIGN KEY (FelhasznaloId) REFERENCES dbo.Felhasznalo(FelhasznaloId),
+    CONSTRAINT FK_MarketplaceHirdetes_Kategoria
+        FOREIGN KEY (MarketplaceKategoriaId) REFERENCES dbo.MarketplaceKategoria(MarketplaceKategoriaId)
+);
+GO
+
+CREATE INDEX IX_MarketplaceHirdetes_Lista
+    ON dbo.MarketplaceHirdetes(Aktiv, MarketplaceKategoriaId, Kiemelt, Letrehozva DESC);
+GO
+
+CREATE INDEX IX_MarketplaceHirdetes_Felhasznalo
+    ON dbo.MarketplaceHirdetes(FelhasznaloId, Aktiv, Letrehozva DESC);
+GO
+
+CREATE TABLE dbo.MarketplaceHirdetesKep
+(
+    MarketplaceHirdetesKepId INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_MarketplaceHirdetesKep PRIMARY KEY,
+    MarketplaceHirdetesId    INT            NOT NULL,
+    KepUrl                   NVARCHAR(MAX)  NOT NULL,
+    FoKep                    BIT            NOT NULL CONSTRAINT DF_MarketplaceHirdetesKep_FoKep DEFAULT (0),
+    Sorrend                  INT            NOT NULL CONSTRAINT DF_MarketplaceHirdetesKep_Sorrend DEFAULT (0),
+    Letrehozva               DATETIME2      NOT NULL CONSTRAINT DF_MarketplaceHirdetesKep_Letrehozva DEFAULT (SYSUTCDATETIME()),
+
+    CONSTRAINT FK_MarketplaceHirdetesKep_Hirdetes
+        FOREIGN KEY (MarketplaceHirdetesId) REFERENCES dbo.MarketplaceHirdetes(MarketplaceHirdetesId) ON DELETE CASCADE
+);
+GO
+
+CREATE INDEX IX_MarketplaceHirdetesKep_Lista
+    ON dbo.MarketplaceHirdetesKep(MarketplaceHirdetesId, FoKep DESC, Sorrend ASC, MarketplaceHirdetesKepId ASC);
+GO
+
+CREATE UNIQUE INDEX UX_MarketplaceHirdetesKep_FoKep
+    ON dbo.MarketplaceHirdetesKep(MarketplaceHirdetesId)
+    WHERE FoKep = 1;
+GO
+
+/* =========================================================
    7) Adatfeltöltés
    ========================================================= */
 
@@ -418,6 +491,62 @@ BEGIN TRY
 
     DECLARE @AdminId INT = (SELECT FelhasznaloId FROM dbo.Felhasznalo WHERE Felhasznalonev = N'admin');
     DECLARE @TesztId INT = (SELECT FelhasznaloId FROM dbo.Felhasznalo WHERE Felhasznalonev = N'Felhasznalo');
+
+    /* =========================================================
+       7.4.1) Marketplace kategóriák és minta hirdetések
+       ========================================================= */
+    DECLARE @MarketplaceKategoriak TABLE (Kod NVARCHAR(30), Nev NVARCHAR(100), Sorrend INT);
+    INSERT INTO @MarketplaceKategoriak (Kod, Nev, Sorrend) VALUES
+        (N'rods',     N'Horgászbotok', 1),
+        (N'reels',    N'Orsók',        2),
+        (N'baits',    N'Csalik',       3),
+        (N'gear',     N'Kellékek',     4),
+        (N'clothing', N'Ruházat',      5),
+        (N'other',    N'Egyéb',        6);
+
+    INSERT INTO dbo.MarketplaceKategoria (Kod, Nev, Sorrend)
+    SELECT mk.Kod, mk.Nev, mk.Sorrend
+    FROM @MarketplaceKategoriak mk
+    WHERE NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.MarketplaceKategoria x
+        WHERE x.Kod = mk.Kod
+    );
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.MarketplaceHirdetes)
+    BEGIN
+        DECLARE @MarketplaceRows TABLE
+        (
+            Kod       NVARCHAR(30),
+            Cim       NVARCHAR(150),
+            Leiras    NVARCHAR(2000),
+            ArFt      INT,
+            Telepules NVARCHAR(100),
+            Kiemelt   BIT
+        );
+
+        INSERT INTO @MarketplaceRows (Kod, Cim, Leiras, ArFt, Telepules, Kiemelt) VALUES
+            (N'rods',     N'Shimano feeder bot 3,6 m',      N'Megkímélt állapotú feeder bot, bottokkal együtt, azonnal vihető.',                      64990, N'Budapest', 1),
+            (N'reels',    N'Daiwa elsőfékes orsó',          N'Finoman futó orsó új zsinórral és tartalék dobbal.',                                  38990, N'Győr',     1),
+            (N'baits',    N'Wobbler csomag süllőre',        N'10 darabos, kipróbált wobbler szett esti pergetéshez is.',                           8990,  N'Szeged',   0),
+            (N'gear',     N'Rod pod szett',                 N'Stabil alumínium rod pod három elektromos kapásjelzővel.',                           27990, N'Pécs',     0),
+            (N'clothing', N'Vízálló horgászkabát',          N'Bélelt, kapucnis kabát esős időre és hideg reggelekre.',                             17990, N'Miskolc',  0),
+            (N'other',    N'Horgász szék és táska szett',   N'Összecsukható szék oldalzsebes felszereléstáskával, kezdőknek is jó választás.',    14990, N'Debrecen', 0);
+
+        INSERT INTO dbo.MarketplaceHirdetes
+            (FelhasznaloId, MarketplaceKategoriaId, Cim, Leiras, ArFt, Telepules, Kiemelt)
+        SELECT
+            @TesztId,
+            mk.MarketplaceKategoriaId,
+            mr.Cim,
+            mr.Leiras,
+            mr.ArFt,
+            mr.Telepules,
+            mr.Kiemelt
+        FROM @MarketplaceRows mr
+        INNER JOIN dbo.MarketplaceKategoria mk ON mk.Kod = mr.Kod;
+    END
 
     /* =========================================================
        7.5) Pest megyei minta vízterületek

@@ -70,6 +70,14 @@ const FORUM_REPORT_REASON_LABELS = {
   other: "Egyéb",
 };
 
+const marketplaceState = {
+  categories: [],
+  activeCategory: "all",
+  search: "",
+  sort: "featured",
+  viewMode: "grid",
+};
+
 /* =========================
    Gyors DOM helper-ek
    ========================= */
@@ -96,6 +104,18 @@ function getViewedProfileUserId() {
   sessionStorage.removeItem("viewedProfileUserId");
   const userId = Number(rawUserId);
   return Number.isInteger(userId) && userId > 0 ? userId : null;
+}
+
+function getMarketplaceListingId() {
+  const params = new URLSearchParams(window.location.search);
+  const rawListingId = params.get("id");
+
+  if (!rawListingId) {
+    return null;
+  }
+
+  const listingId = Number(rawListingId);
+  return Number.isInteger(listingId) && listingId > 0 ? listingId : null;
 }
 
 function $all(selector) {
@@ -128,6 +148,14 @@ function initializePageHooks() {
 
   if (page === "forum") {
     prepareForumPage();
+  }
+
+  if (page === "marketplace") {
+    prepareMarketplacePage();
+  }
+
+  if (page === "marketplace-detail") {
+    prepareMarketplaceDetailPage();
   }
 
   if (page === "admin") {
@@ -166,6 +194,7 @@ function setActiveNavLink() {
       (page === "vizteruletek" && href === "vizteruletek.html") ||
       (page === "fogasnaplo" && href === "fogasnaplo.html") ||
       (page === "forum" && href === "forum.html") ||
+      ((page === "marketplace" || page === "marketplace-detail") && href === "marketplace.html") ||
       (page === "admin" && (
         (currentHash && href === `admin.html${currentHash}`) ||
         (!currentHash && href === "admin.html")
@@ -283,6 +312,33 @@ function ensureAdminReportsNavItem() {
   }
 
   return reportsNavItem;
+}
+
+function ensureMarketplaceNavItem() {
+  const navbarMenu = $("#navbarMenu");
+  if (!navbarMenu) {
+    return null;
+  }
+
+  let marketplaceNavItem = $("#marketplaceNavItem");
+
+  if (!marketplaceNavItem) {
+    const forumLink = findNavigationLink(["forum.html", ADMIN_SHORTCUTS.forum.href]);
+    const forumNavItem = forumLink?.closest(".nav-item");
+
+    marketplaceNavItem = document.createElement("li");
+    marketplaceNavItem.className = "nav-item";
+    marketplaceNavItem.id = "marketplaceNavItem";
+    marketplaceNavItem.innerHTML = '<a class="nav-link" href="marketplace.html">Marketplace</a>';
+
+    if (forumNavItem) {
+      forumNavItem.insertAdjacentElement("afterend", marketplaceNavItem);
+    } else {
+      navbarMenu.appendChild(marketplaceNavItem);
+    }
+  }
+
+  return marketplaceNavItem;
 }
 
 function ensureAppDialogElements() {
@@ -844,6 +900,438 @@ function renderCatchCards(container, catches, { allowDelete = false } = {}) {
     `;
     container.appendChild(card);
   });
+}
+
+function prepareMarketplacePage() {
+  const searchForm = $("#marketplaceSearchForm");
+  const searchInput = $("#marketplaceSearchInput");
+  const sortSelect = $("#marketplaceSortSelect");
+  const categoriesContainer = $("#marketplaceCategoryGrid");
+  const listingsContainer = $("#marketplaceListings");
+  const resultCount = $("#marketplaceResultsCount");
+  const emptyState = $("#marketplaceEmptyState");
+  const loadingState = $("#marketplaceListingsLoading");
+  const createButton = $("#marketplaceCreateButton");
+  const viewToggleButtons = Array.from($all(".marketplace-view-toggle-btn"));
+
+  if (!listingsContainer || !categoriesContainer) {
+    return;
+  }
+
+  const formatMarketplacePrice = (value) => {
+    const amount = Number(value || 0);
+    return `${amount.toLocaleString("hu-HU")} Ft`;
+  };
+
+  const formatMarketplaceDate = (value) => {
+    if (!value) {
+      return "";
+    }
+
+    const parsedDate = new Date(value);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "";
+    }
+
+    return parsedDate.toLocaleDateString("hu-HU");
+  };
+
+  const renderMarketplaceCategories = () => {
+    const allCategories = [
+      {
+        Kod: "all",
+        Nev: "Összes",
+        HirdetesDb: marketplaceState.categories.reduce(
+          (sum, category) => sum + Number(category.HirdetesDb || 0),
+          0
+        ),
+      },
+      ...marketplaceState.categories,
+    ];
+
+    categoriesContainer.innerHTML = allCategories
+      .map((category) => {
+        const isActive = marketplaceState.activeCategory === category.Kod;
+        const countText =
+          category.Kod === "all"
+            ? "Minden kategória"
+            : `${Number(category.HirdetesDb || 0)} hirdetés`;
+
+        return `
+          <button
+            class="marketplace-category-card${isActive ? " is-active" : ""}"
+            type="button"
+            data-category="${escapeHtml(category.Kod)}"
+          >
+            <span class="marketplace-category-name">${escapeHtml(category.Nev)}</span>
+            <span class="marketplace-category-count">${escapeHtml(countText)}</span>
+          </button>
+        `;
+      })
+      .join("");
+  };
+
+  const renderMarketplaceListings = (listings) => {
+    clearElement(listingsContainer);
+    listingsContainer.classList.toggle("marketplace-listings-list-view", marketplaceState.viewMode === "list");
+
+    listings.forEach((listing) => {
+      const card = document.createElement("article");
+      card.className = "marketplace-listing-row";
+      const thumbHtml = listing.FoKepUrl
+        ? `
+          <img
+            src="${escapeHtml(listing.FoKepUrl)}"
+            alt="${escapeHtml(listing.Cim || "Marketplace hirdetés")}"
+            class="marketplace-listing-thumb-image"
+          />
+        `
+        : '<div class="marketplace-listing-thumb-placeholder">Hirdetés</div>';
+      const isListView = marketplaceState.viewMode === "list";
+
+      card.innerHTML = isListView
+        ? `
+          <a class="marketplace-listing-link marketplace-listing-link-list" href="marketplace-reszlet.html?id=${Number(listing.MarketplaceHirdetesId)}" aria-label="${escapeHtml(listing.Cim || "Marketplace hirdetés")}">
+            <div class="marketplace-listing-thumb">
+              ${thumbHtml}
+            </div>
+            <div class="marketplace-listing-main marketplace-listing-main-list">
+              <h2 class="marketplace-listing-title">${escapeHtml(listing.Cim || "")}</h2>
+            </div>
+          </a>
+        `
+        : `
+          <a class="marketplace-listing-link" href="marketplace-reszlet.html?id=${Number(listing.MarketplaceHirdetesId)}" aria-label="${escapeHtml(listing.Cim || "Marketplace hirdetés")}">
+            <div class="marketplace-listing-thumb">
+              ${thumbHtml}
+            </div>
+            <div class="marketplace-listing-main">
+              <h2 class="marketplace-listing-title">${escapeHtml(listing.Cim || "")}</h2>
+            </div>
+          </a>
+        `;
+      listingsContainer.appendChild(card);
+    });
+  };
+
+  const updateMarketplaceViewToggle = () => {
+    viewToggleButtons.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.view === marketplaceState.viewMode);
+    });
+  };
+
+  const setMarketplaceLoading = (isLoading) => {
+    if (loadingState) {
+      loadingState.classList.toggle("d-none", !isLoading);
+    }
+
+    if (listingsContainer) {
+      listingsContainer.classList.toggle("d-none", isLoading);
+    }
+  };
+
+  const loadMarketplaceCategories = async () => {
+    marketplaceState.categories = await apiRequest("/marketplace/categories");
+    renderMarketplaceCategories();
+  };
+
+  const loadMarketplaceListings = async () => {
+    const params = new URLSearchParams();
+
+    if (marketplaceState.activeCategory && marketplaceState.activeCategory !== "all") {
+      params.set("category", marketplaceState.activeCategory);
+    }
+
+    if (marketplaceState.search) {
+      params.set("q", marketplaceState.search);
+    }
+
+    if (marketplaceState.sort) {
+      params.set("sort", marketplaceState.sort);
+    }
+
+    const endpoint = params.toString()
+      ? `/marketplace/listings?${params.toString()}`
+      : "/marketplace/listings";
+
+    setMarketplaceLoading(true);
+
+    try {
+      const listings = await apiRequest(endpoint);
+      renderMarketplaceListings(listings);
+
+      if (resultCount) {
+        resultCount.textContent = `${listings.length} találat`;
+      }
+
+      if (emptyState) {
+        emptyState.classList.toggle("d-none", listings.length > 0);
+      }
+    } finally {
+      setMarketplaceLoading(false);
+    }
+  };
+
+  categoriesContainer.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-category]");
+
+    if (!button) {
+      return;
+    }
+
+    marketplaceState.activeCategory = button.dataset.category || "all";
+    renderMarketplaceCategories();
+    await loadMarketplaceListings();
+  });
+
+  if (sortSelect) {
+    sortSelect.addEventListener("change", async () => {
+      marketplaceState.sort = sortSelect.value || "featured";
+      await loadMarketplaceListings();
+    });
+  }
+
+  if (searchForm) {
+    searchForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      marketplaceState.search = (searchInput?.value || "").trim();
+      await loadMarketplaceListings();
+    });
+  }
+
+  if (createButton) {
+    createButton.addEventListener("click", () => {
+      showAppAlert("A hirdetésfeladás funkció a következő lépésekben érkezik.", { title: "Hamarosan" });
+    });
+  }
+
+  viewToggleButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const nextViewMode = button.dataset.view === "list" ? "list" : "grid";
+
+      if (marketplaceState.viewMode === nextViewMode) {
+        return;
+      }
+
+      marketplaceState.viewMode = nextViewMode;
+      localStorage.setItem("marketplaceViewMode", nextViewMode);
+      updateMarketplaceViewToggle();
+      await loadMarketplaceListings();
+    });
+  });
+
+  (async () => {
+    try {
+      marketplaceState.activeCategory = "all";
+      marketplaceState.search = "";
+      marketplaceState.sort = sortSelect?.value || "featured";
+      marketplaceState.viewMode = localStorage.getItem("marketplaceViewMode") === "list" ? "list" : "grid";
+
+      if (searchInput) {
+        searchInput.value = "";
+      }
+
+      updateMarketplaceViewToggle();
+      await loadMarketplaceCategories();
+      await loadMarketplaceListings();
+    } catch (error) {
+      console.error("Marketplace betöltési hiba:", error);
+      setMarketplaceLoading(false);
+      if (resultCount) {
+        resultCount.textContent = "0 találat";
+      }
+      if (emptyState) {
+        emptyState.classList.remove("d-none");
+        emptyState.querySelector(".section-text").textContent =
+          error.message || "Nem sikerült betölteni a marketplace hirdetéseket.";
+      }
+    }
+  })();
+}
+
+async function prepareMarketplaceDetailPage() {
+  const listingId = getMarketplaceListingId();
+  const loadingState = $("#marketplaceDetailLoading");
+  const errorState = $("#marketplaceDetailError");
+  const content = $("#marketplaceDetailContent");
+  const titleElement = $("#marketplaceDetailTitle");
+  const sellerElement = $("#marketplaceDetailSeller");
+  const locationElement = $("#marketplaceDetailLocation");
+  const locationDuplicateElement = $("#marketplaceDetailLocationDuplicate");
+  const dateElement = $("#marketplaceDetailDate");
+  const dateDuplicateElement = $("#marketplaceDetailDateDuplicate");
+  const categoryElement = $("#marketplaceDetailCategory");
+  const priceElement = $("#marketplaceDetailPrice");
+  const descriptionElement = $("#marketplaceDetailDescription");
+  const heroImageContainer = $("#marketplaceDetailImage");
+  const galleryContainer = $("#marketplaceDetailGallery");
+  const backButton = $("#marketplaceDetailBackButton");
+  const contactButton = $("#marketplaceDetailContactButton");
+
+  if (!loadingState || !errorState || !content) {
+    return;
+  }
+
+  const showDetailError = (message) => {
+    loadingState.classList.add("d-none");
+    content.classList.add("d-none");
+    errorState.classList.remove("d-none");
+    const textElement = errorState.querySelector(".section-text");
+    if (textElement) {
+      textElement.textContent = message;
+    }
+  };
+
+  const formatMarketplacePrice = (value) => {
+    const amount = Number(value || 0);
+    return `${amount.toLocaleString("hu-HU")} Ft`;
+  };
+
+  const formatMarketplaceDate = (value) => {
+    if (!value) {
+      return "-";
+    }
+
+    const parsedDate = new Date(value);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "-";
+    }
+
+    return parsedDate.toLocaleString("hu-HU", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  if (!listingId) {
+    showDetailError("Érvénytelen hirdetés azonosító.");
+    return;
+  }
+
+  if (backButton) {
+    backButton.addEventListener("click", () => {
+      window.location.href = "marketplace.html";
+    });
+  }
+
+  try {
+    const listing = await apiRequest(`/marketplace/listings/${listingId}`);
+    const images = Array.isArray(listing.Kepek) ? listing.Kepek : [];
+    let currentImageIndex = images.findIndex((image) => image.FoKep);
+
+    if (currentImageIndex < 0) {
+      currentImageIndex = images.length ? 0 : -1;
+    }
+
+    const renderMainImage = () => {
+      if (!heroImageContainer) {
+        return;
+      }
+
+      if (currentImageIndex >= 0 && images[currentImageIndex]?.KepUrl) {
+        heroImageContainer.innerHTML = `
+          <img
+            src="${escapeHtml(images[currentImageIndex].KepUrl)}"
+            alt="${escapeHtml(listing.Cim || "Marketplace hirdetés")}"
+            class="marketplace-detail-image-tag"
+          />
+        `;
+      } else {
+        heroImageContainer.innerHTML = '<div class="marketplace-detail-image-placeholder">Hirdetés</div>';
+      }
+    };
+
+    const renderGallery = () => {
+      if (!galleryContainer) {
+        return;
+      }
+
+      if (images.length <= 1) {
+        galleryContainer.classList.add("d-none");
+        clearElement(galleryContainer);
+        return;
+      }
+
+      galleryContainer.classList.remove("d-none");
+      galleryContainer.innerHTML = images
+        .map((image, index) => `
+          <button
+            type="button"
+            class="marketplace-detail-thumb${index === currentImageIndex ? " is-active" : ""}"
+            data-image-index="${index}"
+            aria-label="Kép ${index + 1}"
+          >
+            <img src="${escapeHtml(image.KepUrl)}" alt="${escapeHtml(listing.Cim || "Marketplace kép")}" />
+          </button>
+        `)
+        .join("");
+    };
+
+    if (titleElement) {
+      titleElement.textContent = listing.Cim || "Marketplace hirdetés";
+    }
+    if (sellerElement) {
+      sellerElement.textContent = listing.Felhasznalonev || "-";
+    }
+    if (locationElement) {
+      locationElement.textContent = listing.Telepules || "-";
+    }
+    if (locationDuplicateElement) {
+      locationDuplicateElement.textContent = listing.Telepules || "-";
+    }
+    if (dateElement) {
+      dateElement.textContent = formatMarketplaceDate(listing.Letrehozva);
+    }
+    if (dateDuplicateElement) {
+      dateDuplicateElement.textContent = formatMarketplaceDate(listing.Letrehozva);
+    }
+    if (categoryElement) {
+      categoryElement.textContent = listing.KategoriaNev || "-";
+    }
+    if (priceElement) {
+      priceElement.textContent = formatMarketplacePrice(listing.ArFt);
+    }
+    if (descriptionElement) {
+      descriptionElement.textContent = listing.Leiras || "Ehhez a hirdetéshez még nincs részletes leírás.";
+    }
+
+    renderMainImage();
+    renderGallery();
+
+    if (galleryContainer) {
+      galleryContainer.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-image-index]");
+
+        if (!button) {
+          return;
+        }
+
+        currentImageIndex = Number(button.dataset.imageIndex);
+        renderMainImage();
+        renderGallery();
+      });
+    }
+
+    if (contactButton) {
+      contactButton.addEventListener("click", () => {
+        showAppAlert("Az érdeklődés küldése funkció a következő lépésben érkezik.", {
+          title: "Hamarosan",
+        });
+      });
+    }
+
+    loadingState.classList.add("d-none");
+    errorState.classList.add("d-none");
+    content.classList.remove("d-none");
+  } catch (error) {
+    console.error("Marketplace hirdetés részlet betöltési hiba:", error);
+    showDetailError(error.message || "Nem sikerült betölteni a hirdetés részleteit.");
+  }
 }
 
 function prepareWatersPage() {
@@ -3041,6 +3529,7 @@ function getAuthHeaders() {
    Navbar frissítése bejelentkezési státusz alapján
    ========================= */
 async function updateNavbar() {
+  ensureMarketplaceNavItem();
   const adminNavItem = $("#adminNavItem");
   const reportsNavItem = ensureAdminReportsNavItem();
   const profilNavItem = $("#profilNavItem");

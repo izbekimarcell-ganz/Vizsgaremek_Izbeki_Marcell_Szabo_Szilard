@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HalTérkép - Hirdetés részletei</title>
+
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="CSS/styles.css" />
+</head>
+<body data-page="marketplace-detail" data-theme="dark">
+
+  <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
+    <div class="container nav-container">
+      <a class="navbar-brand d-flex align-items-center gap-3" href="index.html">
+        <img src="assets/logo.png" alt="HalTérkép logó" class="brand-logo" />
+        <div>
+          <div class="fw-bold brand-title">HalTérkép</div>
+          <small class="brand-subtitle">Horgászvizek • Halfajok • Fogásnapló • Fórum</small>
+        </div>
+      </a>
+
+      <div class="nav-actions-mobile d-lg-none">
+        <button id="themeToggleMobile" class="theme-toggle-btn" type="button" aria-label="Téma váltása">
+          <span class="theme-icon">☀️</span>
+        </button>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      </div>
+
+      <button class="navbar-toggler d-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="mainNavbar">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center" id="navbarMenu">
+          <li class="nav-item friend-search-nav">
+            <div class="friend-search-container" id="friendSearchContainer">
+              <button class="friend-search-toggle" id="friendSearchToggle" type="button" aria-label="Barátok keresése">🔍</button>
+              <input id="friendSearchInput" class="form-control app-input friend-search-input" type="text" placeholder="Barátok keresése" autocomplete="off" />
+              <ul id="friendSearchResults" class="friend-search-results d-none"></ul>
+            </div>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="index.html">Kezdőlap</a></li>
+          <li class="nav-item"><a class="nav-link" href="vizteruletek.html">Vízterületek</a></li>
+          <li class="nav-item"><a class="nav-link" href="fogasnaplo.html">Fogásnapló</a></li>
+          <li class="nav-item"><a class="nav-link" href="forum.html">Fórum</a></li>
+          <li class="nav-item d-none" id="adminNavItem"><a class="nav-link" href="admin.html">Admin</a></li>
+          <li class="nav-item d-none" id="profilNavItem"><a class="nav-link" href="profil.html">Profil</a></li>
+
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0 d-none d-lg-block">
+            <button id="themeToggleDesktop" class="theme-toggle-btn" type="button" aria-label="Téma váltása">
+              <span class="theme-icon">☀️</span>
+            </button>
+          </li>
+
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="loginNavItem">
+            <a class="btn btn-outline-light btn-sm" href="login.html">Bejelentkezés</a>
+          </li>
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="registerNavItem">
+            <a class="btn btn-primary btn-sm" href="register.html">Regisztráció</a>
+          </li>
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0 d-none" id="logoutNavItem">
+            <button class="btn btn-outline-danger btn-sm" onclick="handleLogout()">Kijelentkezés</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main-content pb-5">
+    <section class="marketplace-detail-section">
+      <div class="container">
+        <div id="marketplaceDetailLoading" class="card app-card">
+          <div class="card-body">
+            <p class="section-text mb-0">Hirdetés betöltése...</p>
+          </div>
+        </div>
+
+        <div id="marketplaceDetailError" class="card app-card d-none">
+          <div class="card-body">
+            <h1 class="h4 mb-2">Nem található a hirdetés</h1>
+            <p class="section-text mb-0">A keresett hirdetés nem érhető el.</p>
+          </div>
+        </div>
+
+        <div id="marketplaceDetailContent" class="marketplace-detail-shell d-none">
+          <div class="marketplace-detail-topbar">
+            <button id="marketplaceDetailBackButton" type="button" class="btn btn-outline-light btn-sm marketplace-detail-back">
+              Vissza a piactérhez
+            </button>
+          </div>
+
+          <div class="marketplace-detail-header">
+            <div>
+              <span class="marketplace-kicker">Marketplace hirdetés</span>
+              <h1 id="marketplaceDetailTitle" class="marketplace-detail-title"></h1>
+            </div>
+            <div class="marketplace-detail-meta">
+              <span><strong>Eladó:</strong> <span id="marketplaceDetailSeller"></span></span>
+              <span><strong>Település:</strong> <span id="marketplaceDetailLocation"></span></span>
+              <span><strong>Dátum:</strong> <span id="marketplaceDetailDate"></span></span>
+            </div>
+          </div>
+
+          <div class="marketplace-detail-layout">
+            <div class="marketplace-detail-gallery-shell">
+              <div id="marketplaceDetailImage" class="marketplace-detail-image"></div>
+              <div id="marketplaceDetailGallery" class="marketplace-detail-thumbs d-none"></div>
+            </div>
+
+            <aside class="marketplace-detail-side">
+              <div class="card app-card marketplace-detail-price-card">
+                <div class="card-body">
+                  <div class="marketplace-detail-price-label">Ár</div>
+                  <div id="marketplaceDetailPrice" class="marketplace-detail-price"></div>
+                </div>
+              </div>
+
+              <div class="card app-card marketplace-detail-info-card">
+                <div class="card-body">
+                  <h2 class="h5 mb-3">Termékinformációk</h2>
+                  <dl class="marketplace-detail-info-list">
+                    <div>
+                      <dt>Kategória</dt>
+                      <dd id="marketplaceDetailCategory"></dd>
+                    </div>
+                    <div>
+                      <dt>Település</dt>
+                      <dd id="marketplaceDetailLocationDuplicate"></dd>
+                    </div>
+                    <div>
+                      <dt>Feltöltve</dt>
+                      <dd id="marketplaceDetailDateDuplicate"></dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+
+            </aside>
+          </div>
+
+          <div class="card app-card marketplace-detail-description-card">
+            <div class="card-body">
+              <h2 class="h5 mb-3">Leírás</h2>
+              <p id="marketplaceDetailDescription" class="marketplace-detail-description"></p>
+            </div>
+          </div>
+
+          <div class="marketplace-detail-actions">
+            <button id="marketplaceDetailContactButton" type="button" class="btn marketplace-create-button w-100">
+              Érdeklődés küldése
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="py-4 border-top border-secondary-subtle app-footer">
+    <div class="container text-center footer-text">© HalTérkép</div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="JavaScript/script.js"></script>
+  <script src="JavaScript/friend-search.js"></script>
+</body>
+</html>
