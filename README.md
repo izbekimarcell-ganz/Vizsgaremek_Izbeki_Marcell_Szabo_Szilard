@@ -20,7 +20,7 @@
 - A főoldal átrendezése **()**
 - ~~Térkép tervezésének és megcsinálásának elkezdése~~ **(Törölve)**
 - ~~Regisztrációnál az adatok ellenőrzése~~ **(KÉSZ)**
-- Marketplace csinálás **()**
+- ~~Marketplace csinálás~~ **(KÉSZ)**
 - Pici redesign (nagyon látszik az ai) **()**
 
 ## 2026.03.15
@@ -31,3 +31,10 @@
 
 - ~~Egy naptár hozzáadása a profilban ahová lehet jelölni a horgászattal töltött napokat és még hozzá lehet csatolni a naphoz az azon a napon fogott fogásokat~~ **(KÉSZ)**
 - A profilt lehessen jobban testreszabni(pl. profilkép, bemutatkozás, profil leírás, stb.) **()**
+
+## 2026.03.21
+
+- Kód tisztítása
+- Kód jobban átlátható legyen (pl script.js fájl nagyon hosszú ezért szét kéne szedni külön .js fájlokba **()**
+- Adatbázist egy picikét tömöríteni mert nagyon sok tábla van **()**
+- Adatokkal feltölteni az egészet. **()**
