@@ -80,7 +80,7 @@
     <div class="container">
       <div class="mb-4">
         <h1 class="mb-1">Admin felület</h1>
-        <p class="section-text mb-0">Felhasználók kezelése.</p>
+        <p class="section-text mb-0">Felhasználók, moderáció és report üzenetek kezelése.</p>
       </div>
 
       <div id="adminUsersSection" class="row g-4">
@@ -124,7 +124,7 @@
               <div>
                 <h2 id="adminMasterDataTitle" class="h4 mb-1">Törzsadat kezelés</h2>
                 <p id="adminMasterDataDescription" class="section-text mb-0">
-                  Válassz egy kezelési területet a fenti gombokkal.
+                  Itt kezelheted az oldal törzsadatait és adminisztrációs feladatait.
                 </p>
               </div>
               <button id="closeAdminMasterDataSection" class="btn btn-outline-secondary btn-sm" type="button">
@@ -256,9 +256,48 @@
               </div>
             </div>
 
+            <div id="adminReportsPanel" class="d-none">
+              <div class="row g-4">
+                <div class="col-12">
+                  <div class="card bg-transparent border-secondary-subtle">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-center gap-2 mb-3 flex-wrap">
+                        <h3 class="h6 mb-0">Beérkezett reportok</h3>
+                        <span id="adminReportsCount" class="section-text small"></span>
+                      </div>
+                      <div id="adminReportsList" class="d-grid gap-3"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
+
+      <div class="modal fade" id="adminReportDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+          <div class="modal-content app-card border-danger-subtle">
+            <div class="modal-header border-secondary-subtle">
+              <h2 class="modal-title fs-5">Report részletei</h2>
+              <button type="button" class="btn-close admin-modal-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+            </div>
+            <div class="modal-body">
+              <div id="adminReportDetailBody" class="d-grid gap-3"></div>
+              <hr class="border-secondary-subtle">
+              <div>
+                <label class="form-label" for="adminReportReplyText">Válasz a reportoló felhasználónak</label>
+                <textarea id="adminReportReplyText" class="form-control app-input" rows="5" maxlength="2000"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer border-secondary-subtle justify-content-between">
+              <button type="button" id="adminReportJumpButton" class="btn btn-outline-info">Ugrás a tartalomhoz</button>
+              <button type="button" id="adminSendReportReplyButton" class="btn btn-primary">Válasz küldése</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="modal fade" id="waterEditModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">

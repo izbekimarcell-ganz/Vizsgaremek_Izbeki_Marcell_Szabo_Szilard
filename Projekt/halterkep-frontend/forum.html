@@ -187,6 +187,50 @@
   </main>
   <!-- Fő tartalom vége -->
 
+  <div class="modal fade" id="forumReportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content app-card border-danger-subtle">
+        <div class="modal-header border-secondary-subtle">
+          <h2 class="modal-title fs-5">Tartalom jelentése</h2>
+          <button type="button" class="btn-close admin-modal-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+        </div>
+        <form id="forumReportForm">
+          <div class="modal-body">
+            <input type="hidden" id="forumReportTargetType" />
+            <input type="hidden" id="forumReportTargetId" />
+
+            <div class="mb-3">
+              <label class="form-label" for="forumReportReason">Jelentés oka</label>
+              <select id="forumReportReason" class="form-select app-input" required>
+                <option value="">Válassz indokot</option>
+                <option value="spam">Spam vagy kéretlen tartalom</option>
+                <option value="offensive">Sértő vagy nem megfelelő tartalom</option>
+                <option value="harassment">Zaklatás vagy személyeskedés</option>
+                <option value="misleading">Félrevezető információ</option>
+                <option value="off_topic">Nem kapcsolódik a témához</option>
+                <option value="other">Egyéb...</option>
+              </select>
+            </div>
+
+            <div id="forumReportDetailsGroup" class="d-none">
+              <label class="form-label" for="forumReportDetails">Részletezés</label>
+              <textarea
+                id="forumReportDetails"
+                class="form-control app-input"
+                rows="5"
+                maxlength="1000"
+                placeholder="Írd le röviden, miért jelentetted ezt a tartalmat."
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-secondary-subtle">
+            <button type="submit" class="btn btn-danger">Report elküldése</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="py-4 border-top border-secondary-subtle app-footer">
     <div class="container text-center footer-text">© HalTérkép</div>

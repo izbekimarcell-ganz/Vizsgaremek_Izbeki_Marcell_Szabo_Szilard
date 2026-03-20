@@ -9,6 +9,7 @@ const speciesRoutes = require("./routes/speciesRoutes");
 const catchLogRoutes = require("./routes/catchLogRoutes");
 const fishingDayRoutes = require("./routes/fishingDayRoutes");
 const forumRoutes = require("./routes/forumRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 const userRoutes = require("./routes/userRoutes");
 const friendRoutes = require("./routes/friendRoutes");
 
@@ -29,6 +30,7 @@ app.use("/api/halfajok", speciesRoutes);
 app.use("/api/fogasnaplo", catchLogRoutes);
 app.use("/api/horgasznapok", fishingDayRoutes);
 app.use("/api/forum", forumRoutes);
+app.use("/api/reports", reportRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/friends", friendRoutes);
 

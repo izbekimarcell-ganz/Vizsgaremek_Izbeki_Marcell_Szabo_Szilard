@@ -26,6 +26,12 @@ const ADMIN_SHORTCUTS = {
     title: "Fórum moderáció",
     description: "Fórum témák és hozzászólások adminisztrációja.",
   },
+  reports: {
+    href: "admin.html#reports",
+    label: "Üzenetek",
+    title: "Report üzenetek",
+    description: "Fórum reportok kezelése és admin válaszok küldése.",
+  },
 };
 
 const DEFAULT_NAV_ITEMS = [
@@ -54,6 +60,15 @@ const HOME_PAGE_SHORTCUTS = [
     adminShortcut: ADMIN_SHORTCUTS.forum,
   },
 ];
+
+const FORUM_REPORT_REASON_LABELS = {
+  spam: "Spam vagy kéretlen tartalom",
+  offensive: "Sértő vagy nem megfelelő tartalom",
+  harassment: "Zaklatás vagy személyeskedés",
+  misleading: "Félrevezető információ",
+  off_topic: "Nem kapcsolódik a témához",
+  other: "Egyéb",
+};
 
 /* =========================
    Gyors DOM helper-ek
@@ -247,6 +262,27 @@ function setText(element, value = "") {
 
 function clearElement(element) {
   if (element) element.innerHTML = "";
+}
+
+function ensureAdminReportsNavItem() {
+  const adminNavItem = $("#adminNavItem");
+  const navbarMenu = $("#navbarMenu");
+
+  if (!adminNavItem || !navbarMenu) {
+    return null;
+  }
+
+  let reportsNavItem = $("#reportsNavItem");
+
+  if (!reportsNavItem) {
+    reportsNavItem = document.createElement("li");
+    reportsNavItem.className = "nav-item d-none";
+    reportsNavItem.id = "reportsNavItem";
+    reportsNavItem.innerHTML = '<a class="nav-link" href="admin.html#reports">Üzenetek</a>';
+    adminNavItem.insertAdjacentElement("beforebegin", reportsNavItem);
+  }
+
+  return reportsNavItem;
 }
 
 function ensureAppDialogElements() {
@@ -1232,11 +1268,27 @@ async function handleAddCatch(event) {
 /* =========================
    Fórum oldal előkészítés
    ========================= */
+const forumState = {
+  selectedTopicId: null,
+  pendingJumpTopicId: null,
+  pendingJumpReplyId: null,
+  reportTargetType: "",
+  reportTargetId: null,
+};
+
 function prepareForumPage() {
   const topicForm = $("#forumTopicForm");
   const replyForm = $("#forumReplyForm");
   const topicsList = $("#forumTopicsList");
+  const reportForm = $("#forumReportForm");
+  const reportReason = $("#forumReportReason");
   updateForumAuthUi();
+
+  const params = new URLSearchParams(window.location.search);
+  const jumpTopicId = Number.parseInt(params.get("temaId"), 10);
+  const jumpReplyId = Number.parseInt(params.get("hozzaszolasId"), 10);
+  forumState.pendingJumpTopicId = Number.isInteger(jumpTopicId) && jumpTopicId > 0 ? jumpTopicId : null;
+  forumState.pendingJumpReplyId = Number.isInteger(jumpReplyId) && jumpReplyId > 0 ? jumpReplyId : null;
 
   if (topicForm) {
     topicForm.addEventListener("submit", handleCreateTopic);
@@ -1244,6 +1296,14 @@ function prepareForumPage() {
 
   if (replyForm) {
     replyForm.addEventListener("submit", handleCreateReply);
+  }
+
+  if (reportForm) {
+    reportForm.addEventListener("submit", handleForumReportSubmit);
+  }
+
+  if (reportReason) {
+    reportReason.addEventListener("change", handleForumReportReasonChange);
   }
 
   if (topicsList) {
@@ -1274,8 +1334,19 @@ async function loadForumTopics() {
     data.forEach((tema) => {
       const card = document.createElement("div");
       card.className = "card mb-3";
+      const canReport = isLoggedIn();
       card.innerHTML = `
-        <div class="card-body">
+        <div class="card-body forum-reportable-card">
+          ${
+            canReport
+              ? `<button
+                  class="btn btn-sm forum-report-button"
+                  type="button"
+                  aria-label="Téma reportolása"
+                  onclick="openForumReportModal('topic', ${tema.TemaId})"
+                >🚩</button>`
+              : ""
+          }
           <h5 class="card-title">${tema.Cim}</h5>
           <p class="card-text">
             <small class="text-muted">
@@ -1291,6 +1362,14 @@ async function loadForumTopics() {
       `;
       topicsList.appendChild(card);
     });
+
+    if (forumState.pendingJumpTopicId) {
+      const pendingTopicId = forumState.pendingJumpTopicId;
+      const pendingReplyId = forumState.pendingJumpReplyId;
+      forumState.pendingJumpTopicId = null;
+      forumState.pendingJumpReplyId = null;
+      await loadTopicReplies(pendingTopicId, pendingReplyId);
+    }
   } catch (error) {
     console.error("Témák betöltési hiba:", error);
     if (topicsList) {
@@ -1346,6 +1425,88 @@ async function handleCreateTopic(event) {
   }
 }
 
+function handleForumReportReasonChange() {
+  const reasonSelect = $("#forumReportReason");
+  const detailsGroup = $("#forumReportDetailsGroup");
+  const detailsInput = $("#forumReportDetails");
+
+  if (!reasonSelect || !detailsGroup || !detailsInput) {
+    return;
+  }
+
+  const hasReason = Boolean(reasonSelect.value);
+  detailsGroup.classList.toggle("d-none", !hasReason);
+  detailsInput.required = reasonSelect.value === "other";
+}
+
+function openForumReportModal(targetType, targetId) {
+  if (!isLoggedIn()) {
+    showAppAlert("A report kuldesehez be kell jelentkezned.", { title: "Bejelentkezes szukseges" });
+    return;
+  }
+
+  const modalElement = document.getElementById("forumReportModal");
+  const targetTypeInput = $("#forumReportTargetType");
+  const targetIdInput = $("#forumReportTargetId");
+  const reasonSelect = $("#forumReportReason");
+  const detailsInput = $("#forumReportDetails");
+  const detailsGroup = $("#forumReportDetailsGroup");
+
+  if (!modalElement || !targetTypeInput || !targetIdInput || !reasonSelect || !detailsInput || !detailsGroup) {
+    return;
+  }
+
+  forumState.reportTargetType = targetType;
+  forumState.reportTargetId = Number(targetId);
+  targetTypeInput.value = targetType;
+  targetIdInput.value = String(targetId);
+  reasonSelect.value = "";
+  detailsInput.value = "";
+  detailsInput.required = false;
+  detailsGroup.classList.add("d-none");
+
+  const modalInstance = createModalInstance("forumReportModal");
+  if (modalInstance) {
+    modalInstance.show();
+  }
+}
+
+async function handleForumReportSubmit(event) {
+  event.preventDefault();
+
+  const targetType = $("#forumReportTargetType")?.value || "";
+  const targetId = Number.parseInt($("#forumReportTargetId")?.value || "", 10);
+  const reasonCode = $("#forumReportReason")?.value || "";
+  const details = $("#forumReportDetails")?.value.trim() || "";
+
+  if (!targetType || !Number.isInteger(targetId) || targetId <= 0 || !reasonCode) {
+    showAppAlert("Valassz report indokot, mielott elkuldod a jelentest.", { title: "Hiba" });
+    return;
+  }
+
+  if (reasonCode === "other" && details.length < 3) {
+    showAppAlert("Az Egyeb indoknal add meg a reszletezest is.", { title: "Hiba" });
+    return;
+  }
+
+  try {
+    await apiRequest("/reports/forum", {
+      method: "POST",
+      body: JSON.stringify({
+        targetType,
+        targetId,
+        reasonCode,
+        details,
+      }),
+    });
+
+    createModalInstance("forumReportModal")?.hide();
+    await showAppSuccess("A report sikeresen elkuldve.");
+  } catch (error) {
+    showAppAlert(error.message || "Nem sikerult elkuldeni a reportot.", { title: "Hiba" });
+  }
+}
+
 function updateForumAuthUi() {
   const topicForm = $("#forumTopicForm");
   const replyForm = $("#forumReplyForm");
@@ -1373,9 +1534,10 @@ function updateForumAuthUi() {
 /* =========================
    Téma hozzászólásainak betöltése
    ========================= */
-async function loadTopicReplies(temaId) {
+async function loadTopicReplies(temaId, highlightReplyId = null) {
   try {
     const data = await apiRequest(`/forum/tema/${temaId}/hozzaszolasok`);
+    forumState.selectedTopicId = temaId;
 
     const selectedTopicCard = $("#forumSelectedTopicCard");
     const postsList = $("#forumPostsList");
@@ -1412,8 +1574,19 @@ async function loadTopicReplies(temaId) {
     if (postsList && data.length) {
       data.forEach((hz) => {
         const item = document.createElement("div");
-        item.className = "border rounded p-3 mb-3";
+        item.className = "border rounded p-3 mb-3 forum-reportable-card";
+        item.dataset.replyId = String(hz.HozzaszolasId);
         item.innerHTML = `
+          ${
+            isLoggedIn()
+              ? `<button
+                  class="btn btn-sm forum-report-button"
+                  type="button"
+                  aria-label="Hozzászólás reportolása"
+                  onclick="openForumReportModal('reply', ${hz.HozzaszolasId})"
+                >🚩</button>`
+              : ""
+          }
           <div class="small section-text mb-2">
             ${escapeHtml(hz.Felhasznalonev)} | ${escapeHtml(new Date(hz.Letrehozva).toLocaleString("hu-HU"))}
           </div>
@@ -1428,6 +1601,17 @@ async function loadTopicReplies(temaId) {
     if (replyForm) {
       const temaIdInput = replyForm.querySelector("#replyTopicId");
       if (temaIdInput) temaIdInput.value = temaId;
+    }
+
+    if (highlightReplyId) {
+      const targetReply = postsList?.querySelector(`[data-reply-id="${Number(highlightReplyId)}"]`);
+      if (targetReply) {
+        targetReply.classList.add("forum-highlighted-reply");
+        targetReply.scrollIntoView({ behavior: "smooth", block: "center" });
+        window.setTimeout(() => {
+          targetReply.classList.remove("forum-highlighted-reply");
+        }, 2200);
+      }
     }
   } catch (error) {
     showAppAlert("Hiba a hozzászólások betöltése során!", { title: "Hiba" });
@@ -1487,6 +1671,8 @@ const adminState = {
   waterTypes: [],
   forumTopics: [],
   forumRepliesByTopic: {},
+  reports: [],
+  activeReportId: null,
 };
 
 function escapeHtml(value) {
@@ -1507,6 +1693,7 @@ function getAdminPanelElements() {
     species: $("#adminSpeciesPanel"),
     waters: $("#adminWatersPanel"),
     forum: $("#adminForumPanel"),
+    reports: $("#adminReportsPanel"),
   };
 }
 
@@ -1531,6 +1718,7 @@ function closeAdminPanel() {
   hideElement(panels.species);
   hideElement(panels.waters);
   hideElement(panels.forum);
+  hideElement(panels.reports);
   hideAdminFeedback();
 }
 
@@ -1542,12 +1730,14 @@ function openAdminPanel(panelName, title, description) {
   hideElement(panels.species);
   hideElement(panels.waters);
   hideElement(panels.forum);
+  hideElement(panels.reports);
   setText(panels.title, title);
   setText(panels.description, description);
 
   if (panelName === "species") showElement(panels.species);
   if (panelName === "waters") showElement(panels.waters);
   if (panelName === "forum") showElement(panels.forum);
+  if (panelName === "reports") showElement(panels.reports);
 }
 
 function updateAdminLocationHash(target = "") {
@@ -1602,6 +1792,17 @@ async function openAdminTarget(target, syncHash = true) {
     return;
   }
 
+  if (target === "reports") {
+    openAdminPanel(
+      "reports",
+      "Report üzenetek",
+      "Felhasználói forum reportok kezelese es admin valaszok kuldese."
+    );
+    if (syncHash) updateAdminLocationHash("reports");
+    await loadAdminReports();
+    return;
+  }
+
   closeAdminPanel();
   if (syncHash) updateAdminLocationHash("");
 }
@@ -1614,7 +1815,7 @@ async function handleAdminTargetChange() {
   const usersSection = $("#adminUsersSection");
   const target = getAdminTargetFromLocation();
 
-  if (!target || !["species", "waters", "forum"].includes(target)) {
+  if (!target || !["species", "waters", "forum", "reports"].includes(target)) {
     showElement(usersSection);
     closeAdminPanel();
     setActiveNavLink();
@@ -1655,6 +1856,10 @@ function formatSpeciesRules(species) {
 
 function formatDateTime(value) {
   return value ? new Date(value).toLocaleString("hu-HU") : "-";
+}
+
+function formatForumReportReason(reasonCode) {
+  return FORUM_REPORT_REASON_LABELS[reasonCode] || "Ismeretlen indok";
 }
 
 function createModalInstance(modalId) {
@@ -2315,14 +2520,183 @@ async function deleteForumReply(replyId, topicId) {
   }
 }
 
+function renderAdminReports() {
+  const reportsList = $("#adminReportsList");
+  const reportsCount = $("#adminReportsCount");
+
+  if (!reportsList || !reportsCount) {
+    return;
+  }
+
+  const reports = Array.isArray(adminState.reports) ? adminState.reports : [];
+  reportsCount.textContent = `${reports.length} report`;
+  clearElement(reportsList);
+
+  if (!reports.length) {
+    reportsList.innerHTML = `<div class="section-text">Nincs megjelenitheto report.</div>`;
+    return;
+  }
+
+  reports.forEach((report) => {
+    const item = document.createElement("div");
+    item.className = `app-list-item admin-report-item${report.AdminOlvasva ? "" : " is-unread"}`;
+    item.innerHTML = `
+      <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+        <div>
+          <div class="fw-semibold">${escapeHtml(report.ReportoloFelhasznalonev)}</div>
+          <div class="small section-text mb-2">
+            ${escapeHtml(formatDateTime(report.Letrehozva))} | ${report.CelTipus === "reply" ? "Hozzaszolas report" : "Tema report"}
+          </div>
+          <div class="admin-forum-item-title">${escapeHtml(report.TemaCim || "-")}</div>
+          <div class="small section-text mt-1">${escapeHtml(formatForumReportReason(report.IndokKod))}</div>
+        </div>
+        <div class="admin-forum-actions">
+          <button class="btn btn-sm btn-outline-info" type="button" onclick="openAdminReportModal(${report.ForumReportId})">Megnyitás</button>
+          <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteAdminReport(${report.ForumReportId})">Törlés</button>
+        </div>
+      </div>
+    `;
+    reportsList.appendChild(item);
+  });
+}
+
+async function loadAdminReports() {
+  try {
+    const reports = await apiRequest("/reports/admin");
+    adminState.reports = Array.isArray(reports) ? reports : [];
+    renderAdminReports();
+    await openPendingAdminReportFromSession();
+  } catch (error) {
+    showAdminFeedback(error.message || "Nem sikerult betolteni a reportokat.", "danger");
+  }
+}
+
+async function openPendingAdminReportFromSession() {
+  const rawReportId = sessionStorage.getItem("adminOpenForumReportId");
+
+  if (!rawReportId) {
+    return;
+  }
+
+  sessionStorage.removeItem("adminOpenForumReportId");
+  const reportId = Number.parseInt(rawReportId, 10);
+
+  if (!Number.isInteger(reportId) || reportId <= 0) {
+    return;
+  }
+
+  await openAdminReportModal(reportId);
+}
+
+async function openAdminReportModal(reportId) {
+  const detailBody = $("#adminReportDetailBody");
+  const replyText = $("#adminReportReplyText");
+  const jumpButton = $("#adminReportJumpButton");
+
+  if (!detailBody || !replyText || !jumpButton) {
+    return;
+  }
+
+  try {
+    const report = await apiRequest(`/reports/admin/${reportId}`);
+    adminState.activeReportId = reportId;
+
+    detailBody.innerHTML = `
+      <div class="app-list-item">
+        <div class="fw-semibold mb-2">Reportolo felhasznalo</div>
+        <div>${escapeHtml(report.ReportoloFelhasznalonev || "-")}</div>
+      </div>
+      <div class="app-list-item">
+        <div class="fw-semibold mb-2">Jelentett tartalom</div>
+        <div class="mb-2">${escapeHtml(report.CelTipus === "reply" ? "Hozzaszolas" : "Tema")}</div>
+        <div class="fw-semibold">${escapeHtml(report.TemaCim || "-")}</div>
+        ${report.CelFelhasznalonev ? `<div class="small section-text mt-1">Erintett felhasznalo: ${escapeHtml(report.CelFelhasznalonev)}</div>` : ""}
+        ${report.CelSzoveg ? `<div class="mt-3">${escapeHtml(report.CelSzoveg)}</div>` : ""}
+      </div>
+      <div class="app-list-item">
+        <div class="fw-semibold mb-2">Report reszletei</div>
+        <div class="mb-2">Indok: ${escapeHtml(formatForumReportReason(report.IndokKod))}</div>
+        <div>${escapeHtml(report.Reszletezes || "Nincs reszletezes.")}</div>
+      </div>
+    `;
+
+    replyText.value = report.AdminValasz || "";
+    jumpButton.disabled = !report.UgrasUrl;
+    jumpButton.onclick = () => {
+      if (!report.UgrasUrl) {
+        return;
+      }
+
+      window.open(report.UgrasUrl, "_blank");
+    };
+
+    const modalInstance = createModalInstance("adminReportDetailModal");
+    if (modalInstance) {
+      modalInstance.show();
+    }
+
+    await loadAdminReports();
+  } catch (error) {
+    showAdminFeedback(error.message || "Nem sikerult megnyitni a reportot.", "danger");
+  }
+}
+
+async function sendAdminReportReply() {
+  const reportId = adminState.activeReportId;
+  const replyText = $("#adminReportReplyText");
+  const reportModal = createModalInstance("adminReportDetailModal");
+
+  if (!Number.isInteger(reportId) || !replyText) {
+    return;
+  }
+
+  const adminReply = replyText.value.trim();
+
+  if (!adminReply) {
+    showAppAlert("Adj meg valaszt a reportolo felhasznalonak.", { title: "Hiba" });
+    return;
+  }
+
+  try {
+    await apiRequest(`/reports/admin/${reportId}/reply`, {
+      method: "POST",
+      body: JSON.stringify({ adminReply }),
+    });
+
+    adminState.activeReportId = null;
+    if (reportModal) {
+      reportModal.hide();
+    }
+    await loadAdminReports();
+    await showAppSuccess("Az admin valasz sikeresen elkuldve.");
+  } catch (error) {
+    showAdminFeedback(error.message || "Nem sikerult elkuldeni a valaszt.", "danger");
+  }
+}
+
+async function deleteAdminReport(reportId) {
+  if (!(await showAppConfirm("Biztosan torolni szeretned ezt a reportot?", { confirmLabel: "Torles" }))) {
+    return;
+  }
+
+  try {
+    await apiRequest(`/reports/admin/${reportId}`, { method: "DELETE" });
+    if (adminState.activeReportId === reportId) {
+      adminState.activeReportId = null;
+      createModalInstance("adminReportDetailModal")?.hide();
+    }
+    await loadAdminReports();
+    await showAppSuccess("A report sikeresen torolve.");
+  } catch (error) {
+    showAdminFeedback(error.message || "Nem sikerult torolni a reportot.", "danger");
+  }
+}
+
 /* =========================
    Admin oldal előkészítés
    ========================= */
 function prepareAdminPage() {
   const usersTableBody = $("#adminUsersTableBody");
-  const manageSpeciesButton = $("#manageSpeciesButton");
-  const manageWatersButton = $("#manageWatersButton");
-  const moderateForumButton = $("#moderateForumButton");
   const closePanelButton = $("#closeAdminMasterDataSection");
   const speciesForm = $("#speciesForm");
   const speciesResetButton = $("#speciesFormResetButton");
@@ -2330,6 +2704,7 @@ function prepareAdminPage() {
   const waterForm = $("#waterForm");
   const waterResetButton = $("#waterFormResetButton");
   const waterEditForm = $("#waterEditForm");
+  const adminSendReportReplyButton = $("#adminSendReportReplyButton");
 
   if (!isLoggedIn()) {
     setPendingRedirect("admin.html");
@@ -2347,24 +2722,6 @@ function prepareAdminPage() {
   if (usersTableBody) {
     clearElement(usersTableBody);
     loadAllUsers();
-  }
-
-  if (manageSpeciesButton) {
-    manageSpeciesButton.addEventListener("click", async () => {
-      await openAdminTarget("species");
-    });
-  }
-
-  if (manageWatersButton) {
-    manageWatersButton.addEventListener("click", async () => {
-      await openAdminTarget("waters");
-    });
-  }
-
-  if (moderateForumButton) {
-    moderateForumButton.addEventListener("click", async () => {
-      await openAdminTarget("forum");
-    });
   }
 
   if (closePanelButton) {
@@ -2397,6 +2754,10 @@ function prepareAdminPage() {
 
   if (waterEditForm) {
     waterEditForm.addEventListener("submit", handleWaterEditSubmit);
+  }
+
+  if (adminSendReportReplyButton) {
+    adminSendReportReplyButton.addEventListener("click", sendAdminReportReply);
   }
 
   window.addEventListener("hashchange", handleAdminTargetChange);
@@ -2681,6 +3042,7 @@ function getAuthHeaders() {
    ========================= */
 async function updateNavbar() {
   const adminNavItem = $("#adminNavItem");
+  const reportsNavItem = ensureAdminReportsNavItem();
   const profilNavItem = $("#profilNavItem");
   const loginNavItem = $("#loginNavItem");
   const registerNavItem = $("#registerNavItem");
@@ -2704,12 +3066,14 @@ async function updateNavbar() {
     if (logoutNavItem) logoutNavItem.classList.remove("d-none");
     if (profilNavItem) profilNavItem.classList.toggle("d-none", isAdmin);
     if (adminNavItem) adminNavItem.classList.toggle("d-none", !isAdmin);
+    if (reportsNavItem) reportsNavItem.classList.toggle("d-none", !isAdmin);
   } else {
     if (loginNavItem) loginNavItem.classList.remove("d-none");
     if (registerNavItem) registerNavItem.classList.remove("d-none");
     if (profilNavItem) profilNavItem.classList.add("d-none");
     if (logoutNavItem) logoutNavItem.classList.add("d-none");
     if (adminNavItem) adminNavItem.classList.add("d-none");
+    if (reportsNavItem) reportsNavItem.classList.add("d-none");
   }
 
   if (catchLogNavItem) {

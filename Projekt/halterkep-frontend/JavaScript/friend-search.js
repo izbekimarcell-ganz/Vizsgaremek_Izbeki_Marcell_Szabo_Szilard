@@ -1,10 +1,11 @@
-﻿const FRIENDS_CONFIG = {
+const FRIENDS_CONFIG = {
   apiBaseUrl: "http://localhost:4000/api",
 };
 
 const friendsFeatureState = {
   overview: null,
   notifications: [],
+  reportNotifications: [],
 };
 
 function getFriendsAuthHeaders() {
@@ -39,7 +40,7 @@ async function friendsApiRequest(endpoint, options = {}) {
 
   if (!response.ok) {
     throw new Error(
-      typeof data === "object" && data?.message ? data.message : "Hiba történt a kérés során."
+      typeof data === "object" && data?.message ? data.message : "Hiba tortent a keres soran."
     );
   }
 
@@ -84,6 +85,147 @@ function openFriendProfile(userId) {
   window.location.href = `profil.html?userId=${numericUserId}`;
 }
 
+function getForumReasonLabel(reasonCode) {
+  if (typeof formatForumReportReason === "function") {
+    return formatForumReportReason(reasonCode);
+  }
+
+  const labels = {
+    spam: "Spam vagy keretlen tartalom",
+    offensive: "Serto vagy nem megfelelo tartalom",
+    harassment: "Zaklatas vagy szemelyeskedes",
+    misleading: "Felrevezeto informacio",
+    off_topic: "Nem kapcsolodik a temahoz",
+    other: "Egyeb",
+  };
+
+  return labels[reasonCode] || "Ismeretlen indok";
+}
+
+function ensureUserReportMessageModal() {
+  let modalElement = document.getElementById("userReportMessageModal");
+
+  if (!modalElement) {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div class="modal fade" id="userReportMessageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+          <div class="modal-content app-card border-info-subtle">
+            <div class="modal-header border-secondary-subtle">
+              <h2 class="modal-title fs-5">Admin valasza</h2>
+              <button type="button" class="btn-close admin-modal-close" data-bs-dismiss="modal" aria-label="Bezaras"></button>
+            </div>
+            <div class="modal-body">
+              <div id="userReportMessageBody" class="d-grid gap-3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    modalElement = wrapper.firstElementChild;
+    document.body.appendChild(modalElement);
+  }
+
+  return {
+    modalElement,
+    bodyElement: modalElement.querySelector("#userReportMessageBody"),
+  };
+}
+
+async function openAdminReportInbox(reportId) {
+  const numericReportId = Number(reportId);
+
+  if (!Number.isInteger(numericReportId) || numericReportId <= 0) {
+    return;
+  }
+
+  sessionStorage.setItem("adminOpenForumReportId", String(numericReportId));
+
+  if (document.body.dataset.page === "admin") {
+    window.location.hash = "reports";
+    if (typeof handleAdminTargetChange === "function") {
+      await handleAdminTargetChange();
+    }
+    return;
+  }
+
+  window.location.href = "admin.html#reports";
+}
+
+async function openUserReportMessage(reportId) {
+  const numericReportId = Number(reportId);
+
+  if (!Number.isInteger(numericReportId) || numericReportId <= 0) {
+    return;
+  }
+
+  try {
+    const message = await friendsApiRequest(`/reports/messages/${numericReportId}`);
+    const { bodyElement } = ensureUserReportMessageModal();
+
+    if (!bodyElement) {
+      return;
+    }
+
+    bodyElement.innerHTML = `
+      <div class="app-list-item">
+        <div class="fw-semibold mb-2">A te reportod</div>
+        <div class="mb-2">Indok: ${escapeFriendsHtml(getForumReasonLabel(message.IndokKod))}</div>
+        <div>${escapeFriendsHtml(message.Reszletezes || "Nem adtal meg tovabbi reszletezest.")}</div>
+      </div>
+      <div class="app-list-item">
+        <div class="fw-semibold mb-2">Admin valasza</div>
+        <div>${escapeFriendsHtml(message.AdminValasz || "-")}</div>
+      </div>
+    `;
+
+    if (typeof bootstrap !== "undefined") {
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("userReportMessageModal")).show();
+    }
+
+    await loadFriendNotifications();
+  } catch (error) {
+    if (typeof showAppAlert === "function") {
+      showAppAlert(error.message || "Nem sikerult megnyitni az uzenetet.", {
+        title: "Hiba",
+      });
+    }
+  }
+}
+
+async function deleteUserReportNotification(reportId) {
+  const numericReportId = Number(reportId);
+
+  if (!Number.isInteger(numericReportId) || numericReportId <= 0) {
+    return;
+  }
+
+  const confirmed =
+    typeof showAppConfirm === "function"
+      ? await showAppConfirm("Biztosan torolni szeretned ezt az uzenetet?", {
+          confirmLabel: "Torles",
+        })
+      : window.confirm("Biztosan torolni szeretned ezt az uzenetet?");
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    await friendsApiRequest(`/reports/messages/${numericReportId}`, {
+      method: "DELETE",
+    });
+    await loadFriendNotifications();
+  } catch (error) {
+    if (typeof showAppAlert === "function") {
+      showAppAlert(error.message || "Nem sikerult torolni az uzenetet.", {
+        title: "Hiba",
+      });
+    }
+  }
+}
+
 function renderFriendsNav() {
   const navItem = document.querySelector(".friend-search-nav");
 
@@ -95,7 +237,7 @@ function renderFriendsNav() {
   const isAdmin = typeof isAdminUser === "function" ? isAdminUser(user) : false;
   const loggedIn = typeof isLoggedIn === "function" ? isLoggedIn() : Boolean(user);
 
-  if (isAdmin || !loggedIn) {
+  if (!loggedIn) {
     navItem.classList.add("d-none");
     const notificationItem = document.getElementById("friendNotificationsNav");
     if (notificationItem) {
@@ -104,10 +246,14 @@ function renderFriendsNav() {
     return;
   }
 
-  navItem.classList.remove("d-none");
-  navItem.innerHTML = `
-    <a class="nav-link" href="baratok.html">Barátok</a>
-  `;
+  if (isAdmin) {
+    navItem.classList.add("d-none");
+  } else {
+    navItem.classList.remove("d-none");
+    navItem.innerHTML = `
+      <a class="nav-link" href="baratok.html">Barátok</a>
+    `;
+  }
 
   let notificationItem = document.getElementById("friendNotificationsNav");
   if (notificationItem) {
@@ -115,7 +261,7 @@ function renderFriendsNav() {
   }
 
   notificationItem = document.createElement("li");
-  notificationItem.className = `nav-item ms-lg-2 mt-2 mt-lg-0 friend-notification-nav${loggedIn ? "" : " d-none"}`;
+  notificationItem.className = "nav-item ms-lg-2 mt-2 mt-lg-0 friend-notification-nav";
   notificationItem.id = "friendNotificationsNav";
   notificationItem.innerHTML = `
     <div class="dropdown" data-bs-auto-close="outside">
@@ -125,7 +271,7 @@ function renderFriendsNav() {
         type="button"
         data-bs-toggle="dropdown"
         aria-expanded="false"
-        aria-label="Értesítések"
+        aria-label="Ertesitesek"
       >
         <span class="friend-notification-icon">🔔</span>
         <span id="friendNotificationsCount" class="friend-notification-count d-none">0</span>
@@ -160,57 +306,76 @@ function renderFriendsNav() {
   const list = notificationItem.querySelector("#friendNotificationsList");
   if (list) {
     list.addEventListener("click", async (event) => {
-      const button = event.target.closest("[data-request-id][data-action]");
+      const actionButton = event.target.closest("[data-action]");
 
-      if (!button) {
+      if (!actionButton) {
         return;
       }
 
-      const requestId = Number(button.dataset.requestId);
-      const action = button.dataset.action;
+      const action = actionButton.dataset.action;
 
-      if (!Number.isInteger(requestId) || !action) {
-        return;
-      }
+      if (action === "accept" || action === "reject") {
+        const requestId = Number(actionButton.dataset.requestId);
 
-      const confirmMessage =
-        action === "accept"
-          ? "Biztosan elfogadod ezt a barátkérelmet?"
-          : "Biztosan elutasítod ezt a barátkérelmet?";
-
-      const isConfirmed =
-        typeof showAppConfirm === "function"
-          ? await showAppConfirm(confirmMessage, {
-              confirmLabel: action === "accept" ? "Elfogadás" : "Elutasítás",
-              confirmButtonClass: action === "accept" ? "btn-success" : "btn-danger",
-            })
-          : window.confirm(confirmMessage);
-
-      if (!isConfirmed) {
-        return;
-      }
-
-      try {
-        await friendsApiRequest(`/friends/requests/${requestId}/respond`, {
-          method: "PUT",
-          body: JSON.stringify({ action }),
-        });
-
-        if (typeof showAppSuccess === "function") {
-          await showAppSuccess(
-            action === "accept"
-              ? "A barátkérelem sikeresen elfogadva."
-              : "A barátkérelem sikeresen elutasítva."
-          );
+        if (!Number.isInteger(requestId)) {
+          return;
         }
 
-        await Promise.all([loadFriendNotifications(), refreshFriendsOverviewIfNeeded()]);
-      } catch (error) {
-        if (typeof showAppAlert === "function") {
-          showAppAlert(error.message || "Nem sikerült feldolgozni a barátkérelmet.", {
-            title: "Hiba",
+        const confirmMessage =
+          action === "accept"
+            ? "Biztosan elfogadod ezt a barátkérelmet?"
+            : "Biztosan elutasítod ezt a barátkérelmet?";
+
+        const isConfirmed =
+          typeof showAppConfirm === "function"
+            ? await showAppConfirm(confirmMessage, {
+                confirmLabel: action === "accept" ? "Elfogadás" : "Elutasítás",
+                confirmButtonClass: action === "accept" ? "btn-success" : "btn-danger",
+              })
+            : window.confirm(confirmMessage);
+
+        if (!isConfirmed) {
+          return;
+        }
+
+        try {
+          await friendsApiRequest(`/friends/requests/${requestId}/respond`, {
+            method: "PUT",
+            body: JSON.stringify({ action }),
           });
+
+          if (typeof showAppSuccess === "function") {
+            await showAppSuccess(
+              action === "accept"
+                ? "A barátkérelem sikeresen elfogadva."
+                : "A barátkérelem sikeresen elutasítva."
+            );
+          }
+
+          await Promise.all([loadFriendNotifications(), refreshFriendsOverviewIfNeeded()]);
+        } catch (error) {
+          if (typeof showAppAlert === "function") {
+            showAppAlert(error.message || "Nem sikerult feldolgozni a baratkerelmet.", {
+              title: "Hiba",
+            });
+          }
         }
+
+        return;
+      }
+
+      if (action === "open-admin-report") {
+        await openAdminReportInbox(actionButton.dataset.reportId);
+        return;
+      }
+
+      if (action === "open-user-report-message") {
+        await openUserReportMessage(actionButton.dataset.reportId);
+        return;
+      }
+
+      if (action === "delete-user-report-message") {
+        await deleteUserReportNotification(actionButton.dataset.reportId);
       }
     });
   }
@@ -220,58 +385,113 @@ function renderFriendsNav() {
   }
 }
 
-function renderFriendNotifications(notifications) {
+function renderFriendNotifications(friendNotifications, reportNotifications) {
   const list = document.getElementById("friendNotificationsList");
   const count = document.getElementById("friendNotificationsCount");
+  const user = getCurrentUserInfo();
+  const isAdmin = typeof isAdminUser === "function" ? isAdminUser(user) : false;
 
   if (!list || !count) {
     return;
   }
 
-  const items = Array.isArray(notifications) ? notifications : [];
-  const pendingCount = items.length;
+  const friendItems = Array.isArray(friendNotifications) ? friendNotifications : [];
+  const reportItems = Array.isArray(reportNotifications) ? reportNotifications : [];
+  const unreadReportCount = isAdmin
+    ? reportItems.length
+    : reportItems.filter((item) => !item.FelhasznaloOlvastaValaszt).length;
+  const pendingCount = friendItems.length + unreadReportCount;
 
   count.textContent = String(pendingCount);
   count.classList.toggle("d-none", pendingCount === 0);
 
-  if (!pendingCount) {
+  if (!friendItems.length && !reportItems.length) {
     list.innerHTML = `<div class="friend-notification-empty">Még nincs értesítésed.</div>`;
     return;
   }
 
-  list.innerHTML = items
-    .map(
-      (item) => `
+  const friendMarkup = friendItems.map(
+    (item) => `
+      <div class="friend-notification-item">
+        <div class="fw-semibold">${escapeFriendsHtml(item.Felhasznalonev)}</div>
+        <div class="section-text small mb-3">barátkérelmet küldött neked.</div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-sm btn-success" type="button" data-request-id="${Number(item.BaratKerelemId)}" data-action="accept">
+            Elfogadás
+          </button>
+          <button class="btn btn-sm btn-outline-danger" type="button" data-request-id="${Number(item.BaratKerelemId)}" data-action="reject">
+            Elutasítás
+          </button>
+        </div>
+      </div>
+    `
+  );
+
+  const reportMarkup = reportItems.map((item) => {
+    if (isAdmin) {
+      return `
         <div class="friend-notification-item">
-          <div class="fw-semibold">${escapeFriendsHtml(item.Felhasznalonev)}</div>
-          <div class="section-text small mb-3">barátkérelmet küldött neked.</div>
+          <div class="fw-semibold">Új fórum report</div>
+          <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.Letrehozva).toLocaleString("hu-HU"))}</div>
           <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-sm btn-success" type="button" data-request-id="${Number(item.BaratKerelemId)}" data-action="accept">
-              Elfogadás
-            </button>
-            <button class="btn btn-sm btn-outline-danger" type="button" data-request-id="${Number(item.BaratKerelemId)}" data-action="reject">
-              Elutasítás
+            <button class="btn btn-sm btn-outline-info" type="button" data-report-id="${Number(item.ForumReportId)}" data-action="open-admin-report">
+              Megnyitás
             </button>
           </div>
         </div>
-      `
-    )
-    .join("");
+      `;
+    }
+
+    return `
+      <div class="friend-notification-item">
+        <div class="fw-semibold">${item.FelhasznaloOlvastaValaszt ? "Üzenet" : "Új üzenet"}</div>
+        <div class="section-text small mb-2">${escapeFriendsHtml(getForumReasonLabel(item.IndokKod))}</div>
+        <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.AdminValaszLetrehozva || item.Letrehozva).toLocaleString("hu-HU"))}</div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-sm btn-outline-info" type="button" data-report-id="${Number(item.ForumReportId)}" data-action="open-user-report-message">
+            Megnyitás
+          </button>
+          <button class="btn btn-sm btn-outline-danger" type="button" data-report-id="${Number(item.ForumReportId)}" data-action="delete-user-report-message">
+            Törlés
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  list.innerHTML = [...friendMarkup, ...reportMarkup].join("");
 }
 
 async function loadFriendNotifications() {
   const notificationNav = document.getElementById("friendNotificationsNav");
+  const user = getCurrentUserInfo();
+  const isAdmin = typeof isAdminUser === "function" ? isAdminUser(user) : false;
 
   if (!notificationNav || (typeof isLoggedIn === "function" && !isLoggedIn())) {
     return;
   }
 
   try {
-    const notifications = await friendsApiRequest("/friends/notifications");
-    friendsFeatureState.notifications = Array.isArray(notifications) ? notifications : [];
-    renderFriendNotifications(friendsFeatureState.notifications);
+    const [friendNotifications, reportNotifications] = await Promise.all([
+      isAdmin ? Promise.resolve([]) : friendsApiRequest("/friends/notifications"),
+      isAdmin
+        ? friendsApiRequest("/reports/admin/notifications")
+        : friendsApiRequest("/reports/messages"),
+    ]);
+
+    friendsFeatureState.notifications = Array.isArray(friendNotifications)
+      ? friendNotifications
+      : [];
+    friendsFeatureState.reportNotifications = Array.isArray(reportNotifications)
+      ? reportNotifications
+      : [];
+
+    renderFriendNotifications(
+      friendsFeatureState.notifications,
+      friendsFeatureState.reportNotifications
+    );
   } catch (error) {
-    renderFriendNotifications([]);
+    renderFriendNotifications([], []);
   }
 }
 
@@ -315,7 +535,7 @@ function renderFriendsPageLists() {
   if (!filteredNonFriends.length) {
     nonFriendsList.innerHTML = `
       <div class="friend-list-empty">
-        Nincs megjeleníthető felhasználó ebben a listában.
+        Nincs megjelenitheto felhasznalo ebben a listaban.
       </div>
     `;
   } else {
@@ -325,16 +545,16 @@ function renderFriendsPageLists() {
         const hasPendingSent = pendingSentIds.has(userId);
         const hasPendingReceived = pendingReceivedIds.has(userId);
 
-        let buttonLabel = "Jelölés";
+        let buttonLabel = "Jeloles";
         let buttonClass = "btn-outline-info";
         let disabledAttr = "";
 
         if (hasPendingSent) {
-          buttonLabel = "Kérelem elküldve";
+          buttonLabel = "Kerelem elkuldve";
           buttonClass = "btn-secondary";
           disabledAttr = "disabled";
         } else if (hasPendingReceived) {
-          buttonLabel = "Kérelem érkezett";
+          buttonLabel = "Kerelem erkezett";
           buttonClass = "btn-secondary";
           disabledAttr = "disabled";
         }
@@ -409,10 +629,13 @@ async function loadFriendsOverview() {
     const overview = await friendsApiRequest("/friends/overview");
     friendsFeatureState.overview = overview;
     renderFriendsPageLists();
-    renderFriendNotifications(overview.pendingReceived || friendsFeatureState.notifications);
+    renderFriendNotifications(
+      overview.pendingReceived || friendsFeatureState.notifications,
+      friendsFeatureState.reportNotifications
+    );
   } catch (error) {
     if (document.body.dataset.page === "baratok" && typeof showAppAlert === "function") {
-      showAppAlert(error.message || "Nem sikerült betölteni a barátok adatait.", {
+      showAppAlert(error.message || "Nem sikerult betolteni a baratok adatait.", {
         title: "Hiba",
       });
     }
@@ -561,4 +784,3 @@ function initializeFriendsFeature() {
 }
 
 document.addEventListener("DOMContentLoaded", initializeFriendsFeature);
-

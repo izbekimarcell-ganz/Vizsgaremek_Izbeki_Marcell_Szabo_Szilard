@@ -20,6 +20,7 @@ GO
       - FK-k miatt fordított sorrendben */
 IF OBJECT_ID(N'dbo.ForumHozzaszolas', N'U') IS NOT NULL DROP TABLE dbo.ForumHozzaszolas;
 IF OBJECT_ID(N'dbo.ForumTema', N'U') IS NOT NULL DROP TABLE dbo.ForumTema;
+IF OBJECT_ID(N'dbo.ForumReport', N'U') IS NOT NULL DROP TABLE dbo.ForumReport;
 
 IF OBJECT_ID(N'dbo.HorgaszNap', N'U') IS NOT NULL DROP TABLE dbo.HorgaszNap;
 IF OBJECT_ID(N'dbo.FogasNaplo', N'U') IS NOT NULL DROP TABLE dbo.FogasNaplo;
@@ -32,7 +33,7 @@ IF OBJECT_ID(N'dbo.Vizterulet', N'U') IS NOT NULL DROP TABLE dbo.Vizterulet;
 IF OBJECT_ID(N'dbo.VizTipus', N'U') IS NOT NULL DROP TABLE dbo.VizTipus;
 
 IF OBJECT_ID(N'dbo.Megye', N'U') IS NOT NULL DROP TABLE dbo.Megye;
-IF OBJECT_ID(N'dbo.Halfaj', N'U') IS NOT NULL DROP TABLE dbo.Halafaj;
+IF OBJECT_ID(N'dbo.Halfaj', N'U') IS NOT NULL DROP TABLE dbo.Halfaj;
 
 IF OBJECT_ID(N'dbo.Felhasznalo', N'U') IS NOT NULL DROP TABLE dbo.Felhasznalo;
 GO
@@ -245,6 +246,39 @@ GO
 
 CREATE INDEX IX_ForumHozzaszolas_TemaId ON dbo.ForumHozzaszolas(TemaId);
 CREATE INDEX IX_ForumHozzaszolas_FelhasznaloId ON dbo.ForumHozzaszolas(FelhasznaloId);
+GO
+
+CREATE TABLE dbo.ForumReport
+(
+    ForumReportId             INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_ForumReport PRIMARY KEY,
+    FelhasznaloId             INT NOT NULL,
+    CelTipus                  NVARCHAR(20) NOT NULL,
+    TemaId                    INT NULL,
+    HozzaszolasId             INT NULL,
+    TemaCim                   NVARCHAR(150) NOT NULL,
+    CelFelhasznalonev         NVARCHAR(50) NULL,
+    CelSzoveg                 NVARCHAR(1000) NULL,
+    IndokKod                  NVARCHAR(40) NOT NULL,
+    Reszletezes               NVARCHAR(1000) NULL,
+    Letrehozva                DATETIME2 NOT NULL CONSTRAINT DF_ForumReport_Letrehozva DEFAULT (SYSUTCDATETIME()),
+    AdminOlvasva              BIT NOT NULL CONSTRAINT DF_ForumReport_AdminOlvasva DEFAULT (0),
+    AdminValasz               NVARCHAR(2000) NULL,
+    AdminValaszLetrehozva     DATETIME2 NULL,
+    FelhasznaloOlvastaValaszt BIT NOT NULL CONSTRAINT DF_ForumReport_FelhasznaloOlvastaValaszt DEFAULT (0),
+    AdminTorolve              BIT NOT NULL CONSTRAINT DF_ForumReport_AdminTorolve DEFAULT (0),
+    FelhasznaloTorolve        BIT NOT NULL CONSTRAINT DF_ForumReport_FelhasznaloTorolve DEFAULT (0),
+
+    CONSTRAINT FK_ForumReport_Felhasznalo FOREIGN KEY (FelhasznaloId) REFERENCES dbo.Felhasznalo(FelhasznaloId),
+    CONSTRAINT CK_ForumReport_CelTipus CHECK (CelTipus IN (N'topic', N'reply'))
+);
+GO
+
+CREATE INDEX IX_ForumReport_AdminInbox
+    ON dbo.ForumReport(AdminTorolve, AdminOlvasva, Letrehozva DESC);
+GO
+
+CREATE INDEX IX_ForumReport_FelhasznaloMessages
+    ON dbo.ForumReport(FelhasznaloId, FelhasznaloTorolve, FelhasznaloOlvastaValaszt, AdminValaszLetrehozva DESC);
 GO
 
 /* =========================================================
