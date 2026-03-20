@@ -16,7 +16,7 @@
 - ~~Lehessen a fiókot úgy beállítani, hogy csak a barátok lássák és mindenki másnak privát legyen~~ **(KÉSZ)**
 - A vízterületeknél az információkat pontosítani (a halfajokból csak kevés van feltüntetve, pl. Dunán csak 4 hal van pedig sokkal több van) **()**
 - ~~Jelszó újrakérés megcsinálása offline (biztonsági kérdés)~~ **(KÉSZ)**
-- Admin support kérése **()**
+- ~~Report funkció(forum és mraketplace)~~ **(KÉSZ)**
 - A főoldal átrendezése **()**
 - ~~Térkép tervezésének és megcsinálásának elkezdése~~ **(Törölve)**
 - ~~Regisztrációnál az adatok ellenőrzése~~ **(KÉSZ)**
