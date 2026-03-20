@@ -15,7 +15,7 @@
 - ~~Lehessen barátkérelmet küldeni~~ **(Kész)**
 - ~~Lehessen a fiókot úgy beállítani, hogy csak a barátok lássák és mindenki másnak privát legyen~~ **(KÉSZ)**
 - A vízterületeknél az információkat pontosítani (a halfajokból csak kevés van feltüntetve, pl. Dunán csak 4 hal van pedig sokkal több van) **()**
-- Jelszó újrakérés megcsinálása offline (biztonsági kérdés) **()**
+- ~~Jelszó újrakérés megcsinálása offline (biztonsági kérdés)~~ **(KÉSZ)**
 - Admin support kérése **()**
 - A főoldal átrendezése **()**
 - ~~Térkép tervezésének és megcsinálásának elkezdése~~ **(Törölve)**
