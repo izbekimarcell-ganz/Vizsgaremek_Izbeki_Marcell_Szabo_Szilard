@@ -21,6 +21,9 @@ GO
 IF OBJECT_ID(N'dbo.ForumHozzaszolas', N'U') IS NOT NULL DROP TABLE dbo.ForumHozzaszolas;
 IF OBJECT_ID(N'dbo.ForumTema', N'U') IS NOT NULL DROP TABLE dbo.ForumTema;
 IF OBJECT_ID(N'dbo.ForumReport', N'U') IS NOT NULL DROP TABLE dbo.ForumReport;
+IF OBJECT_ID(N'dbo.FelhasznaloErtesites', N'U') IS NOT NULL DROP TABLE dbo.FelhasznaloErtesites;
+IF OBJECT_ID(N'dbo.MarketplaceUzenet', N'U') IS NOT NULL DROP TABLE dbo.MarketplaceUzenet;
+IF OBJECT_ID(N'dbo.MarketplaceReport', N'U') IS NOT NULL DROP TABLE dbo.MarketplaceReport;
 IF OBJECT_ID(N'dbo.MarketplaceHirdetesKep', N'U') IS NOT NULL DROP TABLE dbo.MarketplaceHirdetesKep;
 IF OBJECT_ID(N'dbo.MarketplaceHirdetes', N'U') IS NOT NULL DROP TABLE dbo.MarketplaceHirdetes;
 IF OBJECT_ID(N'dbo.MarketplaceKategoria', N'U') IS NOT NULL DROP TABLE dbo.MarketplaceKategoria;
@@ -284,6 +287,30 @@ CREATE INDEX IX_ForumReport_FelhasznaloMessages
     ON dbo.ForumReport(FelhasznaloId, FelhasznaloTorolve, FelhasznaloOlvastaValaszt, AdminValaszLetrehozva DESC);
 GO
 
+CREATE TABLE dbo.FelhasznaloErtesites
+(
+    FelhasznaloErtesitesId   INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_FelhasznaloErtesites PRIMARY KEY,
+    CimzettFelhasznaloId     INT            NOT NULL,
+    FeladoAdminFelhasznaloId INT            NULL,
+    Tipus                    NVARCHAR(40)   NOT NULL,
+    Cim                      NVARCHAR(150)  NOT NULL,
+    Szoveg                   NVARCHAR(2000) NOT NULL,
+    HivatkozasUrl            NVARCHAR(300)  NULL,
+    Letrehozva               DATETIME2      NOT NULL CONSTRAINT DF_FelhasznaloErtesites_Letrehozva DEFAULT (SYSUTCDATETIME()),
+    Olvasva                  BIT            NOT NULL CONSTRAINT DF_FelhasznaloErtesites_Olvasva DEFAULT (0),
+    Torolve                  BIT            NOT NULL CONSTRAINT DF_FelhasznaloErtesites_Torolve DEFAULT (0),
+
+    CONSTRAINT FK_FelhasznaloErtesites_Cimzett FOREIGN KEY (CimzettFelhasznaloId)
+        REFERENCES dbo.Felhasznalo(FelhasznaloId),
+    CONSTRAINT FK_FelhasznaloErtesites_FeladoAdmin FOREIGN KEY (FeladoAdminFelhasznaloId)
+        REFERENCES dbo.Felhasznalo(FelhasznaloId)
+);
+GO
+
+CREATE INDEX IX_FelhasznaloErtesites_CimzettInbox
+    ON dbo.FelhasznaloErtesites(CimzettFelhasznaloId, Torolve, Olvasva, Letrehozva DESC);
+GO
+
 /* =========================================================
    6.5) Marketplace
    ========================================================= */
@@ -312,6 +339,7 @@ CREATE TABLE dbo.MarketplaceHirdetes
     ArFt                   INT            NOT NULL,
     Telepules              NVARCHAR(100)  NOT NULL,
     Kiemelt                BIT            NOT NULL CONSTRAINT DF_MarketplaceHirdetes_Kiemelt DEFAULT (0),
+    Jegelve                BIT            NOT NULL CONSTRAINT DF_MarketplaceHirdetes_Jegelve DEFAULT (0),
     Letrehozva             DATETIME2      NOT NULL CONSTRAINT DF_MarketplaceHirdetes_Letrehozva DEFAULT (SYSUTCDATETIME()),
     Aktiv                  BIT            NOT NULL CONSTRAINT DF_MarketplaceHirdetes_Aktiv DEFAULT (1),
 
@@ -352,6 +380,64 @@ GO
 CREATE UNIQUE INDEX UX_MarketplaceHirdetesKep_FoKep
     ON dbo.MarketplaceHirdetesKep(MarketplaceHirdetesId)
     WHERE FoKep = 1;
+GO
+
+CREATE TABLE dbo.MarketplaceUzenet
+(
+    MarketplaceUzenetId     INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_MarketplaceUzenet PRIMARY KEY,
+    MarketplaceHirdetesId   INT            NOT NULL,
+    KuldoFelhasznaloId      INT            NOT NULL,
+    CimzettFelhasznaloId    INT            NOT NULL,
+    UzenetSzoveg            NVARCHAR(2000) NOT NULL,
+    Letrehozva              DATETIME2      NOT NULL CONSTRAINT DF_MarketplaceUzenet_Letrehozva DEFAULT (SYSUTCDATETIME()),
+    CimzettOlvasta          BIT            NOT NULL CONSTRAINT DF_MarketplaceUzenet_CimzettOlvasta DEFAULT (0),
+    KuldoTorolve            BIT            NOT NULL CONSTRAINT DF_MarketplaceUzenet_KuldoTorolve DEFAULT (0),
+    CimzettTorolve          BIT            NOT NULL CONSTRAINT DF_MarketplaceUzenet_CimzettTorolve DEFAULT (0),
+
+    CONSTRAINT FK_MarketplaceUzenet_Hirdetes
+        FOREIGN KEY (MarketplaceHirdetesId) REFERENCES dbo.MarketplaceHirdetes(MarketplaceHirdetesId) ON DELETE CASCADE,
+    CONSTRAINT FK_MarketplaceUzenet_Kuldo
+        FOREIGN KEY (KuldoFelhasznaloId) REFERENCES dbo.Felhasznalo(FelhasznaloId),
+    CONSTRAINT FK_MarketplaceUzenet_Cimzett
+        FOREIGN KEY (CimzettFelhasznaloId) REFERENCES dbo.Felhasznalo(FelhasznaloId),
+    CONSTRAINT CK_MarketplaceUzenet_NemOnmaga CHECK (KuldoFelhasznaloId <> CimzettFelhasznaloId)
+);
+GO
+
+CREATE INDEX IX_MarketplaceUzenet_CimzettInbox
+    ON dbo.MarketplaceUzenet(CimzettFelhasznaloId, CimzettTorolve, CimzettOlvasta, Letrehozva DESC);
+GO
+
+CREATE TABLE dbo.MarketplaceReport
+(
+    MarketplaceReportId         INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_MarketplaceReport PRIMARY KEY,
+    FelhasznaloId               INT            NOT NULL,
+    MarketplaceHirdetesId       INT            NOT NULL,
+    HirdetesCim                 NVARCHAR(150)  NOT NULL,
+    HirdetoFelhasznalonev       NVARCHAR(50)   NOT NULL,
+    IndokKod                    NVARCHAR(40)   NOT NULL,
+    Reszletezes                 NVARCHAR(1000) NULL,
+    Letrehozva                  DATETIME2      NOT NULL CONSTRAINT DF_MarketplaceReport_Letrehozva DEFAULT (SYSUTCDATETIME()),
+    AdminOlvasva                BIT            NOT NULL CONSTRAINT DF_MarketplaceReport_AdminOlvasva DEFAULT (0),
+    AdminValasz                 NVARCHAR(2000) NULL,
+    AdminValaszLetrehozva       DATETIME2      NULL,
+    FelhasznaloOlvastaValaszt   BIT            NOT NULL CONSTRAINT DF_MarketplaceReport_FelhasznaloOlvastaValaszt DEFAULT (0),
+    AdminTorolve                BIT            NOT NULL CONSTRAINT DF_MarketplaceReport_AdminTorolve DEFAULT (0),
+    FelhasznaloTorolve          BIT            NOT NULL CONSTRAINT DF_MarketplaceReport_FelhasznaloTorolve DEFAULT (0),
+
+    CONSTRAINT FK_MarketplaceReport_Felhasznalo
+        FOREIGN KEY (FelhasznaloId) REFERENCES dbo.Felhasznalo(FelhasznaloId),
+    CONSTRAINT FK_MarketplaceReport_Hirdetes
+        FOREIGN KEY (MarketplaceHirdetesId) REFERENCES dbo.MarketplaceHirdetes(MarketplaceHirdetesId) ON DELETE CASCADE
+);
+GO
+
+CREATE INDEX IX_MarketplaceReport_AdminInbox
+    ON dbo.MarketplaceReport(AdminTorolve, AdminOlvasva, Letrehozva DESC);
+GO
+
+CREATE INDEX IX_MarketplaceReport_FelhasznaloMessages
+    ON dbo.MarketplaceReport(FelhasznaloId, FelhasznaloTorolve, FelhasznaloOlvastaValaszt, AdminValaszLetrehozva DESC);
 GO
 
 /* =========================================================

@@ -11,6 +11,7 @@ const fishingDayRoutes = require("./routes/fishingDayRoutes");
 const forumRoutes = require("./routes/forumRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const marketplaceRoutes = require("./routes/marketplaceRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const userRoutes = require("./routes/userRoutes");
 const friendRoutes = require("./routes/friendRoutes");
 
@@ -33,6 +34,7 @@ app.use("/api/horgasznapok", fishingDayRoutes);
 app.use("/api/forum", forumRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/marketplace", marketplaceRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/friends", friendRoutes);
 

@@ -1,4 +1,5 @@
-﻿const { sql, poolPromise } = require("../DbConfig");
+﻿const { createUserNotification } = require("./notificationController");
+const { sql, poolPromise } = require("../DbConfig");
 
 async function getTopics(req, res) {
   try {
@@ -233,6 +234,26 @@ async function deleteTopic(req, res) {
     }
 
     const pool = await poolPromise;
+    const topicLookup = await pool
+      .request()
+      .input("temaId", sql.Int, temaId)
+      .query(`
+        SELECT
+          TemaId,
+          FelhasznaloId,
+          Cim
+        FROM ForumTema
+        WHERE TemaId = @temaId
+      `);
+
+    const topic = topicLookup.recordset[0];
+
+    if (!topic) {
+      return res.status(404).json({
+        message: "Téma nem található.",
+      });
+    }
+
     const result = await pool
       .request()
       .input("temaId", sql.Int, temaId)
@@ -242,11 +263,13 @@ async function deleteTopic(req, res) {
         WHERE TemaId = @temaId
       `);
 
-    if (!result.recordset.length) {
-      return res.status(404).json({
-        message: "Téma nem található.",
-      });
-    }
+    await createUserNotification({
+      recipientUserId: Number(topic.FelhasznaloId),
+      adminUserId: Number(req.user?.id),
+      type: "forum-topic-deleted",
+      title: "Fórum téma törölve",
+      body: `Az admin törölte a "${String(topic.Cim || "").trim() || "Névtelen téma"}" című fórum témádat.`,
+    });
 
     return res.status(200).json({
       message: "Téma sikeresen törölve.",
@@ -270,6 +293,28 @@ async function deleteReply(req, res) {
     }
 
     const pool = await poolPromise;
+    const replyLookup = await pool
+      .request()
+      .input("hozzaszolasId", sql.Int, hozzaszolasId)
+      .query(`
+        SELECT
+          h.HozzaszolasId,
+          h.FelhasznaloId,
+          LEFT(NULLIF(LTRIM(RTRIM(h.Szoveg)), N''), 120) AS Reszlet,
+          t.Cim AS TemaCim
+        FROM ForumHozzaszolas h
+        INNER JOIN ForumTema t ON t.TemaId = h.TemaId
+        WHERE h.HozzaszolasId = @hozzaszolasId
+      `);
+
+    const reply = replyLookup.recordset[0];
+
+    if (!reply) {
+      return res.status(404).json({
+        message: "Hozzászólás nem található.",
+      });
+    }
+
     const result = await pool
       .request()
       .input("hozzaszolasId", sql.Int, hozzaszolasId)
@@ -279,11 +324,17 @@ async function deleteReply(req, res) {
         WHERE HozzaszolasId = @hozzaszolasId
       `);
 
-    if (!result.recordset.length) {
-      return res.status(404).json({
-        message: "Hozzászólás nem található.",
-      });
-    }
+    const replyLabel = String(reply.Reszlet || "").trim()
+      ? `"${String(reply.Reszlet).trim()}"`
+      : "egy hozzászólásodat";
+
+    await createUserNotification({
+      recipientUserId: Number(reply.FelhasznaloId),
+      adminUserId: Number(req.user?.id),
+      type: "forum-reply-deleted",
+      title: "Fórum hozzászólás törölve",
+      body: `Az admin törölte ${replyLabel} a(z) "${String(reply.TemaCim || "").trim() || "Ismeretlen téma"}" témából.`,
+    });
 
     return res.status(200).json({
       message: "Hozzászólás sikeresen törölve.",

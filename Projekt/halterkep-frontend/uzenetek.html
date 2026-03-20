@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HalTérkép - Marketplace</title>
+  <title>HalTérkép - Üzenetek</title>
 
   <link rel="icon" type="image/png" href="assets/favicon.png" />
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="CSS/styles.css" />
+  <link rel="stylesheet" href="CSS/styles.css">
 </head>
-<body data-page="marketplace" data-theme="dark">
+<body data-page="uzenetek" data-theme="dark">
 
   <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
     <div class="container nav-container">
@@ -73,94 +73,33 @@
     </div>
   </nav>
 
-  <main class="main-content pb-5">
-    <section class="marketplace-hero-section">
-      <div class="container">
-        <div class="marketplace-hero-shell">
-          <div class="marketplace-hero-copy">
-            <span class="marketplace-kicker">HalTérkép piactér</span>
-            <h1 class="marketplace-title">Horgászfelszerelések egy helyen</h1>
-            <p class="marketplace-subtitle">
-              Böngéssz kategóriák szerint, keress gyorsan, és nézd meg a felhasználók által feladott hirdetéseket.
-            </p>
+  <main class="main-content py-5">
+    <div class="container">
+      <div class="mb-4">
+        <h1 class="mb-1">Üzenetek</h1>
+        <p class="section-text mb-0">Itt látod az admin válaszait és a hirdetéseiddel kapcsolatos beérkező üzeneteket.</p>
+      </div>
+
+      <div class="card app-card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center gap-2 mb-3 flex-wrap">
+            <h2 class="h5 mb-0">Beérkezett üzenetek</h2>
+            <span id="userMessagesCount" class="section-text small"></span>
           </div>
 
-          <form id="marketplaceSearchForm" class="marketplace-search-bar" novalidate>
-            <input
-              id="marketplaceSearchInput"
-              class="form-control app-input marketplace-search-input"
-              type="search"
-              placeholder="Mit keresel a piactéren?"
-            />
-            <button class="btn btn-danger marketplace-search-button" type="submit">Keresés</button>
-            <button id="marketplaceCreateButton" class="btn marketplace-create-button" type="button">Hirdetésfeladás</button>
-          </form>
+          <div id="userMessagesLoading" class="section-text d-none">Betöltés...</div>
+          <div id="userMessagesError" class="text-danger d-none"></div>
+          <div id="userMessagesEmpty" class="section-text d-none">Még nincs beérkezett üzeneted.</div>
+          <div id="userMessagesList" class="d-grid gap-3"></div>
         </div>
       </div>
-    </section>
-
-    <section class="marketplace-category-strip">
-      <div class="container">
-        <div id="marketplaceCategoryGrid" class="marketplace-category-grid"></div>
-      </div>
-    </section>
-
-    <section class="marketplace-main-section">
-      <div class="container">
-        <div class="marketplace-toolbar">
-          <div class="marketplace-toolbar-info">
-            <span class="marketplace-toolbar-badge">Marketplace</span>
-            <span id="marketplaceResultsCount" class="section-text">0 találat</span>
-          </div>
-          <div class="marketplace-toolbar-actions">
-            <div class="marketplace-view-toggle" role="group" aria-label="Marketplace elrendezés">
-              <button
-                id="marketplaceGridViewButton"
-                type="button"
-                class="marketplace-view-toggle-btn"
-                data-view="grid"
-              >
-                Kártyák
-              </button>
-              <button
-                id="marketplaceListViewButton"
-                type="button"
-                class="marketplace-view-toggle-btn is-active"
-                data-view="list"
-              >
-                Lista
-              </button>
-            </div>
-            <label class="marketplace-sort-label" for="marketplaceSortSelect">Rendezés</label>
-            <select id="marketplaceSortSelect" class="form-select marketplace-sort-select">
-              <option value="featured">Kiemelt / ajánlott</option>
-              <option value="price-asc">Ár szerint növekvő</option>
-              <option value="price-desc">Ár szerint csökkenő</option>
-              <option value="newest">Legújabbak elöl</option>
-            </select>
-          </div>
-        </div>
-
-        <div id="marketplaceListingsLoading" class="card app-card marketplace-loading-card">
-          <div class="card-body">
-            <p class="section-text mb-0">Hirdetések betöltése...</p>
-          </div>
-        </div>
-
-        <div id="marketplaceListings" class="marketplace-listings d-none"></div>
-
-        <div id="marketplaceEmptyState" class="card app-card mt-4 d-none">
-          <div class="card-body">
-            <h2 class="h5 mb-2">Nincs találat</h2>
-            <p class="section-text mb-0">Próbálj másik kategóriát vagy keresőkifejezést használni.</p>
-          </div>
-        </div>
-      </div>
-    </section>
+    </div>
   </main>
 
   <footer class="py-4 border-top border-secondary-subtle app-footer">
-    <div class="container text-center footer-text">© HalTérkép</div>
+    <div class="container text-center footer-text">
+      © HalTérkép
+    </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
