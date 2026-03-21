@@ -31,7 +31,7 @@ async function getOwnCatches(req, res) {
     const catches = await getCatchesForUserId(req.user.id);
     return res.status(200).json(catches);
   } catch (error) {
-    console.error("Sajat fogasok lekeresi hiba:", error);
+    console.error("Saját fogások lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a fogások lekérésekor.",
     });
@@ -66,7 +66,7 @@ async function getUserProfileCatches(req, res) {
     const catches = await getCatchesForUserId(userId);
     return res.status(200).json(catches);
   } catch (error) {
-    console.error("Profil fogasok lekeresi hiba:", error);
+    console.error("Profilfogások lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a fogások lekérésekor.",
     });
@@ -146,7 +146,7 @@ async function deleteOwnCatch(req, res) {
       message: "Fogás sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Fogas torlesi hiba:", error);
+    console.error("Fogástörlési hiba:", error);
     return res.status(500).json({
       message: "Hiba a fogás törlése közben.",
     });

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="hu">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HalTerkep - Hirdetesfeladas</title>
+  <title>HalTérkép - Hirdetésfeladás</title>
 
   <link rel="icon" type="image/png" href="assets/favicon.png" />
   <link
@@ -17,15 +17,15 @@
   <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
     <div class="container nav-container">
       <a class="navbar-brand d-flex align-items-center gap-3" href="index.html">
-        <img src="assets/logo.png" alt="HalTerkep logo" class="brand-logo" />
+        <img src="assets/logo.png" alt="HalTérkép logó" class="brand-logo" />
         <div>
-          <div class="fw-bold brand-title">HalTerkep</div>
-          <small class="brand-subtitle">Horgaszvizek - Halfajok - Fogasnaplo - Forum</small>
+          <div class="fw-bold brand-title">HalTérkép</div>
+          <small class="brand-subtitle">Horgászvizek • Halfajok • Fogásnapló • Fórum</small>
         </div>
       </a>
 
       <div class="nav-actions-mobile d-lg-none">
-        <button id="themeToggleMobile" class="theme-toggle-btn" type="button" aria-label="Tema valtasa">
+        <button id="themeToggleMobile" class="theme-toggle-btn" type="button" aria-label="Téma váltása">
           <span class="theme-icon">☀️</span>
         </button>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
@@ -41,32 +41,32 @@
         <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center" id="navbarMenu">
           <li class="nav-item friend-search-nav">
             <div class="friend-search-container" id="friendSearchContainer">
-              <button class="friend-search-toggle" id="friendSearchToggle" type="button" aria-label="Baratok keresese">🔍</button>
-              <input id="friendSearchInput" class="form-control app-input friend-search-input" type="text" placeholder="Baratok keresese" autocomplete="off" />
+              <button class="friend-search-toggle" id="friendSearchToggle" type="button" aria-label="Barátok keresése">🔍</button>
+              <input id="friendSearchInput" class="form-control app-input friend-search-input" type="text" placeholder="Barátok keresése" autocomplete="off" />
               <ul id="friendSearchResults" class="friend-search-results d-none"></ul>
             </div>
           </li>
-          <li class="nav-item"><a class="nav-link" href="index.html">Kezdolap</a></li>
-          <li class="nav-item"><a class="nav-link" href="vizteruletek.html">Vizteruletek</a></li>
-          <li class="nav-item"><a class="nav-link" href="fogasnaplo.html">Fogasnaplo</a></li>
-          <li class="nav-item"><a class="nav-link" href="forum.html">Forum</a></li>
+          <li class="nav-item"><a class="nav-link" href="index.html">Kezdőlap</a></li>
+          <li class="nav-item"><a class="nav-link" href="vizteruletek.html">Vízterületek</a></li>
+          <li class="nav-item"><a class="nav-link" href="fogasnaplo.html">Fogásnapló</a></li>
+          <li class="nav-item"><a class="nav-link" href="forum.html">Fórum</a></li>
           <li class="nav-item d-none" id="adminNavItem"><a class="nav-link" href="admin.html">Admin</a></li>
           <li class="nav-item d-none" id="profilNavItem"><a class="nav-link" href="profil.html">Profil</a></li>
 
           <li class="nav-item ms-lg-2 mt-2 mt-lg-0 d-none d-lg-block">
-            <button id="themeToggleDesktop" class="theme-toggle-btn" type="button" aria-label="Tema valtasa">
+            <button id="themeToggleDesktop" class="theme-toggle-btn" type="button" aria-label="Téma váltása">
               <span class="theme-icon">☀️</span>
             </button>
           </li>
 
           <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="loginNavItem">
-            <a class="btn btn-outline-light btn-sm" href="login.html">Bejelentkezes</a>
+            <a class="btn btn-outline-light btn-sm" href="login.html">Bejelentkezés</a>
           </li>
           <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="registerNavItem">
-            <a class="btn btn-primary btn-sm" href="register.html">Regisztracio</a>
+            <a class="btn btn-primary btn-sm" href="register.html">Regisztráció</a>
           </li>
           <li class="nav-item ms-lg-2 mt-2 mt-lg-0 d-none" id="logoutNavItem">
-            <button class="btn btn-outline-danger btn-sm" onclick="handleLogout()">Kijelentkezes</button>
+            <button class="btn btn-outline-danger btn-sm" onclick="handleLogout()">Kijelentkezés</button>
           </li>
         </ul>
       </div>
@@ -79,56 +79,56 @@
         <div id="marketplaceCreatePage" class="marketplace-create-shell app-card">
           <div class="marketplace-create-topbar">
             <button id="marketplaceCreateBackButton" type="button" class="btn btn-outline-light btn-sm marketplace-detail-back">
-              Vissza a piacterhez
+              Vissza a piactérhez
             </button>
           </div>
 
           <div class="marketplace-create-header">
-            <span class="marketplace-kicker">Marketplace hirdetes</span>
-            <h1 id="marketplaceCreatePageTitle" class="marketplace-title marketplace-create-title">Uj hirdetes feladasa</h1>
-            <p id="marketplaceCreatePageSubtitle" class="marketplace-subtitle">Adj fel uj hirdetest a piacterre.</p>
+            <span class="marketplace-kicker">Marketplace hirdetés</span>
+            <h1 id="marketplaceCreatePageTitle" class="marketplace-title marketplace-create-title">Új hirdetés feladása</h1>
+            <p id="marketplaceCreatePageSubtitle" class="marketplace-subtitle">Adj fel új hirdetést a piactérre.</p>
           </div>
 
           <form id="marketplaceCreateForm" class="marketplace-create-form" novalidate>
             <div class="row g-3">
               <div class="col-md-6">
-                <label class="form-label" for="marketplaceCreateCategory">Kategoria</label>
+                <label class="form-label" for="marketplaceCreateCategory">Kategória</label>
                 <select id="marketplaceCreateCategory" class="form-select app-input" required></select>
               </div>
               <div class="col-md-6">
-                <label class="form-label" for="marketplaceCreateCity">Telepules</label>
+                <label class="form-label" for="marketplaceCreateCity">Település</label>
                 <input id="marketplaceCreateCity" class="form-control app-input" type="text" maxlength="100" required />
               </div>
               <div class="col-md-8">
-                <label class="form-label" for="marketplaceCreateTitle">Hirdetes megnevezese</label>
+                <label class="form-label" for="marketplaceCreateTitle">Hirdetés megnevezése</label>
                 <input id="marketplaceCreateTitle" class="form-control app-input" type="text" maxlength="150" required />
               </div>
               <div class="col-md-4">
-                <label class="form-label" for="marketplaceCreatePrice">Ar (Ft)</label>
+                <label class="form-label" for="marketplaceCreatePrice">Ár (Ft)</label>
                 <input id="marketplaceCreatePrice" class="form-control app-input" type="number" min="0" required />
               </div>
               <div class="col-12">
-                <label class="form-label" for="marketplaceCreateDescription">Leiras</label>
+                <label class="form-label" for="marketplaceCreateDescription">Leírás</label>
                 <textarea id="marketplaceCreateDescription" class="form-control app-input" rows="6" maxlength="2000" required></textarea>
               </div>
               <div class="col-12">
                 <div class="marketplace-upload-header">
                   <div>
-                    <label class="form-label mb-1" for="marketplaceCreateImages">Kepek</label>
-                    <div class="form-text mb-0">Legfeljebb 5 kep toltheto fel, akar tobb reszletben is.</div>
+                    <label class="form-label mb-1" for="marketplaceCreateImages">Képek</label>
+                    <div class="form-text mb-0">Legfeljebb 5 kép tölthető fel, akár több részletben is.</div>
                   </div>
-                  <label for="marketplaceCreateImages" class="btn btn-outline-info btn-sm marketplace-upload-trigger">Kepek hozzaadasa</label>
+                  <label for="marketplaceCreateImages" class="btn btn-outline-info btn-sm marketplace-upload-trigger">Képek hozzáadása</label>
                 </div>
                 <input id="marketplaceCreateImages" class="d-none" type="file" accept="image/*" multiple />
               </div>
               <div class="col-12">
                 <div id="marketplaceCreateImageList" class="marketplace-upload-list">
-                  <div class="marketplace-upload-empty">Meg nincs kivalasztott kep.</div>
+                  <div class="marketplace-upload-empty">Még nincs kiválasztott kép.</div>
                 </div>
               </div>
               <div id="marketplaceCreateFormError" class="col-12 text-danger small d-none"></div>
               <div class="col-12 d-flex justify-content-end">
-                <button id="marketplaceCreateSubmitButton" type="submit" class="btn marketplace-create-button">Hirdetes mentese</button>
+                <button id="marketplaceCreateSubmitButton" type="submit" class="btn marketplace-create-button">Hirdetés mentése</button>
               </div>
             </div>
           </form>
@@ -138,11 +138,19 @@
   </main>
 
   <footer class="py-4 border-top border-secondary-subtle app-footer">
-    <div class="container text-center footer-text">© HalTerkep</div>
+    <div class="container text-center footer-text">© HalTérkép</div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="JavaScript/script.js"></script>
+  <script src="JavaScript/marketplace.js"></script>
+  <script src="JavaScript/app-pages.js"></script>
+  <script src="JavaScript/admin.js"></script>
+  <script src="JavaScript/profile.js"></script>
   <script src="JavaScript/friend-search.js"></script>
 </body>
 </html>
+
+
+
+

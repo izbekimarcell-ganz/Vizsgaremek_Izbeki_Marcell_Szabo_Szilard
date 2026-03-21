@@ -31,7 +31,7 @@ async function getSpecies(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Halfajok lekeresi hiba:", error);
+    console.error("Halfajok lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a halfajok lekérésekor.",
     });
@@ -81,7 +81,7 @@ async function createSpecies(req, res) {
       species: result.recordset[0],
     });
   } catch (error) {
-    console.error("Halfaj letrehozasi hiba:", error);
+    console.error("Halfaj létrehozási hiba:", error);
     return res.status(500).json({
       message: "Hiba a halfaj létrehozásakor.",
     });
@@ -152,7 +152,7 @@ async function updateSpecies(req, res) {
       species: result.recordset[0],
     });
   } catch (error) {
-    console.error("Halfaj modositasi hiba:", error);
+    console.error("Halfaj módosítási hiba:", error);
     return res.status(500).json({
       message: "Hiba a halfaj módosításakor.",
     });
@@ -224,7 +224,7 @@ async function deleteSpecies(req, res) {
       message: "Halfaj sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Halfaj torlesi hiba:", error);
+    console.error("Halfaj törlési hiba:", error);
     return res.status(500).json({
       message: "Hiba a halfaj törlésekor.",
     });

@@ -101,7 +101,7 @@ function normalizeMarketplaceImages(rawImages) {
 
   if (normalizedImages.some((image) => !image.KepUrl.startsWith("data:image/"))) {
     return {
-      error: "Csak ervenyes kepfajlok tolthetok fel.",
+      error: "Csak érvényes képfájlok tölthetők fel.",
       images: [],
     };
   }
@@ -355,7 +355,7 @@ async function createMarketplaceListing(req, res) {
     }
 
     if (!Number.isInteger(categoryId) || categoryId <= 0) {
-      return res.status(400).json({ message: "Valassz ervenyes kategoriat." });
+      return res.status(400).json({ message: "Válassz érvényes kategóriát." });
     }
 
     if (!title || title.length < 3) {
@@ -363,15 +363,15 @@ async function createMarketplaceListing(req, res) {
     }
 
     if (!description) {
-      return res.status(400).json({ message: "A leiras megadasa kotelezo." });
+      return res.status(400).json({ message: "A leírás megadása kötelező." });
     }
 
     if (!city || city.length < 2) {
-      return res.status(400).json({ message: "Add meg a telepules nevet." });
+      return res.status(400).json({ message: "Add meg a település nevét." });
     }
 
     if (!Number.isInteger(price) || price < 0) {
-      return res.status(400).json({ message: "Adj meg ervenyes arat." });
+      return res.status(400).json({ message: "Adj meg érvényes árat." });
     }
 
     const { images: normalizedImages, error: imageValidationError } = normalizeMarketplaceImages(rawImages);
@@ -450,7 +450,7 @@ async function createMarketplaceListing(req, res) {
       try {
         await transaction.rollback();
       } catch (rollbackError) {
-        console.error("Marketplace hirdetes rollback hiba:", rollbackError);
+        console.error("Marketplace hirdetés rollback hiba:", rollbackError);
       }
     }
 
@@ -483,7 +483,7 @@ async function updateMarketplaceListing(req, res) {
     }
 
     if (!Number.isInteger(categoryId) || categoryId <= 0) {
-      return res.status(400).json({ message: "Valassz ervenyes kategoriat." });
+      return res.status(400).json({ message: "Válassz érvényes kategóriát." });
     }
 
     if (!title || title.length < 3) {
@@ -491,15 +491,15 @@ async function updateMarketplaceListing(req, res) {
     }
 
     if (!description) {
-      return res.status(400).json({ message: "A leiras megadasa kotelezo." });
+      return res.status(400).json({ message: "A leírás megadása kötelező." });
     }
 
     if (!city || city.length < 2) {
-      return res.status(400).json({ message: "Add meg a telepules nevet." });
+      return res.status(400).json({ message: "Add meg a település nevét." });
     }
 
     if (!Number.isInteger(price) || price < 0) {
-      return res.status(400).json({ message: "Adj meg ervenyes arat." });
+      return res.status(400).json({ message: "Adj meg érvényes árat." });
     }
 
     const { images: normalizedImages, error: imageValidationError } = normalizeMarketplaceImages(rawImages);
@@ -592,7 +592,7 @@ async function updateMarketplaceListing(req, res) {
       try {
         await transaction.rollback();
       } catch (rollbackError) {
-        console.error("Marketplace hirdetes update rollback hiba:", rollbackError);
+        console.error("Marketplace hirdetés update rollback hiba:", rollbackError);
       }
     }
 
@@ -637,7 +637,7 @@ async function setMarketplaceListingFrozenState(req, res) {
     }
 
     return res.status(200).json({
-      message: frozen ? "A hirdetes jegelve lett." : "A hirdetés jegelése megszűnt.",
+      message: frozen ? "A hirdetés jegelve lett." : "A hirdetés jegelése megszűnt.",
       Jegelve: Boolean(result.recordset[0].Jegelve),
     });
   } catch (error) {
@@ -954,7 +954,7 @@ async function deleteMarketplaceListingForAdmin(req, res) {
       message: "A hirdetés sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Marketplace admin torlesi hiba:", error);
+    console.error("Marketplace admin törlési hiba:", error);
     return res.status(500).json({
       message: "Hiba a hirdetés admin törlése közben.",
     });
@@ -1372,7 +1372,7 @@ async function createMarketplaceReport(req, res) {
       message: "A report sikeresen elküldve.",
     });
   } catch (error) {
-    console.error("Marketplace report kuldesi hiba:", error);
+    console.error("Marketplace report küldési hiba:", error);
     return res.status(500).json({
       message: "Hiba a report elküldése közben.",
     });

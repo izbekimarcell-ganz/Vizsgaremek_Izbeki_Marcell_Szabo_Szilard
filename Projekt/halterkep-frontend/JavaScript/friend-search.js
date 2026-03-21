@@ -1120,7 +1120,7 @@ function renderFriendsPageLists() {
   if (!filteredNonFriends.length) {
     nonFriendsList.innerHTML = `
       <div class="friend-list-empty">
-        Nincs megjelenitheto felhasznalo ebben a listaban.
+        Nincs megjeleníthető felhasználó ebben a listában.
       </div>
     `;
   } else {

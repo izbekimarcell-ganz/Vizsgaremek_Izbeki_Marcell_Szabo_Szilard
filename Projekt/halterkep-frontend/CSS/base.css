@@ -1,0 +1,958 @@
+﻿/* =========================
+   Alap változók - sötét mód
+   ========================= */
+:root {
+  --panel: rgba(18, 27, 39, 0.84);
+  --card: rgba(15, 22, 32, 0.88);
+  --text: #e7eef7;
+  --muted: #c2d2e6;
+  --border: rgba(255, 255, 255, 0.12);
+  --accent: #4ea8ff;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+/* =========================
+   Világos mód változók
+   ========================= */
+body[data-theme="light"] {
+  --panel: rgba(255, 255, 255, 0.84);
+  --card: rgba(255, 255, 255, 0.88);
+  --text: #15202b;
+  --muted: #31475c;
+  --border: rgba(21, 32, 43, 0.12);
+  --accent: #1f75d8;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* =========================
+   Alap beállítások
+   ========================= */
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background-image: url("../assets/sotet_hatter.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  transition: background-image 0.3s ease, color 0.3s ease, background-color 0.3s ease;
+}
+
+body[data-theme="light"] {
+  background-image: url("../assets/vilagos_hatter.png");
+}
+
+body[data-page="admin"],
+body[data-page="profil"] {
+  background-image: none;
+  background-color: #0a0d12;
+}
+
+body[data-theme="light"][data-page="admin"],
+body[data-theme="light"][data-page="profil"] {
+  background-image: none;
+  background-color: #f3f4f6;
+}
+
+.profile-summary-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 1.25rem;
+  align-items: center;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: linear-gradient(145deg, rgba(78, 168, 255, 0.12), rgba(255, 255, 255, 0.04));
+}
+
+body[data-theme="light"] .profile-summary-card {
+  background: linear-gradient(145deg, rgba(31, 117, 216, 0.08), rgba(255, 255, 255, 0.9));
+}
+
+.profile-edit-toggle {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid rgba(78, 168, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(78, 168, 255, 0.12);
+  color: #d9ecff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  transition: transform 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.profile-edit-toggle:hover,
+.profile-edit-toggle:focus-visible {
+  background: rgba(78, 168, 255, 0.22);
+  border-color: rgba(78, 168, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+body[data-theme="light"] .profile-edit-toggle {
+  color: #175ea8;
+  background: rgba(31, 117, 216, 0.1);
+  border-color: rgba(31, 117, 216, 0.2);
+}
+
+.profile-avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  border: 3px solid rgba(78, 168, 255, 0.35);
+  background: linear-gradient(145deg, #123456, #4ea8ff);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 700;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-summary-text {
+  min-width: 0;
+}
+
+.profile-customization-panel {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.03);
+  animation: fadeInUp 0.18s ease;
+}
+
+body[data-theme="light"] .profile-customization-panel {
+  background: rgba(21, 32, 43, 0.03);
+}
+
+body[data-page="marketplace"] {
+  background-image:
+    radial-gradient(circle at top right, rgba(78, 168, 255, 0.18), transparent 30%),
+    linear-gradient(180deg, rgba(8, 11, 16, 0.96), rgba(12, 16, 22, 0.98)),
+    url("../assets/sotet_hatter.png");
+}
+
+body[data-theme="light"][data-page="marketplace"] {
+  background-image:
+    radial-gradient(circle at top right, rgba(78, 168, 255, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(250, 251, 253, 0.98), rgba(242, 245, 248, 0.98)),
+    url("../assets/vilagos_hatter.png");
+}
+
+.main-content {
+  flex: 1;
+}
+
+/* =========================
+   Általános szövegek
+   ========================= */
+.section-text {
+  color: var(--muted) !important;
+}
+
+.footer-text {
+  color: var(--muted);
+}
+
+.brand-subtitle {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.brand-title {
+  color: var(--text);
+}
+
+body[data-theme="light"] .brand-title {
+  color: #15202b;
+}
+
+/* =========================
+   Navbar
+   ========================= */
+.app-navbar {
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  transition: transform 0.28s ease, opacity 0.28s ease, background 0.3s ease;
+  will-change: transform;
+}
+
+.app-navbar.navbar-hidden {
+  transform: translateY(calc(-100% - 0.5rem));
+  opacity: 0.96;
+}
+
+.nav-container {
+  position: relative;
+}
+
+.brand-logo {
+  width: 128px;
+  height: 128px;
+  object-fit: contain;
+}
+
+.navbar .nav-link {
+  color: var(--text) !important;
+  opacity: 0.9;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+  opacity: 1;
+  font-weight: 700;
+}
+
+.admin-nav-group .dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.admin-nav-dropdown-menu {
+  min-width: 15rem;
+  padding: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.admin-nav-dropdown-menu .dropdown-item {
+  border-radius: 0.75rem;
+  color: var(--text);
+  font-weight: 600;
+  padding: 0.7rem 0.85rem;
+}
+
+.admin-nav-dropdown-menu .dropdown-item:hover,
+.admin-nav-dropdown-menu .dropdown-item:focus,
+.admin-nav-dropdown-menu .dropdown-item.active {
+  background: rgba(78, 168, 255, 0.12);
+  color: var(--text);
+}
+
+.friend-search-nav {
+  position: relative;
+}
+
+.friend-search-container {
+  --friend-search-field-width: 320px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.friend-search-toggle {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  line-height: 1;
+}
+
+.friend-search-toggle:hover {
+  border-color: var(--accent);
+}
+
+.friend-search-input {
+  width: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  margin-left: 0;
+  transition: width 0.2s ease, opacity 0.2s ease, margin-left 0.2s ease, padding 0.2s ease;
+  pointer-events: none;
+}
+
+.friend-search-container.is-open .friend-search-input {
+  width: var(--friend-search-field-width);
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--border);
+  opacity: 1;
+  margin-left: 0.5rem;
+  pointer-events: auto;
+}
+
+.friend-search-results {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: calc(40px + 0.5rem);
+  width: var(--friend-search-field-width);
+  max-height: 320px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  z-index: 1055;
+}
+
+.friend-search-item,
+.friend-search-empty {
+  padding: 0.6rem 0.85rem;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.friend-search-empty {
+  color: var(--muted);
+}
+
+.friend-search-results li:last-child {
+  border-bottom: 0;
+  border-radius: 0 0 0.75rem 0.75rem;
+}
+
+.friend-search-item:hover {
+  background: rgba(120, 196, 255, 0.16);
+}
+
+.friend-search-result-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.friend-notification-nav {
+  position: relative;
+}
+
+.friend-notification-nav-mobile {
+  display: inline-flex;
+}
+
+.friend-notification-toggle {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  padding: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.friend-notification-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.friend-notification-count {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #ff4d4f;
+  color: #fff;
+  font-size: 0.72rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.friend-notification-menu {
+  width: min(92vw, 24rem);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.friend-notification-header {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.friend-notification-list {
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.friend-notification-item,
+.friend-notification-empty,
+.friend-user-card,
+.friend-list-empty {
+  padding: 1rem;
+  color: var(--text);
+}
+
+.friend-notification-item + .friend-notification-item {
+  border-top: 1px solid var(--border);
+}
+
+.friend-notification-empty,
+.friend-list-empty {
+  color: var(--muted);
+}
+
+.user-message-item {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.user-message-item.is-unread {
+  border-color: rgba(78, 168, 255, 0.45);
+  background: rgba(78, 168, 255, 0.1);
+}
+
+body[data-theme="light"] .user-message-item {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+body[data-theme="light"] .user-message-item.is-unread {
+  border-color: rgba(31, 117, 216, 0.28);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.user-message-actions {
+  flex-shrink: 0;
+}
+
+.friend-user-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.friend-user-card.is-friend {
+  background: rgba(59, 185, 119, 0.12);
+}
+
+body[data-theme="light"] .friend-user-card {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+body[data-theme="light"] .friend-user-card.is-friend {
+  background: rgba(59, 185, 119, 0.16);
+}
+
+/* =========================
+   Mobil felső vezérlők
+   ========================= */
+.nav-actions-mobile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-actions-mobile .friend-notification-nav {
+  margin: 0;
+}
+
+.nav-actions-mobile .friend-notification-toggle {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+}
+
+/* =========================
+   Téma váltó gomb
+   ========================= */
+.theme-toggle-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  transform: scale(1.04);
+}
+
+.theme-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.desktop-account-menu-toggle {
+  min-height: 42px;
+  padding: 0.55rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(32, 82, 129, 0.92), rgba(78, 168, 255, 0.88));
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.desktop-account-menu-toggle:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.desktop-account-menu-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.desktop-account-menu-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.desktop-account-menu {
+  min-width: 13rem;
+  padding: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.desktop-account-menu .dropdown-item {
+  border-radius: 0.75rem;
+  color: var(--text);
+  font-weight: 600;
+  padding: 0.7rem 0.85rem;
+}
+
+.desktop-account-menu .dropdown-item:hover,
+.desktop-account-menu .dropdown-item:focus {
+  background: rgba(78, 168, 255, 0.12);
+  color: var(--text);
+}
+
+.desktop-account-menu-logout {
+  color: #ff8d8f;
+}
+
+body[data-theme="light"] .desktop-account-menu-toggle {
+  background: linear-gradient(135deg, #dcecff, #b7d8ff);
+  color: #12385f;
+}
+
+.desktop-account-menu-nav-item {
+  display: none;
+}
+
+.desktop-account-menu-nav-item.desktop-account-menu-hidden {
+  display: none !important;
+}
+
+@media (min-width: 992px) {
+  .desktop-account-menu-nav-item {
+    display: block;
+  }
+}
+
+/* =========================
+   Hero szekció
+   ========================= */
+.hero-section {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+}
+
+/* =========================
+   Kezdőlap panelek
+   ========================= */
+.home-main {
+  padding-bottom: 0;
+}
+
+.home-panel {
+  position: relative;
+  overflow: clip;
+  min-height: clamp(18rem, 40vw, 25rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);
+}
+
+body[data-theme="light"] .home-panel {
+  border-top-color: rgba(21, 32, 43, 0.08);
+  border-bottom-color: rgba(21, 32, 43, 0.05);
+  box-shadow: 0 18px 36px rgba(21, 32, 43, 0.08);
+}
+
+.home-panel + .home-panel {
+  margin-top: -1.5rem;
+}
+
+.home-panel-hero {
+  min-height: clamp(34rem, calc(100vh - 10rem), 50rem);
+  background:
+    linear-gradient(180deg, rgba(4, 8, 14, 0.2), rgba(4, 8, 14, 0.38));
+}
+
+body[data-theme="light"] .home-panel-hero {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(245, 248, 252, 0.3));
+}
+
+.home-panel-ghost {
+  background:
+    linear-gradient(180deg, rgba(8, 14, 20, 0.24), rgba(8, 14, 20, 0.38));
+  backdrop-filter: blur(3px);
+}
+
+body[data-theme="light"] .home-panel-ghost {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(243, 247, 251, 0.26));
+}
+
+.home-panel-solid {
+  background:
+    linear-gradient(130deg, rgba(10, 18, 29, 0.92), rgba(21, 40, 61, 0.82));
+  backdrop-filter: blur(8px);
+}
+
+body[data-theme="light"] .home-panel-solid {
+  background:
+    linear-gradient(130deg, rgba(249, 251, 253, 0.95), rgba(228, 237, 245, 0.92));
+}
+
+.home-panel-shell {
+  width: min(1200px, calc(100% - 3rem));
+  min-height: inherit;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: center;
+  gap: 1rem;
+  padding: clamp(4rem, 8vw, 6rem) 0;
+}
+
+.home-panel-shell-centered {
+  width: min(1080px, calc(100% - 3rem));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.home-panel-shell-left .home-panel-copy {
+  grid-column: 1 / span 5;
+}
+
+.home-panel-shell-right .home-panel-copy {
+  grid-column: 8 / span 5;
+}
+
+.home-panel-copy {
+  position: relative;
+  max-width: 34rem;
+  padding: clamp(1.5rem, 3vw, 2.4rem) 0;
+}
+
+.home-panel-copy::before {
+  content: "";
+  display: block;
+  width: 4.5rem;
+  height: 1px;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+body[data-theme="light"] .home-panel-copy::before {
+  background: rgba(21, 32, 43, 0.22);
+}
+
+.home-panel-copy-centered {
+  max-width: 52rem;
+  padding-inline: clamp(1.25rem, 3vw, 2rem);
+}
+
+.home-panel-copy-centered::before {
+  margin-inline: auto;
+}
+
+.home-panel-kicker,
+.home-panel-label {
+  margin-bottom: 0.9rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.home-main-title {
+  margin: 0;
+  font-size: clamp(2.8rem, 7vw, 5.3rem);
+  line-height: 0.97;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  font-family: "Aptos Display", "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+.home-main-lead {
+  max-width: 42rem;
+  margin: 1.5rem auto 0;
+  font-size: clamp(1.08rem, 2vw, 1.45rem);
+  line-height: 1.65;
+}
+
+.home-panel-title {
+  margin: 0;
+  font-size: clamp(2rem, 4.4vw, 3.1rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  font-family: "Aptos Display", "Trebuchet MS", "Segoe UI", sans-serif;
+}
+
+.home-panel-text {
+  max-width: 30rem;
+  margin: 1rem 0 1.75rem;
+  font-size: 1.02rem;
+  line-height: 1.8;
+}
+
+@media (max-width: 991.98px) {
+  .home-panel-hero {
+    min-height: clamp(28rem, calc(100vh - 8rem), 40rem);
+  }
+
+  .home-panel-shell {
+    width: min(100%, calc(100% - 2rem));
+    grid-template-columns: 1fr;
+    padding: 3.5rem 0;
+  }
+
+  .home-panel-shell-left .home-panel-copy,
+  .home-panel-shell-right .home-panel-copy {
+    grid-column: 1 / -1;
+  }
+
+  .home-main-title {
+    font-size: clamp(2.45rem, 9vw, 4.2rem);
+  }
+}
+
+@media (max-width: 767.98px) {
+  .home-panel {
+    min-height: 0;
+  }
+
+  .home-panel + .home-panel {
+    margin-top: -1rem;
+  }
+
+  .home-panel-shell,
+  .home-panel-shell-centered {
+    width: min(100%, calc(100% - 1.5rem));
+  }
+
+  .home-panel-shell {
+    padding: 2.8rem 0;
+  }
+
+  .home-main-title {
+    font-size: clamp(2.15rem, 12vw, 3.2rem);
+  }
+
+  .home-main-lead,
+  .home-panel-text {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+}
+
+/* =========================
+   Kártyák
+   ========================= */
+.app-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 1rem;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(6px);
+}
+
+body[data-page="fogasnaplo"] .catch-log-layout {
+  align-items: flex-start;
+}
+
+body[data-page="fogasnaplo"] .catch-form-card {
+  height: auto;
+}
+
+body[data-page="fogasnaplo"] .catch-list-card-body {
+  display: flex;
+  flex-direction: column;
+}
+
+body[data-page="fogasnaplo"] .catch-list-scroll-area {
+  max-height: clamp(28rem, 62vh, 40rem);
+  overflow-y: auto;
+  padding-right: 0.35rem;
+}
+
+body[data-page="fogasnaplo"] .catch-list-scroll-area::-webkit-scrollbar {
+  width: 0.55rem;
+}
+
+body[data-page="fogasnaplo"] .catch-list-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+}
+
+body[data-theme="light"][data-page="fogasnaplo"] .catch-list-scroll-area::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.water-species-chip {
+  border-radius: 999px;
+  border-color: rgba(78, 168, 255, 0.45);
+  background: transparent;
+  color: var(--text);
+}
+
+.water-species-chip:hover {
+  border-color: rgba(78, 168, 255, 0.8);
+  background: rgba(78, 168, 255, 0.12);
+  color: var(--text);
+}
+
+.water-species-chip.is-protected {
+  border-color: rgba(255, 193, 7, 0.55);
+}
+
+.water-species-chip.is-protected:hover {
+  border-color: rgba(255, 193, 7, 0.85);
+  background: rgba(255, 193, 7, 0.14);
+  color: var(--text);
+}
+
+.water-species-chip.is-active {
+  border-color: #4ea8ff;
+  background: #4ea8ff;
+  color: #081320;
+  font-weight: 700;
+}
+
+.water-species-chip.is-active.is-protected {
+  border-color: #f3c64d;
+  background: #f3c64d;
+  color: #2c2400;
+}
+
+.water-species-details {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="light"] .water-species-details {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.app-dialog-modal .modal-content {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.app-dialog-modal .modal-header,
+.app-dialog-modal .modal-footer {
+  border: 0;
+}
+
+.app-dialog-modal .modal-title,
+.app-dialog-modal .modal-body {
+  color: var(--text);
+}
+
+/* =========================
+   Form elemek
+   ========================= */
+.app-input,
+.app-input:focus,
+.form-select.app-input {
+  background-color: rgba(0, 0, 0, 0.2);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+body[data-theme="light"] .app-input,
+body[data-theme="light"] .app-input:focus,
+body[data-theme="light"] .form-select.app-input {
+  background-color: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+}
+
+.app-input::placeholder {
+  color: var(--muted);
+}
+
+.form-select.app-input option {
+  background: #121b27;
+  color: #e7eef7;
+}
+
+body[data-theme="light"] .form-select.app-input option {
+  background: #ffffff;
+  color: #15202b;
+}
+
+/* =========================

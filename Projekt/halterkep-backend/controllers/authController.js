@@ -6,11 +6,11 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d).+$/;
 const SECURITY_QUESTIONS = [
   "Mi volt a beceneved gyerekkorodban?",
-  "Mi volt az elso haziallatod neve?",
-  "Mi a kedvenc filmed cime?",
-  "Mi annak a varosnak a neve, ahol altalanos iskolaba jartal?",
-  "Mi volt a kedvenc tantargyad gyerekkorodban?",
-  "Mi az edesanyad keresztneve?",
+  "Mi volt az első háziállatod neve?",
+  "Mi a kedvenc filmed címe?",
+  "Mi annak a városnak a neve, ahol általános iskolába jártál?",
+  "Mi volt a kedvenc tantárgyad gyerekkorodban?",
+  "Mi az édesanyád keresztneve?",
 ];
 
 const mapUser = (user) => ({
@@ -31,11 +31,11 @@ const normalizeSecurityAnswer = (answer = "") =>
 
 function validatePassword(password) {
   if (password.length < 8) {
-    return "A jelszonak legalabb 8 karakter hosszu kell legyen.";
+    return "A jelszónak legalább 8 karakter hosszúnak kell lennie.";
   }
 
   if (!PASSWORD_REGEX.test(password)) {
-    return "A jelszonak tartalmaznia kell legalabb egy nagybetut es egy szamot.";
+    return "A jelszónak tartalmaznia kell legalább egy nagybetűt és egy számot.";
   }
 
   return null;
@@ -367,10 +367,10 @@ async function resetPasswordWithSecurityQuestion(req, res) {
       `);
 
     return res.status(200).json({
-      message: "A jelszo sikeresen modosult.",
+      message: "A jelszó sikeresen módosult.",
     });
   } catch (error) {
-    console.error("Jelszo visszaallitas hiba:", error);
+    console.error("Jelszó-visszaállítási hiba:", error);
     return res.status(500).json({
       message: "Szerverhiba történt.",
     });

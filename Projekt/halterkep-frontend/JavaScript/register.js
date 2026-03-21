@@ -46,13 +46,13 @@ if (registerForm) {
         await showAppAlert(
           typeof data === "object" && data?.message
             ? data.message
-            : "Hiba tortent regisztracio kozben.",
+            : "Hiba történt regisztráció közben.",
           { title: "Hiba" }
         );
         return;
       }
 
-      await showAppSuccess("Sikeres regisztracio!");
+      await showAppSuccess("Sikeres regisztráció!");
       window.location.href = "./login.html";
     } catch (error) {
       console.error("Register fetch hiba:", error);

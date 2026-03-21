@@ -164,7 +164,7 @@ async function getWaters(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Vizteruletek lekeresi hiba:", error);
+    console.error("Vízterületek lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a vízterületek lekérésekor.",
     });
@@ -241,7 +241,7 @@ async function getWaterDetails(req, res) {
     return res.status(200).json({
       vizterulet: {
         ...vizterulet,
-        Leiras: `${vizterulet.Nev} egy ${vizterulet.VizTipusNev.toLowerCase()} tipusú vizterulet.`,
+        Leiras: `${vizterulet.Nev} egy ${vizterulet.VizTipusNev.toLowerCase()} típusú vízterület.`,
       },
       halfajok: halfajokResult.recordset,
       megyek: megyekResult.recordset,
@@ -319,7 +319,7 @@ async function createWater(req, res) {
       }
     }
 
-    console.error("Vizterulet letrehozasi hiba:", error);
+    console.error("Vízterület-létrehozási hiba:", error);
     return res.status(500).json({
       message: "Hiba a vízterület létrehozásakor.",
     });
@@ -411,7 +411,7 @@ async function updateWater(req, res) {
       }
     }
 
-    console.error("Vizterulet modositasi hiba:", error);
+    console.error("Vízterület-módosítási hiba:", error);
     return res.status(500).json({
       message: "Hiba a vízterület módosításakor.",
     });
@@ -489,7 +489,7 @@ async function deleteWater(req, res) {
       }
     }
 
-    console.error("Vizterulet torlesi hiba:", error);
+    console.error("Vízterület-törlési hiba:", error);
     return res.status(500).json({
       message: "Hiba a vízterület törlésekor.",
     });
@@ -552,7 +552,7 @@ async function getWaterRelations(req, res) {
       halfajok: speciesResult.recordset,
     });
   } catch (error) {
-    console.error("Vizterulet kapcsolatok lekeresi hiba:", error);
+    console.error("Vízterület-kapcsolatok lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a kapcsolatok lekérésekor.",
     });
@@ -608,7 +608,7 @@ async function updateWaterRelations(req, res) {
       }
     }
 
-    console.error("Kapcsolatok mentesi hiba:", error);
+    console.error("Kapcsolatok mentési hiba:", error);
     return res.status(500).json({
       message: "Hiba a kapcsolatok mentése során.",
     });
@@ -626,7 +626,7 @@ async function getCounties(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Megyek lekeresi hiba:", error);
+    console.error("Megyék lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a megyék lekérésekor.",
     });
@@ -644,7 +644,7 @@ async function getWaterTypes(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Viztipusok lekeresi hiba:", error);
+    console.error("Víztípusok lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a víztípusok lekérésekor.",
     });

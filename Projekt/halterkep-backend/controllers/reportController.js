@@ -88,7 +88,7 @@ async function createForumReport(req, res) {
             h.HozzaszolasId,
             h.TemaId,
             t.Cim AS TemaCim,
-            LEFT(COALESCE(NULLIF(h.Szoveg, N''), CASE WHEN h.KepUrl IS NOT NULL THEN N'Csak kepes hozzaszolas.' ELSE N'' END), 1000) AS CelSzoveg,
+            LEFT(COALESCE(NULLIF(h.Szoveg, N''), CASE WHEN h.KepUrl IS NOT NULL THEN N'Csak képes hozzászólás.' ELSE N'' END), 1000) AS CelSzoveg,
             f.Felhasznalonev AS CelFelhasznalonev
           FROM ForumHozzaszolas h
           INNER JOIN ForumTema t ON t.TemaId = h.TemaId
@@ -147,7 +147,7 @@ async function createForumReport(req, res) {
       message: "A report sikeresen elküldve.",
     });
   } catch (error) {
-    console.error("Forum report kuldesi hiba:", error);
+    console.error("Fórumreport-küldési hiba:", error);
     return res.status(500).json({
       message: "Hiba a report elküldése közben.",
     });

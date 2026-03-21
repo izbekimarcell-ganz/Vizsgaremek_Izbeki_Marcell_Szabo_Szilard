@@ -270,7 +270,7 @@ async function sendFriendRequest(req, res) {
       message: "Barátkérelem elküldve.",
     });
   } catch (error) {
-    console.error("Baratkeres kuldesi hiba:", error);
+    console.error("Barátkérés-küldési hiba:", error);
     return res.status(500).json({
       message: "Hiba a barátkérés küldésekor.",
     });
@@ -773,7 +773,7 @@ async function respondToFriendRequest(req, res) {
       message: action === "accept" ? "Barátkérelem elfogadva." : "Barátkérelem elutasítva.",
     });
   } catch (error) {
-    console.error("Baratkeres valasz hiba:", error);
+    console.error("Barátkérés-válasz hiba:", error);
     return res.status(500).json({
       message: "Hiba a barátkérés feldolgozásakor.",
     });
@@ -818,7 +818,7 @@ async function removeFriend(req, res) {
       message: "A barát sikeresen törölve lett.",
     });
   } catch (error) {
-    console.error("Barat torlesi hiba:", error);
+    console.error("Baráttörlési hiba:", error);
     return res.status(500).json({
       message: "Hiba a barát törlésekor.",
     });

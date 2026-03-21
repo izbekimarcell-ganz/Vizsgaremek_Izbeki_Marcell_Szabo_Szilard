@@ -63,7 +63,7 @@
         sessionStorage.setItem("authUser", JSON.stringify(data.user));
       }
 
-      await showAppSuccess("Sikeres bejelentkezes!");
+      await showAppSuccess("Sikeres bejelentkezés!");
       const pendingRedirect =
         typeof consumePendingRedirect === "function" ? consumePendingRedirect() : null;
       const target = pendingRedirect || "./index.html";

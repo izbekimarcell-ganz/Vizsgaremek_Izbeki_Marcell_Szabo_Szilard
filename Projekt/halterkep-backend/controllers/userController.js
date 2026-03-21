@@ -26,7 +26,7 @@ function normalizeProfileImageUrl(value) {
   const isHttpImage = /^https?:\/\//i.test(normalized);
 
   if (!isDataImage && !isHttpImage) {
-    throw new Error("A profilkep csak ervenyes kep URL vagy feltoltott kep lehet.");
+    throw new Error("A profilkép csak érvényes kép URL vagy feltöltött kép lehet.");
   }
 
   return normalized;
@@ -48,7 +48,7 @@ async function getUsers(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Felhasznalok lekeresi hiba:", error);
+    console.error("Felhasználók lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a felhasználók lekérésekor.",
     });
@@ -110,7 +110,7 @@ async function toggleUserActive(req, res) {
       user: result.recordset[0],
     });
   } catch (error) {
-    console.error("Felhasznalo allapot modositasi hiba:", error);
+    console.error("Felhasználóállapot-módosítási hiba:", error);
     return res.status(500).json({
       message: "Hiba a felhasználó állapotának módosításakor.",
     });
@@ -214,7 +214,7 @@ async function deleteUserByAdmin(req, res) {
       },
     });
   } catch (error) {
-    console.error("Admin felhasznalo torlesi hiba:", error);
+    console.error("Admin felhasználó törlési hiba:", error);
     return res.status(500).json({
       message: "Hiba a felhasználó törlésekor.",
     });
@@ -244,7 +244,7 @@ async function searchUsers(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Felhasznalo kereses hiba:", error);
+    console.error("Felhasználókeresési hiba:", error);
     return res.status(500).json({
       message: "Hiba a felhasználó keresésekor.",
     });

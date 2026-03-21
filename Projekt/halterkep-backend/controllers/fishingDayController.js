@@ -64,7 +64,7 @@ async function getOwnFishingDays(req, res) {
     const days = await getManualFishingDaysForUserId(req.user.id);
     return res.status(200).json(days);
   } catch (error) {
-    console.error("Sajat horgasznapok lekeresi hiba:", error);
+    console.error("Saját horgásznapok lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a horgásznapok lekérésekor.",
     });
@@ -99,7 +99,7 @@ async function getUserProfileFishingDays(req, res) {
     const days = await getManualFishingDaysForUserId(userId);
     return res.status(200).json(days);
   } catch (error) {
-    console.error("Profil horgasznapok lekeresi hiba:", error);
+    console.error("Profilhorgásznapok lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a horgásznapok lekérésekor.",
     });
@@ -147,7 +147,7 @@ async function addFishingDay(req, res) {
       datum: dateKey,
     });
   } catch (error) {
-    console.error("Horgasznap hozzaadasi hiba:", error);
+    console.error("Horgásznap-hozzáadási hiba:", error);
     return res.status(500).json({
       message: "Hiba a horgásznap mentésekor.",
     });
@@ -246,7 +246,7 @@ async function saveFishingDayNote(req, res) {
       megjegyzes: note,
     });
   } catch (error) {
-    console.error("Horgasznap megjegyzes mentesi hiba:", error);
+    console.error("Horgásznap-megjegyzés mentési hiba:", error);
     return res.status(500).json({
       message: "Hiba a megjegyzés mentésekor.",
     });
@@ -287,7 +287,7 @@ async function deleteFishingDay(req, res) {
       datum: dateKey,
     });
   } catch (error) {
-    console.error("Horgasznap torlesi hiba:", error);
+    console.error("Horgásznap-törlési hiba:", error);
     return res.status(500).json({
       message: "Hiba a horgásznap törlésekor.",
     });

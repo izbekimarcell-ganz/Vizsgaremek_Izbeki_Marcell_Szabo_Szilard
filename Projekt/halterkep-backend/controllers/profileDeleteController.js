@@ -86,7 +86,7 @@ const deleteProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Profil torlesi hiba:", error);
+    console.error("Profiltörlési hiba:", error);
     return res.status(500).json({
       message: "Hiba a profil törlésekor.",
     });

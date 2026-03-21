@@ -20,7 +20,7 @@ async function getTopics(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Forum temak lekeresi hiba:", error);
+    console.error("Fórumtémák lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a fórum témák lekérésekor.",
     });
@@ -79,7 +79,7 @@ async function createTopic(req, res) {
       throw error;
     }
   } catch (error) {
-    console.error("Tema letrehozasi hiba:", error);
+    console.error("Témalétrehozási hiba:", error);
     return res.status(500).json({
       message: "Hiba a téma létrehozása közben.",
     });
@@ -116,7 +116,7 @@ async function getTopicReplies(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Hozzaszolasok lekeresi hiba:", error);
+    console.error("Hozzászólások lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a hozzászólások lekérésekor.",
     });
@@ -153,7 +153,7 @@ async function createReply(req, res) {
       hozzaszolasId: result.recordset[0].HozzaszolasId,
     });
   } catch (error) {
-    console.error("Hozzaszolas letrehozasi hiba:", error);
+    console.error("Hozzászólás-létrehozási hiba:", error);
     return res.status(500).json({
       message: "Hiba a hozzászólás létrehozása közben.",
     });
@@ -179,7 +179,7 @@ async function getTopicsForAdmin(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Admin forum temak lekeresi hiba:", error);
+    console.error("Admin fórumtémák lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a fórum témák admin lekérésekor.",
     });
@@ -216,7 +216,7 @@ async function getRepliesForAdmin(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Admin hozzaszolasok lekeresi hiba:", error);
+    console.error("Admin hozzászólások lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a hozzászólások admin lekérésekor.",
     });
@@ -275,7 +275,7 @@ async function deleteTopic(req, res) {
       message: "Téma sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Tema torlesi hiba:", error);
+    console.error("Tématörlési hiba:", error);
     return res.status(500).json({
       message: "Hiba a téma törlésekor.",
     });
@@ -340,7 +340,7 @@ async function deleteReply(req, res) {
       message: "Hozzászólás sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Hozzaszolas torlesi hiba:", error);
+    console.error("Hozzászólás-törlési hiba:", error);
     return res.status(500).json({
       message: "Hiba a hozzászólás törlésekor.",
     });
