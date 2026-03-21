@@ -30,7 +30,7 @@
 ## 2026.03.19
 
 - ~~Egy naptár hozzáadása a profilban ahová lehet jelölni a horgászattal töltött napokat és még hozzá lehet csatolni a naphoz az azon a napon fogott fogásokat~~ **(KÉSZ)**
-- A profilt lehessen jobban testreszabni(pl. profilkép, bemutatkozás, profil leírás, stb.) **()**
+- ~~A profilt lehessen jobban testreszabni(pl. profilkép, bemutatkozás, profil leírás, stb.)~~ **(KÉSZ)**
 
 ## 2026.03.21
 
