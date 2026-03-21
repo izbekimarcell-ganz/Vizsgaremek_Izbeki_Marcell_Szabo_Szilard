@@ -17,11 +17,11 @@
 - A vízterületeknél az információkat pontosítani (a halfajokból csak kevés van feltüntetve, pl. Dunán csak 4 hal van pedig sokkal több van) **()**
 - ~~Jelszó újrakérés megcsinálása offline (biztonsági kérdés)~~ **(KÉSZ)**
 - ~~Report funkció(forum és mraketplace)~~ **(KÉSZ)**
-- A főoldal átrendezése **()**
+- ~~A főoldal átrendezése~~ **(KÉSZ)**
 - ~~Térkép tervezésének és megcsinálásának elkezdése~~ **(Törölve)**
 - ~~Regisztrációnál az adatok ellenőrzése~~ **(KÉSZ)**
 - ~~Marketplace csinálás~~ **(KÉSZ)**
-- Pici redesign (nagyon látszik az ai) **()**
+- ~~Pici redesign (nagyon látszik az ai)~~ **(KÉSZ)**
 
 ## 2026.03.15
 
@@ -34,7 +34,10 @@
 
 ## 2026.03.21
 
-- Kód tisztítása
-- Kód jobban átlátható legyen (pl script.js fájl nagyon hosszú ezért szét kéne szedni külön .js fájlokba **()**
-- Adatbázist egy picikét tömöríteni mert nagyon sok tábla van **()**
+- ~~Kód tisztítása~~ **(KÉSZ)**
+- ~~Kód jobban átlátható legyen (pl script.js fájl nagyon hosszú ezért szét kéne szedni külön .js fájlokba~~ **(KÉSZ)**
 - Adatokkal feltölteni az egészet. **()**
+
+## 2026.03.22
+
+- html fájlok mappába rendezése
