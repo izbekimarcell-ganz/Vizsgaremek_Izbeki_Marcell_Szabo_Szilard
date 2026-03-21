@@ -18,7 +18,7 @@ if (registerForm) {
     }
 
     if (password !== confirmPassword) {
-      await showAppAlert("A ket jelszo nem egyezik.", { title: "Hiba" });
+      await showAppAlert("A két jelszó nem egyezik.", { title: "Hiba" });
       return;
     }
 
@@ -56,7 +56,7 @@ if (registerForm) {
       window.location.href = "./login.html";
     } catch (error) {
       console.error("Register fetch hiba:", error);
-      await showAppAlert("Nem sikerult kapcsolodni a szerverhez.", { title: "Hiba" });
+      await showAppAlert("Nem sikerült kapcsolódni a szerverhez.", { title: "Hiba" });
     }
   });
 }

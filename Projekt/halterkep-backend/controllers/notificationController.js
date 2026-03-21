@@ -70,7 +70,7 @@ async function getNotifications(req, res) {
     const userId = Number.parseInt(req.user?.id, 10);
 
     if (!Number.isInteger(userId) || userId <= 0) {
-      return res.status(401).json({ message: "Bejelentkezes szukseges." });
+      return res.status(401).json({ message: "Bejelentkezés szükséges." });
     }
 
     const pool = await poolPromise;
@@ -97,9 +97,9 @@ async function getNotifications(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Felhasznaloi ertesitesek lekeresi hiba:", error);
+    console.error("Felhasználói értesítések lekérési hiba:", error);
     return res.status(500).json({
-      message: "Hiba az ertesitesek lekeresekor.",
+      message: "Hiba az értesítések lekérésekor.",
     });
   }
 }
@@ -110,11 +110,11 @@ async function getNotificationDetail(req, res) {
     const notificationId = Number.parseInt(req.params.notificationId, 10);
 
     if (!Number.isInteger(userId) || userId <= 0) {
-      return res.status(401).json({ message: "Bejelentkezes szukseges." });
+      return res.status(401).json({ message: "Bejelentkezés szükséges." });
     }
 
     if (!Number.isInteger(notificationId) || notificationId <= 0) {
-      return res.status(400).json({ message: "Ervenytelen ertesites azonosito." });
+      return res.status(400).json({ message: "Érvénytelen értesítés azonosító." });
     }
 
     const pool = await poolPromise;
@@ -152,14 +152,14 @@ async function getNotificationDetail(req, res) {
     const notification = result.recordset[0];
 
     if (!notification) {
-      return res.status(404).json({ message: "Az ertesites nem talalhato." });
+      return res.status(404).json({ message: "Az értesítés nem található." });
     }
 
     return res.status(200).json(notification);
   } catch (error) {
-    console.error("Felhasznaloi ertesites reszlet hiba:", error);
+    console.error("Felhasználói értesítés részlet hiba:", error);
     return res.status(500).json({
-      message: "Hiba az ertesites megnyitasa kozben.",
+      message: "Hiba az értesítés megnyitása közben.",
     });
   }
 }
@@ -170,11 +170,11 @@ async function deleteNotification(req, res) {
     const notificationId = Number.parseInt(req.params.notificationId, 10);
 
     if (!Number.isInteger(userId) || userId <= 0) {
-      return res.status(401).json({ message: "Bejelentkezes szukseges." });
+      return res.status(401).json({ message: "Bejelentkezés szükséges." });
     }
 
     if (!Number.isInteger(notificationId) || notificationId <= 0) {
-      return res.status(400).json({ message: "Ervenytelen ertesites azonosito." });
+      return res.status(400).json({ message: "Érvénytelen értesítés azonosító." });
     }
 
     const pool = await poolPromise;
@@ -192,16 +192,16 @@ async function deleteNotification(req, res) {
       `);
 
     if (!result.recordset.length) {
-      return res.status(404).json({ message: "Az ertesites nem talalhato." });
+      return res.status(404).json({ message: "Az értesítés nem található." });
     }
 
     return res.status(200).json({
-      message: "Az ertesites sikeresen torolve.",
+      message: "Az értesítés sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Felhasznaloi ertesites torlesi hiba:", error);
+    console.error("Felhasználói értesítés törlési hiba:", error);
     return res.status(500).json({
-      message: "Hiba az ertesites torlese kozben.",
+      message: "Hiba az értesítés törlése közben.",
     });
   }
 }

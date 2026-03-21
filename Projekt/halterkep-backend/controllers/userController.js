@@ -285,7 +285,7 @@ async function getPublicUserProfile(req, res) {
       isFriend,
     });
   } catch (error) {
-    console.error("Nyilvanos profil lekeresi hiba:", error);
+    console.error("Nyilvános profil lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a profil lekérésekor.",
     });
@@ -298,7 +298,7 @@ async function getOwnProfile(req, res) {
 
     if (!Number.isInteger(userId) || userId <= 0) {
       return res.status(401).json({
-        message: "Bejelentkezes szukseges.",
+        message: "Bejelentkezés szükséges.",
       });
     }
 
@@ -325,15 +325,15 @@ async function getOwnProfile(req, res) {
 
     if (!user) {
       return res.status(404).json({
-        message: "Felhasznalo nem talalhato.",
+        message: "Felhasználó nem található.",
       });
     }
 
     return res.status(200).json(mapProfileUser(user, { includeEmail: true }));
   } catch (error) {
-    console.error("Sajat profil lekeresi hiba:", error);
+    console.error("Saját profil lekérési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a profil lekeresekor.",
+      message: "Hiba a profil lekérésekor.",
     });
   }
 }
@@ -344,7 +344,7 @@ async function updateOwnProfile(req, res) {
 
     if (!Number.isInteger(userId) || userId <= 0) {
       return res.status(401).json({
-        message: "Bejelentkezes szukseges.",
+        message: "Bejelentkezés szükséges.",
       });
     }
 
@@ -387,18 +387,18 @@ async function updateOwnProfile(req, res) {
 
     if (!user) {
       return res.status(404).json({
-        message: "Felhasznalo nem talalhato.",
+        message: "Felhasználó nem található.",
       });
     }
 
     return res.status(200).json({
-      message: "A profil sikeresen frissitve.",
+      message: "A profil sikeresen frissítve.",
       user: mapProfileUser(user, { includeEmail: true }),
     });
   } catch (error) {
-    console.error("Profil frissitesi hiba:", error);
+    console.error("Profil frissítési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a profil frissitesekor.",
+      message: "Hiba a profil frissítésekor.",
     });
   }
 }
@@ -452,7 +452,7 @@ async function updateOwnProfilePrivacy(req, res) {
       },
     });
   } catch (error) {
-    console.error("Profil lathatosag modositasi hiba:", error);
+    console.error("Profil láthatóság módosítási hiba:", error);
     return res.status(500).json({
       message: "Hiba a profil láthatóságának módosításakor.",
     });

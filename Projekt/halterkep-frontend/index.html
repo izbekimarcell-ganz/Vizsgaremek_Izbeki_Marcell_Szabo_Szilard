@@ -93,70 +93,75 @@
   <!-- Navbar vége -->
 
   <!-- Hero -->
-  <header class="hero-section py-5">
-    <div class="container">
-      <div class="row align-items-center g-4">
-        <div class="col-lg-8">
-          <h1 class="display-5 fw-bold mb-3">Magyarországi horgászvizek áttekinthetően</h1>
-          <p class="lead section-text">
-            Kereshető vízterületek, halfajok, fogásnapló és fórum egy egységes felületen.
-          </p>
-        
-        </div>
+  <header class="home-panel home-panel-ghost home-panel-hero">
+    <div class="home-panel-shell home-panel-shell-centered">
+      <div class="home-panel-copy home-panel-copy-centered">
+        <p class="home-panel-kicker">HalTérkép</p>
+        <h1 class="home-main-title">Magyarországi horgászvizek áttekinthetően</h1>
+        <p class="home-main-lead section-text">
+          Vízterület-kereső halfaj adatokkal, saját fogásnapló, fórum és piactér egy egységes felületen.
+        </p>
       </div>
     </div>
   </header>
   <!-- Hero vége -->
 
   <!-- Fő tartalom -->
-  <main class="main-content pb-5">
-    <div class="container">
-      <div class="row g-4">
-        <div class="col-md-6 col-xl-3">
-          <div class="card app-card h-100">
-            <div class="card-body">
-              <div class="fs-2 mb-3">🗺️</div>
-              <h5 class="card-title">Vízterületek</h5>
-              <p class="card-text section-text">Szűrés megye, víztípus és halfaj szerint.</p>
-              <a href="vizteruletek.html" class="btn btn-outline-info">Megnyitás</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-          <div class="card app-card h-100">
-            <div class="card-body">
-              <div class="fs-2 mb-3">📒</div>
-              <h5 class="card-title">Fogásnapló</h5>
-              <p class="card-text section-text">Saját fogások rögzítése és listázása.</p>
-              <a href="fogasnaplo.html" class="btn btn-outline-info">Megnyitás</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-          <div class="card app-card h-100">
-            <div class="card-body">
-              <div class="fs-2 mb-3">💬</div>
-              <h5 class="card-title">Fórum</h5>
-              <p class="card-text section-text">Kérdések, tippek és tapasztalatok megosztása.</p>
-              <a href="forum.html" class="btn btn-outline-info">Megnyitás</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6 col-xl-3">
-          <div class="card app-card h-100">
-            <div class="card-body">
-              <div class="fs-2 mb-3">👤</div>
-              <h5 class="card-title" id="accountCardTitle">Profil</h5>
-              <p class="card-text section-text" id="accountCardDescription">Belépés, regisztráció és profilkezelés.</p>
-              <a href="profil.html" id="accountShortcutLink" class="btn btn-outline-info">Megnyitás</a>
-            </div>
-          </div>
+  <main class="main-content home-main">
+    <section class="home-panel home-panel-solid" aria-labelledby="home-waters-title" data-home-shortcut="waters">
+      <div class="home-panel-shell home-panel-shell-right">
+        <div class="home-panel-copy">
+          <p class="home-panel-label" data-home-shortcut-label>01 / Keresés</p>
+          <h2 class="home-panel-title" id="home-waters-title" data-home-shortcut-title>Vízterületek</h2>
+          <p class="home-panel-text section-text" data-home-shortcut-description>Keresés megye, víztípus és halfaj alapján, részletes vízterület-adatlappal.</p>
+          <a href="vizteruletek.html" class="btn btn-outline-info" data-home-shortcut-link>Megnyitás</a>
         </div>
       </div>
-    </div>
+    </section>
+
+    <section class="home-panel home-panel-ghost" aria-labelledby="home-log-title" data-home-shortcut="catchLog">
+      <div class="home-panel-shell home-panel-shell-left">
+        <div class="home-panel-copy">
+          <p class="home-panel-label" data-home-shortcut-label>02 / Naplózás</p>
+          <h2 class="home-panel-title" id="home-log-title" data-home-shortcut-title>Fogásnapló</h2>
+          <p class="home-panel-text section-text" data-home-shortcut-description>Fogások rögzítése dátummal, mérettel, képpel és megjegyzéssel, visszanézhető listában.</p>
+          <a href="fogasnaplo.html" class="btn btn-outline-info" data-home-shortcut-link>Megnyitás</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-panel home-panel-solid" aria-labelledby="home-forum-title" data-home-shortcut="forum">
+      <div class="home-panel-shell home-panel-shell-right">
+        <div class="home-panel-copy">
+          <p class="home-panel-label" data-home-shortcut-label>03 / Közösség</p>
+          <h2 class="home-panel-title" id="home-forum-title" data-home-shortcut-title>Fórum</h2>
+          <p class="home-panel-text section-text" data-home-shortcut-description>Új témák indítása, hozzászólások írása és horgásztapasztalatok megosztása.</p>
+          <a href="forum.html" class="btn btn-outline-info" data-home-shortcut-link>Megnyitás</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-panel home-panel-ghost" aria-labelledby="home-marketplace-title" data-home-shortcut="marketplace">
+      <div class="home-panel-shell home-panel-shell-left">
+        <div class="home-panel-copy">
+          <p class="home-panel-label" data-home-shortcut-label>04 / Piactér</p>
+          <h2 class="home-panel-title" id="home-marketplace-title" data-home-shortcut-title>Marketplace</h2>
+          <p class="home-panel-text section-text" data-home-shortcut-description>Horgászfelszerelések böngészése kategóriák szerint, kereséssel és saját hirdetés feladásával.</p>
+          <a href="marketplace.html" class="btn btn-outline-info" data-home-shortcut-link>Megnyitás</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-panel home-panel-solid" aria-labelledby="accountCardTitle">
+      <div class="home-panel-shell home-panel-shell-right">
+        <div class="home-panel-copy">
+          <p class="home-panel-label" id="accountCardLabel">05 / Fiók</p>
+          <h2 class="home-panel-title" id="accountCardTitle">Profil</h2>
+          <p class="home-panel-text section-text" id="accountCardDescription">Belépés, regisztráció, profilbeállítások és saját adatok kezelése.</p>
+          <a href="profil.html" id="accountShortcutLink" class="btn btn-outline-info">Megnyitás</a>
+        </div>
+      </div>
+    </section>
   </main>
   <!-- Fő tartalom vége -->
 

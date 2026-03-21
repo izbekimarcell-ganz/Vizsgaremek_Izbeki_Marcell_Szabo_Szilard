@@ -1,4 +1,9 @@
 const { sql, poolPromise } = require("../DbConfig");
+const {
+  getAuthenticatedUserId,
+  normalizeText,
+  parsePositiveInt,
+} = require("../utils/requestHelpers");
 
 const REPORT_REASON_CODES = new Set([
   "spam",
@@ -8,15 +13,6 @@ const REPORT_REASON_CODES = new Set([
   "off_topic",
   "other",
 ]);
-
-function normalizeText(value, maxLength) {
-  const normalized = String(value || "").trim();
-  if (!maxLength) {
-    return normalized;
-  }
-
-  return normalized.slice(0, maxLength);
-}
 
 function buildTopicJumpUrl(temaId, hozzaszolasId) {
   const params = new URLSearchParams();
@@ -35,7 +31,7 @@ function buildTopicJumpUrl(temaId, hozzaszolasId) {
 
 async function createForumReport(req, res) {
   try {
-    const reporterUserId = Number.parseInt(req.user?.id, 10);
+    const reporterUserId = getAuthenticatedUserId(req);
     const targetType = normalizeText(req.body?.targetType, 20).toLowerCase();
     const targetId = Number.parseInt(req.body?.targetId, 10);
     const reasonCode = normalizeText(req.body?.reasonCode, 40).toLowerCase();
@@ -43,25 +39,25 @@ async function createForumReport(req, res) {
 
     if (Number.isNaN(reporterUserId) || reporterUserId <= 0) {
       return res.status(401).json({
-        message: "Bejelentkezes szukseges.",
+        message: "Bejelentkezés szükséges.",
       });
     }
 
     if (!["topic", "reply"].includes(targetType) || Number.isNaN(targetId) || targetId <= 0) {
       return res.status(400).json({
-        message: "Ervenytelen report celpont.",
+        message: "Érvénytelen report célpont.",
       });
     }
 
     if (!REPORT_REASON_CODES.has(reasonCode)) {
       return res.status(400).json({
-        message: "Ervenytelen report indok.",
+        message: "Érvénytelen report indok.",
       });
     }
 
     if (reasonCode === "other" && details.length < 3) {
       return res.status(400).json({
-        message: "Az Egyeb indoknal a reszletezes megadasa kotelezo.",
+        message: "Az Egyéb indoknál a részletezés megadása kötelező.",
       });
     }
 
@@ -105,7 +101,7 @@ async function createForumReport(req, res) {
 
     if (!targetRow) {
       return res.status(404).json({
-        message: "A reportolni kivant tartalom nem talalhato.",
+        message: "A reportolni kívánt tartalom nem található.",
       });
     }
 
@@ -148,12 +144,12 @@ async function createForumReport(req, res) {
       `);
 
     return res.status(201).json({
-      message: "A report sikeresen elkuldve.",
+      message: "A report sikeresen elküldve.",
     });
   } catch (error) {
     console.error("Forum report kuldesi hiba:", error);
     return res.status(500).json({
-      message: "Hiba a report elkuldese kozben.",
+      message: "Hiba a report elküldése közben.",
     });
   }
 }
@@ -173,9 +169,9 @@ async function getAdminReportNotifications(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Admin forum report ertesites hiba:", error);
+    console.error("Admin fórum report értesítés hiba:", error);
     return res.status(500).json({
-      message: "Hiba az admin report ertesitesek lekeresekor.",
+      message: "Hiba az admin report értesítések lekérésekor.",
     });
   }
 }
@@ -209,20 +205,20 @@ async function getAdminReports(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Admin report lista lekeresi hiba:", error);
+    console.error("Admin report lista lekérési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a reportok lekeresekor.",
+      message: "Hiba a reportok lekérésekor.",
     });
   }
 }
 
 async function getAdminReportDetail(req, res) {
   try {
-    const reportId = Number.parseInt(req.params.reportId, 10);
+    const reportId = parsePositiveInt(req.params.reportId);
 
     if (Number.isNaN(reportId) || reportId <= 0) {
       return res.status(400).json({
-        message: "Ervenytelen report azonosito.",
+        message: "Érvénytelen report azonosító.",
       });
     }
 
@@ -266,7 +262,7 @@ async function getAdminReportDetail(req, res) {
 
     if (!report) {
       return res.status(404).json({
-        message: "A report nem talalhato.",
+        message: "A report nem található.",
       });
     }
 
@@ -278,27 +274,27 @@ async function getAdminReportDetail(req, res) {
       ),
     });
   } catch (error) {
-    console.error("Admin report reszlet lekeresi hiba:", error);
+    console.error("Admin report részlet lekérési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a report reszleteinek lekeresekor.",
+      message: "Hiba a report részleteinek lekérésekor.",
     });
   }
 }
 
 async function replyToReport(req, res) {
   try {
-    const reportId = Number.parseInt(req.params.reportId, 10);
+    const reportId = parsePositiveInt(req.params.reportId);
     const adminReply = normalizeText(req.body?.adminReply, 2000);
 
     if (Number.isNaN(reportId) || reportId <= 0) {
       return res.status(400).json({
-        message: "Ervenytelen report azonosito.",
+        message: "Érvénytelen report azonosító.",
       });
     }
 
     if (!adminReply) {
       return res.status(400).json({
-        message: "Az admin valasz nem lehet ures.",
+        message: "Az admin válasz nem lehet üres.",
       });
     }
 
@@ -321,28 +317,28 @@ async function replyToReport(req, res) {
 
     if (!result.recordset.length) {
       return res.status(404).json({
-        message: "A report nem talalhato.",
+        message: "A report nem található.",
       });
     }
 
     return res.status(200).json({
-      message: "Az admin valasz sikeresen elkuldve.",
+      message: "Az admin válasz sikeresen elküldve.",
     });
   } catch (error) {
-    console.error("Admin report valasz kuldesi hiba:", error);
+    console.error("Admin report válasz küldési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a valasz elkuldese kozben.",
+      message: "Hiba a válasz elküldése közben.",
     });
   }
 }
 
 async function deleteAdminReport(req, res) {
   try {
-    const reportId = Number.parseInt(req.params.reportId, 10);
+    const reportId = parsePositiveInt(req.params.reportId);
 
     if (Number.isNaN(reportId) || reportId <= 0) {
       return res.status(400).json({
-        message: "Ervenytelen report azonosito.",
+        message: "Érvénytelen report azonosító.",
       });
     }
 
@@ -360,28 +356,28 @@ async function deleteAdminReport(req, res) {
 
     if (!result.recordset.length) {
       return res.status(404).json({
-        message: "A report nem talalhato.",
+        message: "A report nem található.",
       });
     }
 
     return res.status(200).json({
-      message: "A report sikeresen torolve.",
+      message: "A report sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Admin report torlesi hiba:", error);
+    console.error("Admin report törlési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a report torlesekor.",
+      message: "Hiba a report törlésekor.",
     });
   }
 }
 
 async function getUserReportMessages(req, res) {
   try {
-    const userId = Number.parseInt(req.user?.id, 10);
+    const userId = getAuthenticatedUserId(req);
 
     if (Number.isNaN(userId) || userId <= 0) {
       return res.status(401).json({
-        message: "Bejelentkezes szukseges.",
+        message: "Bejelentkezés szükséges.",
       });
     }
 
@@ -406,27 +402,27 @@ async function getUserReportMessages(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Felhasznaloi report uzenetek lekeresi hiba:", error);
+    console.error("Felhasználói report üzenetek lekérési hiba:", error);
     return res.status(500).json({
-      message: "Hiba az uzenetek lekeresekor.",
+      message: "Hiba az üzenetek lekérésekor.",
     });
   }
 }
 
 async function getUserReportMessageDetail(req, res) {
   try {
-    const userId = Number.parseInt(req.user?.id, 10);
-    const reportId = Number.parseInt(req.params.reportId, 10);
+    const userId = getAuthenticatedUserId(req);
+    const reportId = parsePositiveInt(req.params.reportId);
 
     if (Number.isNaN(userId) || userId <= 0) {
       return res.status(401).json({
-        message: "Bejelentkezes szukseges.",
+        message: "Bejelentkezés szükséges.",
       });
     }
 
     if (Number.isNaN(reportId) || reportId <= 0) {
       return res.status(400).json({
-        message: "Ervenytelen uzenet azonosito.",
+        message: "Érvénytelen üzenet azonosító.",
       });
     }
 
@@ -467,33 +463,33 @@ async function getUserReportMessageDetail(req, res) {
 
     if (!message) {
       return res.status(404).json({
-        message: "Az uzenet nem talalhato.",
+        message: "Az üzenet nem található.",
       });
     }
 
     return res.status(200).json(message);
   } catch (error) {
-    console.error("Felhasznaloi report uzenet reszlet hiba:", error);
+    console.error("Felhasználói report üzenet részlet hiba:", error);
     return res.status(500).json({
-      message: "Hiba az uzenet megnyitasakor.",
+      message: "Hiba az üzenet megnyitásakor.",
     });
   }
 }
 
 async function deleteUserReportMessage(req, res) {
   try {
-    const userId = Number.parseInt(req.user?.id, 10);
-    const reportId = Number.parseInt(req.params.reportId, 10);
+    const userId = getAuthenticatedUserId(req);
+    const reportId = parsePositiveInt(req.params.reportId);
 
     if (Number.isNaN(userId) || userId <= 0) {
       return res.status(401).json({
-        message: "Bejelentkezes szukseges.",
+        message: "Bejelentkezés szükséges.",
       });
     }
 
     if (Number.isNaN(reportId) || reportId <= 0) {
       return res.status(400).json({
-        message: "Ervenytelen uzenet azonosito.",
+        message: "Érvénytelen üzenet azonosító.",
       });
     }
 
@@ -514,17 +510,17 @@ async function deleteUserReportMessage(req, res) {
 
     if (!result.recordset.length) {
       return res.status(404).json({
-        message: "Az uzenet nem talalhato.",
+        message: "Az üzenet nem található.",
       });
     }
 
     return res.status(200).json({
-      message: "Az uzenet sikeresen torolve.",
+      message: "Az üzenet sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Felhasznaloi report uzenet torlesi hiba:", error);
+    console.error("Felhasználói report üzenet törlési hiba:", error);
     return res.status(500).json({
-      message: "Hiba az uzenet torlesekor.",
+      message: "Hiba az üzenet törlésekor.",
     });
   }
 }

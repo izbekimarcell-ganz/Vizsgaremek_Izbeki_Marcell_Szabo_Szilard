@@ -50,7 +50,7 @@
 
       if (!response.ok) {
         await showAppAlert(
-          typeof data === "object" && data?.message ? data.message : "Hibas bejelentkezes.",
+          typeof data === "object" && data?.message ? data.message : "Hibás bejelentkezés.",
           { title: "Hiba" }
         );
         return;
@@ -70,7 +70,7 @@
       window.location.href = target;
     } catch (error) {
       console.error("Login fetch hiba:", error);
-      await showAppAlert("Nem sikerult kapcsolodni a szerverhez.", { title: "Hiba" });
+      await showAppAlert("Nem sikerült kapcsolódni a szerverhez.", { title: "Hiba" });
     }
 
     form.classList.add("was-validated");
@@ -134,7 +134,7 @@
         await showAppAlert(
           typeof data === "object" && data?.message
             ? data.message
-            : "Nem sikerult betolteni a biztonsagi kerdest.",
+            : "Nem sikerült betölteni a biztonsági kérdést.",
           { title: "Hiba" }
         );
         return;
@@ -146,7 +146,7 @@
       forgotSecurityAnswer.focus();
     } catch (error) {
       console.error("Forgot password question hiba:", error);
-      await showAppAlert("Nem sikerult kapcsolodni a szerverhez.", { title: "Hiba" });
+      await showAppAlert("Nem sikerült kapcsolódni a szerverhez.", { title: "Hiba" });
     }
 
     forgotLookupForm.classList.add("was-validated");
@@ -162,7 +162,7 @@
     }
 
     if (!loadedForgotIdentifier) {
-      await showAppAlert("Elobb toltsd be a biztonsagi kerdest.", { title: "Hiba" });
+      await showAppAlert("Előbb töltsd be a biztonsági kérdést.", { title: "Hiba" });
       return;
     }
 
@@ -171,7 +171,7 @@
     const confirmPassword = forgotNewPasswordConfirm.value;
 
     if (newPassword !== confirmPassword) {
-      await showAppAlert("A ket uj jelszo nem egyezik.", { title: "Hiba" });
+      await showAppAlert("A két új jelszó nem egyezik.", { title: "Hiba" });
       return;
     }
 
@@ -197,7 +197,7 @@
         await showAppAlert(
           typeof data === "object" && data?.message
             ? data.message
-            : "Nem sikerult uj jelszot beallitani.",
+            : "Nem sikerült új jelszót beállítani.",
           { title: "Hiba" }
         );
         return;
@@ -205,7 +205,7 @@
 
       const lastIdentifier = loadedForgotIdentifier;
 
-      await showAppSuccess("A jelszo sikeresen modositva lett. Most mar az uj jelszoval tudsz belepni.");
+      await showAppSuccess("A jelszó sikeresen módosítva lett. Most már az új jelszóval tudsz belépni.");
       forgotPanel.classList.add("d-none");
       resetForgotFlow();
       form.reset();
@@ -213,7 +213,7 @@
       loginIdentifierInput.value = lastIdentifier;
     } catch (error) {
       console.error("Forgot password reset hiba:", error);
-      await showAppAlert("Nem sikerult kapcsolodni a szerverhez.", { title: "Hiba" });
+      await showAppAlert("Nem sikerült kapcsolódni a szerverhez.", { title: "Hiba" });
     }
 
     forgotResetForm.classList.add("was-validated");

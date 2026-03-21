@@ -12,7 +12,7 @@ function authenticateToken(req, res, next) {
 
   if (!token) {
     return res.status(401).json({
-      message: "Hitelesites szukseges.",
+      message: "Hitelesítés szükséges.",
     });
   }
 
@@ -21,7 +21,7 @@ function authenticateToken(req, res, next) {
     return next();
   } catch (error) {
     return res.status(401).json({
-      message: "Ervenytelen vagy lejart token.",
+      message: "Érvénytelen vagy lejárt token.",
     });
   }
 }
@@ -45,7 +45,7 @@ function authenticateTokenOptional(req, res, next) {
 function requireAdmin(req, res, next) {
   if (!req.user?.admin) {
     return res.status(403).json({
-      message: "Admin jogosultsag szukseges.",
+      message: "Admin jogosultság szükséges.",
     });
   }
 

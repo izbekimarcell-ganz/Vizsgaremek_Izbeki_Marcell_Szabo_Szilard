@@ -1,9 +1,5 @@
-﻿const { sql, poolPromise } = require("../DbConfig");
-
-function normalizeText(value, maxLength = 0) {
-  const normalized = String(value || "").trim();
-  return maxLength > 0 ? normalized.slice(0, maxLength) : normalized;
-}
+const { sql, poolPromise } = require("../DbConfig");
+const { normalizeText } = require("../utils/requestHelpers");
 
 async function getExistingFriendRequest(connection, userId, otherUserId) {
   const lowId = Math.min(userId, otherUserId);
@@ -164,7 +160,7 @@ async function getFriendOverview(req, res) {
       pendingReceived: pendingReceivedResult.recordset,
     });
   } catch (error) {
-    console.error("Barat attekintes lekeresi hiba:", error);
+    console.error("Barát áttekintés lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba a barátok lekérésekor.",
     });
@@ -224,7 +220,7 @@ async function sendFriendRequest(req, res) {
       if (existingRequest.Allapot === "pending") {
         const message =
           existingRequest.KezdemenyezoFelhasznaloId === senderUserId
-            ? "A baratkerelmet mar elkuldted."
+            ? "A barátkérelmet már elküldted."
             : "Már kaptál barátkérelmet ettől a felhasználótól.";
 
         return res.status(409).json({ message });
@@ -312,7 +308,7 @@ async function getFriendNotifications(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Barat ertesitesek lekeresi hiba:", error);
+    console.error("Barát értesítések lekérési hiba:", error);
     return res.status(500).json({
       message: "Hiba az értesítések lekérésekor.",
     });
@@ -327,19 +323,19 @@ async function createFriendMessage(req, res) {
 
     if (!Number.isInteger(userId) || userId <= 0) {
       return res.status(401).json({
-        message: "Bejelentkezes szukseges.",
+        message: "Bejelentkezés szükséges.",
       });
     }
 
     if (!Number.isInteger(targetUserId) || targetUserId <= 0 || targetUserId === userId) {
       return res.status(400).json({
-        message: "Ervenytelen cel felhasznalo.",
+        message: "Érvénytelen cél felhasználó.",
       });
     }
 
     if (!messageText || messageText.length < 3) {
       return res.status(400).json({
-        message: "Az uzenet legalabb 3 karakter legyen.",
+        message: "Az üzenet legalább 3 karakter legyen.",
       });
     }
 
@@ -357,7 +353,7 @@ async function createFriendMessage(req, res) {
 
     if (!targetUser || !targetUser.Aktiv || targetUser.Admin) {
       return res.status(404).json({
-        message: "A kivalasztott felhasznalo nem erheto el.",
+        message: "A kiválasztott felhasználó nem érhető el.",
       });
     }
 
@@ -365,7 +361,7 @@ async function createFriendMessage(req, res) {
 
     if (!relation) {
       return res.status(403).json({
-        message: "Csak elfogadott baratok kuldhetnek egymasnak uzenetet.",
+        message: "Csak elfogadott barátok küldhetnek egymásnak üzenetet.",
       });
     }
 
@@ -390,12 +386,12 @@ async function createFriendMessage(req, res) {
       `);
 
     return res.status(201).json({
-      message: "Az uzenet sikeresen elkuldve.",
+      message: "Az üzenet sikeresen elküldve.",
     });
   } catch (error) {
-    console.error("Barat uzenet kuldesi hiba:", error);
+    console.error("Barát üzenet küldési hiba:", error);
     return res.status(500).json({
-      message: "Hiba az uzenet kuldese kozben.",
+      message: "Hiba az üzenet küldése közben.",
     });
   }
 }
@@ -406,7 +402,7 @@ async function getFriendMessages(req, res) {
 
     if (!Number.isInteger(userId) || userId <= 0) {
       return res.status(401).json({
-        message: "Bejelentkezes szukseges.",
+        message: "Bejelentkezés szükséges.",
       });
     }
 
@@ -495,9 +491,9 @@ async function getFriendMessages(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Barat uzenetek lekeresi hiba:", error);
+    console.error("Barát üzenetek lekérési hiba:", error);
     return res.status(500).json({
-      message: "Hiba az uzenetek lekeresekor.",
+      message: "Hiba az üzenetek lekérésekor.",
     });
   }
 }
@@ -509,13 +505,13 @@ async function getFriendMessageDetail(req, res) {
 
     if (!Number.isInteger(userId) || userId <= 0) {
       return res.status(401).json({
-        message: "Bejelentkezes szukseges.",
+        message: "Bejelentkezés szükséges.",
       });
     }
 
     if (!Number.isInteger(messageId) || messageId <= 0) {
       return res.status(400).json({
-        message: "Ervenytelen uzenet azonosito.",
+        message: "Érvénytelen üzenet azonosító.",
       });
     }
 
@@ -524,7 +520,7 @@ async function getFriendMessageDetail(req, res) {
 
     if (!context) {
       return res.status(404).json({
-        message: "Az uzenet nem talalhato.",
+        message: "Az üzenet nem található.",
       });
     }
 
@@ -579,9 +575,9 @@ async function getFriendMessageDetail(req, res) {
       Uzenetek: messagesResult.recordset,
     });
   } catch (error) {
-    console.error("Barat uzenet reszlet hiba:", error);
+    console.error("Barát üzenet részlet hiba:", error);
     return res.status(500).json({
-      message: "Hiba az uzenet megnyitasa kozben.",
+      message: "Hiba az üzenet megnyitása közben.",
     });
   }
 }
@@ -594,19 +590,19 @@ async function replyToFriendMessage(req, res) {
 
     if (!Number.isInteger(userId) || userId <= 0) {
       return res.status(401).json({
-        message: "Bejelentkezes szukseges.",
+        message: "Bejelentkezés szükséges.",
       });
     }
 
     if (!Number.isInteger(messageId) || messageId <= 0) {
       return res.status(400).json({
-        message: "Ervenytelen uzenet azonosito.",
+        message: "Érvénytelen üzenet azonosító.",
       });
     }
 
     if (!messageText || messageText.length < 3) {
       return res.status(400).json({
-        message: "Az uzenet legalabb 3 karakter legyen.",
+        message: "Az üzenet legalább 3 karakter legyen.",
       });
     }
 
@@ -615,7 +611,7 @@ async function replyToFriendMessage(req, res) {
 
     if (!context) {
       return res.status(404).json({
-        message: "Az uzenet nem talalhato.",
+        message: "Az üzenet nem található.",
       });
     }
 
@@ -623,7 +619,7 @@ async function replyToFriendMessage(req, res) {
 
     if (!relation) {
       return res.status(403).json({
-        message: "Csak elfogadott baratok kuldhetnek egymasnak uzenetet.",
+        message: "Csak elfogadott barátok küldhetnek egymásnak üzenetet.",
       });
     }
 
@@ -648,12 +644,12 @@ async function replyToFriendMessage(req, res) {
       `);
 
     return res.status(201).json({
-      message: "Az uzenet sikeresen elkuldve.",
+      message: "Az üzenet sikeresen elküldve.",
     });
   } catch (error) {
-    console.error("Barat uzenet valasz kuldesi hiba:", error);
+    console.error("Barát üzenet válasz küldési hiba:", error);
     return res.status(500).json({
-      message: "Hiba az uzenet kuldese kozben.",
+      message: "Hiba az üzenet küldése közben.",
     });
   }
 }
@@ -665,13 +661,13 @@ async function deleteFriendMessage(req, res) {
 
     if (!Number.isInteger(userId) || userId <= 0) {
       return res.status(401).json({
-        message: "Bejelentkezes szukseges.",
+        message: "Bejelentkezés szükséges.",
       });
     }
 
     if (!Number.isInteger(messageId) || messageId <= 0) {
       return res.status(400).json({
-        message: "Ervenytelen uzenet azonosito.",
+        message: "Érvénytelen üzenet azonosító.",
       });
     }
 
@@ -680,7 +676,7 @@ async function deleteFriendMessage(req, res) {
 
     if (!context) {
       return res.status(404).json({
-        message: "Az uzenet nem talalhato.",
+        message: "Az üzenet nem található.",
       });
     }
 
@@ -699,12 +695,12 @@ async function deleteFriendMessage(req, res) {
       `);
 
     return res.status(200).json({
-      message: "Az uzenet sikeresen torolve.",
+      message: "Az üzenet sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Barat uzenet torlesi hiba:", error);
+    console.error("Barát üzenet törlési hiba:", error);
     return res.status(500).json({
-      message: "Hiba az uzenet torlese kozben.",
+      message: "Hiba az üzenet törlése közben.",
     });
   }
 }

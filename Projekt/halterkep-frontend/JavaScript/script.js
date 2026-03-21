@@ -12,31 +12,31 @@ const ADMIN_SHORTCUTS = {
     href: "admin.html#species",
     label: "Halfajok kezelése",
     title: "Halfajok kezelése",
-    description: "Új halfaj hozzáadása és a meglévő halfajok szerkesztése.",
+    description: "Halfajok adatainak, szabályainak és védettségének kezelése.",
   },
   waters: {
     href: "admin.html#waters",
     label: "Vízterületek kezelése",
     title: "Vízterületek kezelése",
-    description: "Új vízterület létrehozása és a meglévő vízterületek szerkesztése.",
+    description: "Vízterületek adatainak, megyéinek és halfaj kapcsolatainak kezelése.",
   },
   forum: {
     href: "admin.html#forum",
     label: "Fórum moderáció",
     title: "Fórum moderáció",
-    description: "Fórum témák és hozzászólások adminisztrációja.",
+    description: "Fórumtémák és hozzászólások áttekintése, kezelése és moderálása.",
   },
   marketplaceModeration: {
     href: "marketplace-admin.html",
     label: "Marketplace moderáció",
     title: "Marketplace moderáció",
-    description: "Marketplace hirdetések és reportok moderálása.",
+    description: "Marketplace hirdetések és kapcsolódó reportok áttekintése, moderálása.",
   },
   reports: {
     href: "admin.html#reports",
     label: "Üzenetek",
     title: "Report üzenetek",
-    description: "Fórum reportok kezelése és admin válaszok küldése.",
+    description: "Beérkezett reportok áttekintése és admin válaszok küldése.",
   },
 };
 
@@ -61,22 +61,40 @@ const DEFAULT_NAV_ITEMS = [
 
 const HOME_PAGE_SHORTCUTS = [
   {
+    key: "waters",
+    defaultLabel: "01 / Keresés",
+    adminLabel: "01 / Halfajok",
     defaultHref: "vizteruletek.html",
     defaultTitle: "Vízterületek",
-    defaultDescription: "Szűrés megye, víztípus és halfaj szerint.",
+    defaultDescription: "Keresés megye, víztípus és halfaj alapján, részletes vízterület-adatlappal.",
     adminShortcut: ADMIN_SHORTCUTS.species,
   },
   {
+    key: "catchLog",
+    defaultLabel: "02 / Naplózás",
+    adminLabel: "02 / Vízterületek",
     defaultHref: "fogasnaplo.html",
     defaultTitle: "Fogásnapló",
-    defaultDescription: "Saját fogások rögzítése és listázása.",
+    defaultDescription: "Fogások rögzítése dátummal, mérettel, képpel és megjegyzéssel, visszanézhető listában.",
     adminShortcut: ADMIN_SHORTCUTS.waters,
   },
   {
+    key: "forum",
+    defaultLabel: "03 / Közösség",
+    adminLabel: "03 / Moderáció",
     defaultHref: "forum.html",
     defaultTitle: "Fórum",
-    defaultDescription: "Kérdések, tippek és tapasztalatok megosztása.",
+    defaultDescription: "Új témák indítása, hozzászólások írása és horgásztapasztalatok megosztása.",
     adminShortcut: ADMIN_SHORTCUTS.forum,
+  },
+  {
+    key: "marketplace",
+    defaultLabel: "04 / Piactér",
+    adminLabel: "04 / Piactér",
+    defaultHref: "marketplace.html",
+    defaultTitle: "Marketplace",
+    defaultDescription: "Horgászfelszerelések böngészése kategóriák szerint, kereséssel és saját hirdetés feladásával.",
+    adminShortcut: ADMIN_SHORTCUTS.marketplaceModeration,
   },
 ];
 
@@ -157,6 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeTheme();
   updateNavbar();
   setActiveNavLink();
+  initializeNavbarScrollBehavior();
   initializePageHooks();
 });
 
@@ -209,6 +228,61 @@ function initializePageHooks() {
   if (page === "register") {
     prepareRegisterPage();
   }
+}
+
+function initializeNavbarScrollBehavior() {
+  const navbar = document.querySelector(".app-navbar");
+  const navbarMenu = $("#mainNavbar");
+
+  if (!navbar) {
+    return;
+  }
+
+  let lastScrollY = Math.max(window.scrollY, 0);
+  let isTicking = false;
+  const scrollTolerance = 10;
+  const topRevealOffset = 24;
+
+  const applyNavbarVisibility = () => {
+    const currentScrollY = Math.max(window.scrollY, 0);
+    const isNearTop = currentScrollY <= topRevealOffset;
+    const isMenuOpen = navbarMenu?.classList.contains("show");
+    const scrollDelta = Math.abs(currentScrollY - lastScrollY);
+
+    if (isNearTop || isMenuOpen) {
+      navbar.classList.remove("navbar-hidden");
+    } else if (scrollDelta >= scrollTolerance) {
+      const isScrollingDown = currentScrollY > lastScrollY;
+      navbar.classList.toggle("navbar-hidden", isScrollingDown);
+    }
+
+    lastScrollY = currentScrollY;
+    isTicking = false;
+  };
+
+  const requestVisibilityUpdate = () => {
+    if (isTicking) {
+      return;
+    }
+
+    isTicking = true;
+    window.requestAnimationFrame(applyNavbarVisibility);
+  };
+
+  window.addEventListener("scroll", requestVisibilityUpdate, { passive: true });
+  window.addEventListener("resize", requestVisibilityUpdate);
+
+  if (navbarMenu) {
+    navbarMenu.addEventListener("show.bs.collapse", () => {
+      navbar.classList.remove("navbar-hidden");
+    });
+
+    navbarMenu.addEventListener("shown.bs.collapse", () => {
+      navbar.classList.remove("navbar-hidden");
+    });
+  }
+
+  applyNavbarVisibility();
 }
 
 /* =========================
@@ -571,6 +645,47 @@ function ensureAppDialogElements() {
   };
 }
 
+function createManualModalController(modalElement) {
+  let backdropElement = null;
+
+  const show = () => {
+    modalElement.style.display = "block";
+    modalElement.removeAttribute("aria-hidden");
+    modalElement.setAttribute("aria-modal", "true");
+    modalElement.classList.add("show");
+    document.body.classList.add("modal-open");
+
+    backdropElement = document.createElement("div");
+    backdropElement.className = "modal-backdrop fade show";
+    document.body.appendChild(backdropElement);
+  };
+
+  const hide = () => {
+    modalElement.classList.remove("show");
+    modalElement.style.display = "none";
+    modalElement.setAttribute("aria-hidden", "true");
+    modalElement.removeAttribute("aria-modal");
+    document.body.classList.remove("modal-open");
+
+    if (backdropElement) {
+      backdropElement.remove();
+      backdropElement = null;
+    }
+
+    modalElement.dispatchEvent(new Event("hidden.bs.modal"));
+  };
+
+  return { show, hide };
+}
+
+function getModalController(modalElement) {
+  if (typeof bootstrap !== "undefined") {
+    return bootstrap.Modal.getOrCreateInstance(modalElement);
+  }
+
+  return createManualModalController(modalElement);
+}
+
 function showAppDialog({
   title = "Üzenet",
   message = "",
@@ -579,15 +694,6 @@ function showAppDialog({
   showCancel = false,
   confirmButtonClass = "btn-primary",
 }) {
-  if (typeof bootstrap === "undefined") {
-    if (showCancel) {
-      return Promise.resolve(window.confirm(message));
-    }
-
-    window.alert(message);
-    return Promise.resolve(true);
-  }
-
   const {
     modalElement,
     titleElement,
@@ -604,7 +710,7 @@ function showAppDialog({
   cancelButton.className = `btn btn-outline-light${showCancel ? "" : " d-none"}`;
   confirmButton.className = `btn ${confirmButtonClass}`;
 
-  const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+  const modalInstance = getModalController(modalElement);
 
   return new Promise((resolve) => {
     let result = !showCancel;
@@ -672,11 +778,6 @@ function showAppTextPrompt({
   placeholder = "",
   confirmLabel = "Mentés",
 }) {
-  if (typeof bootstrap === "undefined") {
-    const fallbackValue = window.prompt(label, initialValue);
-    return Promise.resolve(fallbackValue === null ? null : String(fallbackValue));
-  }
-
   let modalElement = document.getElementById("appTextPromptModal");
 
   if (!modalElement) {
@@ -723,7 +824,7 @@ function showAppTextPrompt({
   inputElement.value = initialValue || "";
   inputElement.placeholder = placeholder || "";
 
-  const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement);
+  const modalInstance = getModalController(modalElement);
 
   return new Promise((resolve) => {
     let result = null;
@@ -785,17 +886,19 @@ function updateHomePageShortcuts(user = getStoredUser()) {
   const isAdmin = isAdminUser(user);
 
   HOME_PAGE_SHORTCUTS.forEach((item) => {
-    const link = Array.from(document.querySelectorAll("main .app-card a.btn-outline-info")).find(
-      (anchor) => [item.defaultHref, item.adminShortcut.href].includes(anchor.getAttribute("href"))
-    );
+    const panel = document.querySelector(`[data-home-shortcut="${item.key}"]`);
+    const label = panel?.querySelector("[data-home-shortcut-label]");
+    const link = panel?.querySelector("[data-home-shortcut-link]");
+    const title = panel?.querySelector("[data-home-shortcut-title]");
+    const description = panel?.querySelector("[data-home-shortcut-description]");
 
-    if (!link) return;
-
-    const cardBody = link.closest(".card-body");
-    const title = cardBody?.querySelector(".card-title");
-    const description = cardBody?.querySelector(".card-text");
+    if (!panel || !link) return;
 
     link.setAttribute("href", isAdmin ? item.adminShortcut.href : item.defaultHref);
+
+    if (label) {
+      label.textContent = isAdmin ? item.adminLabel : item.defaultLabel;
+    }
 
     if (title) {
       title.textContent = isAdmin ? item.adminShortcut.title : item.defaultTitle;
@@ -861,207 +964,6 @@ function renderImageHtml(src, alt, className = "img-fluid rounded mt-3") {
   return `<img src="${escapeHtml(src)}" class="${escapeHtml(className)}" alt="${escapeHtml(alt)}">`;
 }
 
-async function loadUserProfile() {
-  const profileContent = $("#profileContent");
-  const profileEmpty = $("#profileEmpty");
-  const profileLoading = $("#profileLoading");
-  const profileName = $("#profileName");
-  const profileEmail = $("#profileEmail");
-  const profileEmailSection = $("#profileEmailSection");
-  const profileCreated = $("#profileCreated");
-  const profileRoles = $("#profileRoles");
-  const profilePageTitle = $("#profilePageTitle");
-  const profilePageDescription = document.querySelector("main .container .mb-4 .section-text");
-  const profileActions = $("#profileActions");
-  const profileActionsDivider = $("#profileActionsDivider");
-  const deleteProfileButton = $("#deleteProfileButton");
-  const logoutButton = $("#logoutButton");
-  const profileError = $("#profileError");
-  const profilePrivateNotice = $("#profilePrivateNotice");
-  const profilePrivacySection = $("#profilePrivacySection");
-  const profilePrivateToggle = $("#profilePrivateToggle");
-
-  try {
-    const viewedUserId = getViewedProfileUserId();
-    const isExternalProfile = viewedUserId !== null;
-
-    if (profileLoading) profileLoading.classList.remove("d-none");
-    if (profileError) {
-      profileError.classList.add("d-none");
-      profileError.textContent = "";
-    }
-    if (profilePrivateNotice) {
-      profilePrivateNotice.classList.add("d-none");
-      profilePrivateNotice.textContent = "Privát fiók.";
-    }
-
-    const user = isExternalProfile
-      ? await apiRequest(`/users/${viewedUserId}/profile`)
-      : getStoredUser();
-
-    if (!user) {
-      if (profileLoading) profileLoading.classList.add("d-none");
-      if (profileContent) profileContent.classList.add("d-none");
-      if (profileEmpty) profileEmpty.classList.remove("d-none");
-      hideProfileCatchesSection();
-      return;
-    }
-
-    if (profileLoading) profileLoading.classList.add("d-none");
-    if (profileContent) profileContent.classList.remove("d-none");
-    if (profileEmpty) profileEmpty.classList.add("d-none");
-
-    if (profilePageTitle) {
-      profilePageTitle.textContent = isExternalProfile ? "Felhaszn\u00E1l\u00F3i profil" : "Profil";
-    }
-    if (profilePageDescription) {
-      profilePageDescription.textContent = isExternalProfile
-        ? "A kiv\u00E1lasztott felhaszn\u00E1l\u00F3 nyilv\u00E1nos profilja."
-        : "Profilinform\u00E1ci\u00F3k \u00E9s be\u00E1ll\u00EDt\u00E1sok.";
-    }
-    if (profileName) profileName.textContent = user.username || "";
-    if (profileEmail) profileEmail.textContent = isExternalProfile ? "-" : user.email || "";
-    if (profileEmailSection) {
-      profileEmailSection.classList.toggle("d-none", isExternalProfile);
-    }
-    if (profileCreated) {
-      profileCreated.textContent = user.letrehozva
-        ? new Date(user.letrehozva).toLocaleDateString("hu-HU")
-        : "-";
-    }
-    if (profileRoles) {
-      profileRoles.textContent = isAdminUser(user) ? "Admin" : "Felhaszn\u00E1l\u00F3";
-    }
-    if (deleteProfileButton) {
-      deleteProfileButton.classList.toggle("d-none", isExternalProfile || isAdminUser(user));
-    }
-    if (logoutButton) {
-      logoutButton.classList.toggle("d-none", isExternalProfile);
-    }
-    if (profileActions) {
-      profileActions.classList.toggle("d-none", isExternalProfile);
-    }
-    if (profileActionsDivider) {
-      profileActionsDivider.classList.toggle("d-none", isExternalProfile);
-    }
-
-    await loadProfileCatches(viewedUserId, isExternalProfile);
-  } catch (error) {
-    console.error("Profil bet\u00F6lt\u00E9si hiba:", error);
-    if (profileLoading) {
-      profileLoading.classList.add("d-none");
-    }
-    if (profileContent) {
-      profileContent.classList.add("d-none");
-    }
-    if (profileError) {
-      profileError.classList.remove("d-none");
-      profileError.textContent = "Hiba a profil bet\u00F6lt\u00E9se sor\u00E1n!";
-    }
-    hideProfileCatchesSection();
-  }
-}
-
-async function loadUserProfile() {
-  const profileContent = $("#profileContent");
-  const profileEmpty = $("#profileEmpty");
-  const profileLoading = $("#profileLoading");
-  const profileName = $("#profileName");
-  const profileEmail = $("#profileEmail");
-  const profileEmailSection = $("#profileEmailSection");
-  const profileCreated = $("#profileCreated");
-  const profileRoles = $("#profileRoles");
-  const profilePageTitle = $("#profilePageTitle");
-  const profilePageDescription = document.querySelector("main .container .mb-4 .section-text");
-  const profileActions = $("#profileActions");
-  const profileActionsDivider = $("#profileActionsDivider");
-  const deleteProfileButton = $("#deleteProfileButton");
-  const logoutButton = $("#logoutButton");
-  const profileError = $("#profileError");
-  const profilePrivateNotice = $("#profilePrivateNotice");
-  const profilePrivacySection = $("#profilePrivacySection");
-  const profilePrivateToggle = $("#profilePrivateToggle");
-
-  try {
-    const viewedUserId = getViewedProfileUserId();
-    const isExternalProfile = viewedUserId !== null;
-
-    if (profileLoading) profileLoading.classList.remove("d-none");
-    if (profileError) {
-      profileError.classList.add("d-none");
-      profileError.textContent = "";
-    }
-    if (profilePrivateNotice) {
-      profilePrivateNotice.classList.add("d-none");
-      profilePrivateNotice.textContent = "Privát fiók.";
-    }
-
-    const user = isExternalProfile
-      ? await apiRequest(`/users/${viewedUserId}/profile`)
-      : getStoredUser();
-
-    if (!user) {
-      if (profileLoading) profileLoading.classList.add("d-none");
-      if (profileContent) profileContent.classList.add("d-none");
-      if (profileEmpty) profileEmpty.classList.remove("d-none");
-      hideProfileCatchesSection();
-      return;
-    }
-
-    if (profileLoading) profileLoading.classList.add("d-none");
-    if (profileContent) profileContent.classList.remove("d-none");
-    if (profileEmpty) profileEmpty.classList.add("d-none");
-
-    if (profilePageTitle) {
-      profilePageTitle.textContent = isExternalProfile ? "Felhaszn\u00E1l\u00F3i profil" : "Profil";
-    }
-    if (profilePageDescription) {
-      profilePageDescription.textContent = isExternalProfile
-        ? "A kiv\u00E1lasztott felhaszn\u00E1l\u00F3 nyilv\u00E1nos profilja."
-        : "Profilinform\u00E1ci\u00F3k \u00E9s be\u00E1ll\u00EDt\u00E1sok.";
-    }
-    if (profileName) profileName.textContent = user.username || "";
-    if (profileEmail) profileEmail.textContent = isExternalProfile ? "-" : user.email || "";
-    if (profileEmailSection) {
-      profileEmailSection.classList.toggle("d-none", isExternalProfile);
-    }
-    if (profileCreated) {
-      profileCreated.textContent = user.letrehozva
-        ? new Date(user.letrehozva).toLocaleDateString("hu-HU")
-        : "-";
-    }
-    if (profileRoles) {
-      profileRoles.textContent = isAdminUser(user) ? "Admin" : "Felhaszn\u00E1l\u00F3";
-    }
-    if (deleteProfileButton) {
-      deleteProfileButton.classList.toggle("d-none", isExternalProfile || isAdminUser(user));
-    }
-    if (logoutButton) {
-      logoutButton.classList.toggle("d-none", isExternalProfile);
-    }
-    if (profileActions) {
-      profileActions.classList.toggle("d-none", isExternalProfile);
-    }
-    if (profileActionsDivider) {
-      profileActionsDivider.classList.toggle("d-none", isExternalProfile);
-    }
-
-    await loadProfileCatches(viewedUserId, isExternalProfile);
-  } catch (error) {
-    console.error("Profil bet\u00F6lt\u00E9si hiba:", error);
-    if (profileLoading) {
-      profileLoading.classList.add("d-none");
-    }
-    if (profileContent) {
-      profileContent.classList.add("d-none");
-    }
-    if (profileError) {
-      profileError.classList.remove("d-none");
-      profileError.textContent = "Hiba a profil bet\u00F6lt\u00E9se sor\u00E1n!";
-    }
-    hideProfileCatchesSection();
-  }
-}
 
 function renderCatchCards(container, catches, { allowDelete = false } = {}) {
   if (!container) {
@@ -2750,7 +2652,9 @@ async function prepareMarketplaceDetailPage() {
         deleteButton.addEventListener("click", async () => {
           manageMenu.classList.remove("is-open");
 
-          const confirmed = window.confirm("Biztosan törölni szeretnéd ezt a hirdetést?");
+          const confirmed = await showAppConfirm("Biztosan törölni szeretnéd ezt a hirdetést?", {
+            confirmLabel: "Törlés",
+          });
           if (!confirmed) {
             return;
           }
@@ -3068,52 +2972,6 @@ function prepareCatchLogPage() {
 /* =========================
    Saját fogások betöltése
    ========================= */
-async function loadSajatFogasok() {
-  const catchListContainer = $("#catchListContainer");
-  if (!catchListContainer) return;
-
-  try {
-    const data = await apiRequest("/fogasnaplo/sajat");
-    
-    clearElement(catchListContainer);
-    
-    if (data.length === 0) {
-      catchListContainer.innerHTML = `
-        <div class="alert alert-info">Még nincs rögzített fogásod.</div>
-      `;
-      return;
-    }
-
-    data.forEach((fogas) => {
-      const card = document.createElement("div");
-      card.className = "card mb-3";
-      card.innerHTML = `
-        <div class="card-body">
-          <h5 class="card-title">${escapeHtml(fogas.HalfajNev)}</h5>
-          <p class="card-text">
-            <strong>Vízterület:</strong> ${escapeHtml(fogas.VizteruletNev)}<br>
-            <strong>Időpont:</strong> ${new Date(fogas.FogasIdeje).toLocaleString("hu-HU")}<br>
-            ${fogas.SulyKg ? `<strong>Súly:</strong> ${escapeHtml(String(fogas.SulyKg))} kg<br>` : ""}
-            ${fogas.HosszCm ? `<strong>Hossz:</strong> ${escapeHtml(String(fogas.HosszCm))} cm<br>` : ""}
-            ${fogas.Megjegyzes ? `<strong>Megjegyzés:</strong> ${escapeHtml(fogas.Megjegyzes)}` : ""}
-          </p>
-          ${renderImageHtml(fogas.FotoUrl, "Fogás fotó")}
-          <div class="mt-3 d-flex justify-content-end">
-            <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteCatch(${fogas.FogasId})">Törlés</button>
-          </div>
-        </div>
-      `;
-      catchListContainer.appendChild(card);
-    });
-  } catch (error) {
-    console.error("Fogások betöltési hiba:", error);
-    if (catchListContainer) {
-      catchListContainer.innerHTML = `
-        <div class="alert alert-danger">Hiba történt az adatok betöltése során</div>
-      `;
-    }
-  }
-}
 
 /* =========================
    Fogásnapló dropdown-ok betöltése
@@ -3378,7 +3236,7 @@ function handleForumReportReasonChange() {
 
 function openForumReportModal(targetType, targetId) {
   if (!isLoggedIn()) {
-    showAppAlert("A report kuldesehez be kell jelentkezned.", { title: "Bejelentkezes szukseges" });
+    showAppAlert("A report küldéséhez be kell jelentkezned.", { title: "Bejelentkezés szükséges" });
     return;
   }
 
@@ -3417,12 +3275,12 @@ async function handleForumReportSubmit(event) {
   const details = $("#forumReportDetails")?.value.trim() || "";
 
   if (!targetType || !Number.isInteger(targetId) || targetId <= 0 || !reasonCode) {
-    showAppAlert("Valassz report indokot, mielott elkuldod a jelentest.", { title: "Hiba" });
+    showAppAlert("Válassz report indokot, mielőtt elküldöd a jelentést.", { title: "Hiba" });
     return;
   }
 
   if (reasonCode === "other" && details.length < 3) {
-    showAppAlert("Az Egyeb indoknal add meg a reszletezest is.", { title: "Hiba" });
+    showAppAlert("Az Egyéb indoknál add meg a részletezést is.", { title: "Hiba" });
     return;
   }
 
@@ -3438,9 +3296,9 @@ async function handleForumReportSubmit(event) {
     });
 
     createModalInstance("forumReportModal")?.hide();
-    await showAppSuccess("A report sikeresen elkuldve.");
+    await showAppSuccess("A report sikeresen elküldve.");
   } catch (error) {
-    showAppAlert(error.message || "Nem sikerult elkuldeni a reportot.", { title: "Hiba" });
+    showAppAlert(error.message || "Nem sikerült elküldeni a reportot.", { title: "Hiba" });
   }
 }
 
@@ -4540,7 +4398,7 @@ async function loadAdminReports() {
     renderAdminReports();
     await openPendingAdminReportFromSession();
   } catch (error) {
-    showAdminFeedback(error.message || "Nem sikerult betolteni a reportokat.", "danger");
+    showAdminFeedback(error.message || "Nem sikerült betölteni a reportokat.", "danger");
   }
 }
 
@@ -4585,14 +4443,14 @@ async function openAdminReportModal(reportSource, reportId) {
       reportSource === "marketplace"
         ? "Marketplace hirdetés"
         : report.CelTipus === "reply"
-          ? "Hozzaszolas"
-          : "Tema";
+          ? "Hozzászólás"
+          : "Téma";
     const targetTitle = reportSource === "marketplace" ? report.HirdetesCim : report.TemaCim;
     const relatedUserLabel =
       reportSource === "marketplace"
-        ? `Hirdeto: ${escapeHtml(report.HirdetoFelhasznalonev || "-")}`
+        ? `Hirdető: ${escapeHtml(report.HirdetoFelhasznalonev || "-")}`
         : report.CelFelhasznalonev
-          ? `Erintett felhasznalo: ${escapeHtml(report.CelFelhasznalonev)}`
+          ? `Érintett felhasználó: ${escapeHtml(report.CelFelhasznalonev)}`
           : "";
     const contentPreview =
       reportSource === "marketplace"
@@ -4603,7 +4461,7 @@ async function openAdminReportModal(reportSource, reportId) {
 
     detailBody.innerHTML = `
       <div class="app-list-item">
-        <div class="fw-semibold mb-2">Reportolo felhasznalo</div>
+        <div class="fw-semibold mb-2">Reportoló felhasználó</div>
         <div>${escapeHtml(report.ReportoloFelhasznalonev || "-")}</div>
       </div>
       <div class="app-list-item">
@@ -4614,9 +4472,9 @@ async function openAdminReportModal(reportSource, reportId) {
         ${contentPreview}
       </div>
       <div class="app-list-item">
-        <div class="fw-semibold mb-2">Report reszletei</div>
+        <div class="fw-semibold mb-2">Report részletei</div>
         <div class="mb-2">Indok: ${escapeHtml(formatForumReportReason(report.IndokKod))}</div>
-        <div>${escapeHtml(report.Reszletezes || "Nincs reszletezes.")}</div>
+        <div>${escapeHtml(report.Reszletezes || "Nincs részletezés.")}</div>
       </div>
     `;
 
@@ -4637,7 +4495,7 @@ async function openAdminReportModal(reportSource, reportId) {
 
     await loadAdminReports();
   } catch (error) {
-    showAdminFeedback(error.message || "Nem sikerult megnyitni a reportot.", "danger");
+    showAdminFeedback(error.message || "Nem sikerült megnyitni a reportot.", "danger");
   }
 }
 
@@ -4654,7 +4512,7 @@ async function sendAdminReportReply() {
   const adminReply = replyText.value.trim();
 
   if (!adminReply) {
-    showAppAlert("Adj meg valaszt a reportolo felhasznalonak.", { title: "Hiba" });
+    showAppAlert("Adj meg választ a reportoló felhasználónak.", { title: "Hiba" });
     return;
   }
 
@@ -4675,14 +4533,14 @@ async function sendAdminReportReply() {
       reportModal.hide();
     }
     await loadAdminReports();
-    await showAppSuccess("Az admin valasz sikeresen elkuldve.");
+    await showAppSuccess("Az admin válasz sikeresen elküldve.");
   } catch (error) {
-    showAdminFeedback(error.message || "Nem sikerult elkuldeni a valaszt.", "danger");
+    showAdminFeedback(error.message || "Nem sikerült elküldeni a választ.", "danger");
   }
 }
 
 async function deleteAdminReport(reportSource, reportId) {
-  if (!(await showAppConfirm("Biztosan torolni szeretned ezt a reportot?", { confirmLabel: "Torles" }))) {
+  if (!(await showAppConfirm("Biztosan törölni szeretnéd ezt a reportot?", { confirmLabel: "Törlés" }))) {
     return;
   }
 
@@ -4699,9 +4557,9 @@ async function deleteAdminReport(reportSource, reportId) {
       createModalInstance("adminReportDetailModal")?.hide();
     }
     await loadAdminReports();
-    await showAppSuccess("A report sikeresen torolve.");
+    await showAppSuccess("A report sikeresen törölve.");
   } catch (error) {
-    showAdminFeedback(error.message || "Nem sikerult torolni a reportot.", "danger");
+    showAdminFeedback(error.message || "Nem sikerült törölni a reportot.", "danger");
   }
 }
 
@@ -5275,74 +5133,6 @@ function prepareAdminPage() {
 /* =========================
    Összes felhasználó betöltése (Admin)
    ========================= */
-async function loadAllUsers() {
-  const usersTableBody = $("#adminUsersTableBody");
-  if (!usersTableBody) return;
-
-  try {
-    const data = await apiRequest("/users");
-    
-    clearElement(usersTableBody);
-    
-    if (data.length === 0) {
-      usersTableBody.innerHTML = `
-        <tr>
-          <td colspan="4" class="text-center">Nincs felhasználó</td>
-        </tr>
-      `;
-      return;
-    }
-
-    data.forEach((user) => {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${user.Felhasznalonev}</td>
-        <td>${user.Email}</td>
-        <td>
-          <span class="badge ${user.Aktiv ? "bg-success" : "bg-danger"}">
-            ${user.Aktiv ? "Aktív" : "Tiltva"}
-          </span>
-        </td>
-        <td>
-          <button class="btn btn-sm btn-warning" onclick="toggleUserStatus(${user.FelhasznaloId})">
-            ${user.Aktiv ? "Tiltás" : "Aktiválás"}
-          </button>
-        </td>
-      `;
-      usersTableBody.appendChild(row);
-    });
-  } catch (error) {
-    console.error("Felhasználók betöltési hiba:", error);
-    if (usersTableBody) {
-      usersTableBody.innerHTML = `
-        <tr>
-          <td colspan="4" class="text-center text-danger">Hiba történt az adatok betöltése során</td>
-        </tr>
-      `;
-    }
-  }
-}
-
-/* =========================
-   Felhasználó aktiválása/tiltása (Admin)
-   ========================= */
-async function toggleUserStatus(userId) {
-  if (!(await showAppConfirm("Biztosan módosítod a felhasználó állapotát?", { confirmLabel: "Módosítás", confirmButtonClass: "btn-warning" }))) {
-    return;
-  }
-
-  try {
-    await apiRequest(`/users/${userId}/toggle-active`, {
-      method: "PUT",
-    });
-
-    await loadAllUsers();
-    await showAppSuccess("Felhasználó állapota módosítva!");
-  } catch (error) {
-    showAppAlert(error.message || "Hiba történt a művelet során!", { title: "Hiba" });
-  }
-}
-
 /* =========================
    Profil oldal előkészítés
    ========================= */
@@ -5809,6 +5599,15 @@ function getAuthHeaders() {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+function openProfileByUserId(userId) {
+  if (!Number.isInteger(userId) || userId <= 0) {
+    return;
+  }
+
+  sessionStorage.setItem("viewedProfileUserId", String(userId));
+  window.location.href = `profil.html?userId=${userId}`;
+}
+
 /* =========================
    Navbar frissítése bejelentkezési státusz alapján
    ========================= */
@@ -6004,12 +5803,7 @@ async function toggleUserStatus(userId) {
 }
 
 function openAdminUserProfile(userId) {
-  if (!Number.isInteger(userId) || userId <= 0) {
-    return;
-  }
-
-  sessionStorage.setItem("viewedProfileUserId", String(userId));
-  window.location.href = `profil.html?userId=${userId}`;
+  openProfileByUserId(userId);
 }
 
 async function deleteUserAccount(userId) {
@@ -6091,6 +5885,7 @@ async function handleDeleteProfile() {
 }
 
 function updateAccountShortcut(user = getStoredUser()) {
+  const shortcutLabel = $("#accountCardLabel");
   const shortcutLink = $("#accountShortcutLink");
   const shortcutTitle = $("#accountCardTitle");
   const shortcutDescription = $("#accountCardDescription");
@@ -6101,26 +5896,29 @@ function updateAccountShortcut(user = getStoredUser()) {
 
   if (!user) {
     shortcutLink.setAttribute("href", "profil.html");
+    if (shortcutLabel) shortcutLabel.textContent = "05 / Fiók";
     if (shortcutTitle) shortcutTitle.textContent = "Profil";
     if (shortcutDescription) {
-      shortcutDescription.textContent = "Belépés, regisztráció és profilkezelés.";
+      shortcutDescription.textContent = "Belépés, regisztráció, profilbeállítások és saját adatok kezelése.";
     }
     return;
   }
 
   if (isAdminUser(user)) {
     shortcutLink.setAttribute("href", "admin.html");
+    if (shortcutLabel) shortcutLabel.textContent = "05 / Admin";
     if (shortcutTitle) shortcutTitle.textContent = "Admin";
     if (shortcutDescription) {
-      shortcutDescription.textContent = "Admin felület és felhasználók kezelése.";
+      shortcutDescription.textContent = "Felhasználók, moderáció és report üzenetek kezelése.";
     }
     return;
   }
 
   shortcutLink.setAttribute("href", "profil.html");
+  if (shortcutLabel) shortcutLabel.textContent = "05 / Fiók";
   if (shortcutTitle) shortcutTitle.textContent = "Profil";
   if (shortcutDescription) {
-    shortcutDescription.textContent = "Saját fiókod és profiladataid megtekintése.";
+    shortcutDescription.textContent = "Profiladatok, bemutatkozás, láthatóság és saját beállítások kezelése.";
   }
 }
 
@@ -6339,6 +6137,19 @@ function clearProfileFishingCalendar() {
     nextButton.disabled = true;
   }
 }
+
+window.HalTerkepShared = {
+  apiRequest,
+  escapeHtml,
+  formatForumReportReason,
+  getAuthHeaders,
+  getStoredUser,
+  openProfileByUserId,
+  showAppAlert,
+  showAppConfirm,
+  showAppSuccess,
+  showAppTextPrompt,
+};
 
 async function toggleProfileFishingDay(dateKey, removeMark = false) {
   const normalizedDateKey = normalizeDateKey(dateKey);

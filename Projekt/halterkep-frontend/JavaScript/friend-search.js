@@ -2,6 +2,8 @@
   apiBaseUrl: "http://localhost:4000/api",
 };
 
+const sharedApp = window.HalTerkepShared || {};
+
 const friendsFeatureState = {
   overview: null,
   notifications: [],
@@ -12,11 +14,7 @@ const friendsFeatureState = {
   activeMessageContext: null,
 };
 
-function getFriendsAuthHeaders() {
-  if (typeof getAuthHeaders === "function") {
-    return getAuthHeaders();
-  }
-
+const getFriendsAuthHeaders = sharedApp.getAuthHeaders || function getFriendsAuthHeadersFallback() {
   const token =
     localStorage.getItem("authToken") ||
     sessionStorage.getItem("authToken") ||
@@ -24,9 +22,9 @@ function getFriendsAuthHeaders() {
     sessionStorage.getItem("token");
 
   return token ? { Authorization: `Bearer ${token}` } : {};
-}
+};
 
-async function friendsApiRequest(endpoint, options = {}) {
+const friendsApiRequest = sharedApp.apiRequest || async function friendsApiRequestFallback(endpoint, options = {}) {
   const response = await fetch(`${FRIENDS_CONFIG.apiBaseUrl}${endpoint}`, {
     method: options.method || "GET",
     headers: {
@@ -49,22 +47,18 @@ async function friendsApiRequest(endpoint, options = {}) {
   }
 
   return data;
-}
+};
 
-function escapeFriendsHtml(value) {
+const escapeFriendsHtml = sharedApp.escapeHtml || function escapeFriendsHtmlFallback(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
-}
+};
 
-function getCurrentUserInfo() {
-  if (typeof getStoredUser === "function") {
-    return getStoredUser();
-  }
-
+const getCurrentUserInfo = sharedApp.getStoredUser || function getCurrentUserInfoFallback() {
   const rawUser = localStorage.getItem("authUser") || sessionStorage.getItem("authUser");
 
   if (!rawUser) {
@@ -76,7 +70,23 @@ function getCurrentUserInfo() {
   } catch (error) {
     return null;
   }
-}
+};
+
+const friendsShowAlert = sharedApp.showAppAlert || function friendsShowAlertFallback() {
+  return Promise.resolve(true);
+};
+
+const friendsShowSuccess = sharedApp.showAppSuccess || function friendsShowSuccessFallback() {
+  return Promise.resolve(true);
+};
+
+const friendsShowConfirm = sharedApp.showAppConfirm || function friendsShowConfirmFallback() {
+  return Promise.resolve(false);
+};
+
+const friendsShowTextPrompt = sharedApp.showAppTextPrompt || function friendsShowTextPromptFallback() {
+  return Promise.resolve(null);
+};
 
 function openFriendProfile(userId) {
   const numericUserId = Number(userId);
@@ -85,26 +95,27 @@ function openFriendProfile(userId) {
     return;
   }
 
+  if (typeof sharedApp.openProfileByUserId === "function") {
+    sharedApp.openProfileByUserId(numericUserId);
+    return;
+  }
+
   sessionStorage.setItem("viewedProfileUserId", String(numericUserId));
   window.location.href = `profil.html?userId=${numericUserId}`;
 }
 
-function getForumReasonLabel(reasonCode) {
-  if (typeof formatForumReportReason === "function") {
-    return formatForumReportReason(reasonCode);
-  }
-
+const getForumReasonLabel = sharedApp.formatForumReportReason || function getForumReasonLabelFallback(reasonCode) {
   const labels = {
-    spam: "Spam vagy keretlen tartalom",
-    offensive: "Serto vagy nem megfelelo tartalom",
-    harassment: "Zaklatas vagy szemelyeskedes",
-    misleading: "Felrevezeto informacio",
-    off_topic: "Nem kapcsolodik a temahoz",
-    other: "Egyeb",
+    spam: "Spam vagy kéretlen tartalom",
+    offensive: "Sértő vagy nem megfelelő tartalom",
+    harassment: "Zaklatás vagy személyeskedés",
+    misleading: "Félrevezető információ",
+    off_topic: "Nem kapcsolódik a témához",
+    other: "Egyéb",
   };
 
   return labels[reasonCode] || "Ismeretlen indok";
-}
+};
 
 function ensureUserReportMessageModal() {
   let modalElement = document.getElementById("userReportMessageModal");
@@ -116,13 +127,13 @@ function ensureUserReportMessageModal() {
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content app-card border-info-subtle">
             <div class="modal-header border-secondary-subtle">
-              <h2 class="modal-title fs-5">Uzenet reszletei</h2>
-              <button type="button" class="btn-close admin-modal-close" data-bs-dismiss="modal" aria-label="Bezaras"></button>
+              <h2 class="modal-title fs-5">Üzenet részletei</h2>
+              <button type="button" class="btn-close admin-modal-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
             </div>
             <div class="modal-body">
               <div id="userReportMessageBody" class="d-grid gap-3"></div>
               <div id="userReportMessageReplySection" class="mt-3 d-none">
-                <label class="form-label" for="userReportMessageReplyText">Valasz</label>
+                <label class="form-label" for="userReportMessageReplyText">Válasz</label>
                 <textarea id="userReportMessageReplyText" class="form-control app-input" rows="4" maxlength="2000"></textarea>
                 <div id="userReportMessageError" class="text-danger small mt-2 d-none"></div>
               </div>
@@ -133,14 +144,14 @@ function ensureUserReportMessageModal() {
                 id="userReportMessageReplyButton"
                 class="btn btn-primary d-none"
               >
-                Valasz kuldese
+                Válasz küldése
               </button>
               <button
                 type="button"
                 id="userReportMessageJumpButton"
                 class="btn btn-outline-info d-none"
               >
-                Hirdetes megnyitasa
+                Hirdetés megnyitása
               </button>
             </div>
           </div>
@@ -213,8 +224,8 @@ function renderFriendConversationMarkup(detail) {
 
   return `
     <div class="app-list-item">
-      <div class="fw-semibold mb-2">Barat beszelgetes</div>
-      <div>Beszelgetes partner: ${escapeFriendsHtml(detail?.MasikFelhasznalonev || "-")}</div>
+      <div class="fw-semibold mb-2">Barát beszélgetés</div>
+      <div>Beszélgetés partner: ${escapeFriendsHtml(detail?.MasikFelhasznalonev || "-")}</div>
     </div>
     <div class="d-grid gap-2">
       ${messages
@@ -222,7 +233,7 @@ function renderFriendConversationMarkup(detail) {
           (message) => `
             <div class="app-list-item${message.SajatUzenet ? " border-primary-subtle" : ""}">
               <div class="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
-                <div class="fw-semibold">${escapeFriendsHtml(message.SajatUzenet ? "Te" : (message.KuldoFelhasznalonev || detail?.MasikFelhasznalonev || "Felhasznalo"))}</div>
+                <div class="fw-semibold">${escapeFriendsHtml(message.SajatUzenet ? "Te" : (message.KuldoFelhasznalonev || detail?.MasikFelhasznalonev || "Felhasználó"))}</div>
                 <div class="small section-text">${escapeFriendsHtml(new Date(message.Letrehozva).toLocaleString("hu-HU"))}</div>
               </div>
               <div>${escapeFriendsHtml(message.UzenetSzoveg || "-")}</div>
@@ -244,7 +255,7 @@ async function sendActiveConversationReply() {
   }
 
   if (message.length < 3) {
-    setUserReportMessageError("Az uzenet legalabb 3 karakter legyen.");
+    setUserReportMessageError("Az üzenet legalább 3 karakter legyen.");
     return;
   }
 
@@ -263,10 +274,10 @@ async function sendActiveConversationReply() {
     await loadFriendNotifications();
     await loadUserMessagesPage();
     if (typeof showAppSuccess === "function") {
-      await showAppSuccess("Az uzenet sikeresen elkuldve.");
+      await showAppSuccess("Az üzenet sikeresen elküldve.");
     }
   } catch (error) {
-    setUserReportMessageError(error.message || "Nem sikerult elkuldeni az uzenetet.");
+    setUserReportMessageError(error.message || "Nem sikerült elküldeni az üzenetet.");
   }
 }
 
@@ -367,12 +378,12 @@ async function openUserReportMessage(reportId, source = "forum") {
       bodyElement.innerHTML =         '<div class="app-list-item">' +
           '<div class="fw-semibold mb-2">A te reportod</div>' +
           (source === 'marketplace-report'
-            ? '<div class="mb-2">Hirdetes: ' + escapeFriendsHtml(targetTitle) + '</div>'
+            ? '<div class="mb-2">Hirdetés: ' + escapeFriendsHtml(targetTitle) + '</div>'
             : '<div class="mb-2">Indok: ' + escapeFriendsHtml(getForumReasonLabel(message.IndokKod)) + '</div>') +
-          '<div>' + escapeFriendsHtml(message.Reszletezes || 'Nem adtal meg tovabbi reszletezest.') + '</div>' +
+          '<div>' + escapeFriendsHtml(message.Reszletezes || 'Nem adtál meg további részletezést.') + '</div>' +
         '</div>' +
         '<div class="app-list-item">' +
-          '<div class="fw-semibold mb-2">Admin valasza</div>' +
+          '<div class="fw-semibold mb-2">Admin válasza</div>' +
           '<div>' + escapeFriendsHtml(message.AdminValasz || '-') + '</div>' +
         '</div>';
     }
@@ -385,7 +396,7 @@ async function openUserReportMessage(reportId, source = "forum") {
     await loadUserMessagesPage();
   } catch (error) {
     if (typeof showAppAlert === "function") {
-      showAppAlert(error.message || "Nem sikerult megnyitni az uzenetet.", {
+      showAppAlert(error.message || "Nem sikerült megnyitni az üzenetet.", {
         title: "Hiba",
       });
     }
@@ -399,12 +410,9 @@ async function deleteUserReportNotification(reportId, source = "forum") {
     return;
   }
 
-  const confirmed =
-    typeof showAppConfirm === "function"
-      ? await showAppConfirm("Biztosan torolni szeretned ezt az uzenetet?", {
-          confirmLabel: "Torles",
-        })
-      : window.confirm("Biztosan torolni szeretned ezt az uzenetet?");
+  const confirmed = await friendsShowConfirm("Biztosan törölni szeretnéd ezt az üzenetet?", {
+    confirmLabel: "Torles",
+  });
 
   if (!confirmed) {
     return;
@@ -429,7 +437,7 @@ async function deleteUserReportNotification(reportId, source = "forum") {
     await loadUserMessagesPage();
   } catch (error) {
     if (typeof showAppAlert === "function") {
-      showAppAlert(error.message || "Nem sikerult torolni az uzenetet.", {
+      showAppAlert(error.message || "Nem sikerült törölni az üzenetet.", {
         title: "Hiba",
       });
     }
@@ -460,7 +468,7 @@ function renderFriendsNav() {
   } else {
     navItem.classList.remove("d-none");
     navItem.innerHTML = `
-      <a class="nav-link" href="baratok.html">Baratok</a>
+      <a class="nav-link" href="baratok.html">Barátok</a>
     `;
   }
 
@@ -475,16 +483,16 @@ function renderFriendsNav() {
         type="button"
         data-bs-toggle="dropdown"
         aria-expanded="false"
-        aria-label="Ertesitesek"
+        aria-label="Értesítések"
         data-notification-toggle
       >
         <span class="friend-notification-icon">🔔</span>
         <span class="friend-notification-count d-none" data-notification-count>0</span>
       </button>
       <div class="dropdown-menu dropdown-menu-end friend-notification-menu p-0">
-        <div class="friend-notification-header">Ertesitesek</div>
+        <div class="friend-notification-header">Értesítések</div>
         <div class="friend-notification-list" data-notification-list>
-          <div class="friend-notification-empty">Meg nincs ertesitesed.</div>
+          <div class="friend-notification-empty">Még nincs értesítésed.</div>
         </div>
       </div>
     </div>
@@ -546,16 +554,13 @@ function renderFriendsNav() {
 
         const confirmMessage =
           action === "accept"
-            ? "Biztosan elfogadod ezt a baratkerelmet?"
-            : "Biztosan elutasitod ezt a baratkerelmet?";
+            ? "Biztosan elfogadod ezt a barátkérelmet?"
+            : "Biztosan elutasítod ezt a barátkérelmet?";
 
-        const isConfirmed =
-          typeof showAppConfirm === "function"
-            ? await showAppConfirm(confirmMessage, {
-                confirmLabel: action === "accept" ? "Elfogadas" : "Elutasitas",
-                confirmButtonClass: action === "accept" ? "btn-success" : "btn-danger",
-              })
-            : window.confirm(confirmMessage);
+        const isConfirmed = await friendsShowConfirm(confirmMessage, {
+          confirmLabel: action === "accept" ? "Elfogadás" : "Elutasítás",
+          confirmButtonClass: action === "accept" ? "btn-success" : "btn-danger",
+        });
 
         if (!isConfirmed) {
           return;
@@ -567,21 +572,17 @@ function renderFriendsNav() {
             body: JSON.stringify({ action }),
           });
 
-          if (typeof showAppSuccess === "function") {
-            await showAppSuccess(
-              action === "accept"
-                ? "A baratkerelem sikeresen elfogadva."
-                : "A baratkerelem sikeresen elutasitva."
-            );
-          }
+          await friendsShowSuccess(
+            action === "accept"
+              ? "A barátkérelem sikeresen elfogadva."
+              : "A barátkérelem sikeresen elutasítva."
+          );
 
           await Promise.all([loadFriendNotifications(), refreshFriendsOverviewIfNeeded()]);
         } catch (error) {
-          if (typeof showAppAlert === "function") {
-            showAppAlert(error.message || "Nem sikerult feldolgozni a baratkerelmet.", {
-              title: "Hiba",
-            });
-          }
+          friendsShowAlert(error.message || "Nem sikerült feldolgozni a barátkérelmet.", {
+            title: "Hiba",
+          });
         }
 
         return;
@@ -638,7 +639,7 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
 
   if (!friendItems.length && !reportItems.length && !friendMessageItems.length && !marketplaceMessageItems.length && !systemNotificationItems.length) {
     lists.forEach((list) => {
-      list.innerHTML = `<div class="friend-notification-empty">Meg nincs ertesitesed.</div>`;
+      list.innerHTML = `<div class="friend-notification-empty">Még nincs értesítésed.</div>`;
     });
     return;
   }
@@ -647,13 +648,13 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
     (item) => `
       <div class="friend-notification-item">
         <div class="fw-semibold">${escapeFriendsHtml(item.Felhasznalonev)}</div>
-        <div class="section-text small mb-3">baratkerelmet kuldott neked.</div>
+        <div class="section-text small mb-3">barátkérelmet küldött neked.</div>
         <div class="d-flex gap-2 flex-wrap">
           <button class="btn btn-sm btn-success" type="button" data-request-id="${Number(item.BaratKerelemId)}" data-action="accept">
-            Elfogadas
+            Elfogadás
           </button>
           <button class="btn btn-sm btn-outline-danger" type="button" data-request-id="${Number(item.BaratKerelemId)}" data-action="reject">
-            Elutasitas
+            Elutasítás
           </button>
         </div>
       </div>
@@ -664,7 +665,7 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
     if (isAdmin) {
       return `
         <div class="friend-notification-item">
-          <div class="fw-semibold">${item.Source === "marketplace" ? "Uj marketplace report" : "Uj forum report"}</div>
+          <div class="fw-semibold">${item.Source === "marketplace" ? "Új marketplace report" : "Új fórum report"}</div>
           <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.Letrehozva).toLocaleString("hu-HU"))}</div>
           <div class="d-flex gap-2 flex-wrap">
             <button class="btn btn-sm btn-outline-info" type="button" data-report-id="${Number(item.Source === "marketplace" ? item.MarketplaceReportId : item.ForumReportId)}" data-report-source="${escapeFriendsHtml(item.Source || "forum")}" data-action="open-admin-report">
@@ -677,7 +678,7 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
 
     return `
       <div class="friend-notification-item">
-        <div class="fw-semibold">${item.FelhasznaloOlvastaValaszt ? "Uzenet" : "Uj uzenet"}</div>
+          <div class="fw-semibold">${item.FelhasznaloOlvastaValaszt ? "Üzenet" : "Új üzenet"}</div>
         <div class="section-text small mb-2">${escapeFriendsHtml(item.Source === "marketplace-report" ? (item.HirdetesCim || "Marketplace report") : getForumReasonLabel(item.IndokKod))}</div>
         <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.AdminValaszLetrehozva || item.Letrehozva).toLocaleString("hu-HU"))}</div>
         <div class="d-flex gap-2 flex-wrap">
@@ -696,7 +697,7 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
     ? []
     : marketplaceMessageItems.map((item) => `
         <div class="friend-notification-item">
-          <div class="fw-semibold">${Number(item.OlvasatlanDb || 0) > 0 ? "Uj marketplace uzenet" : "Marketplace beszelgetes"}</div>
+          <div class="fw-semibold">${Number(item.OlvasatlanDb || 0) > 0 ? "Új marketplace üzenet" : "Marketplace beszélgetés"}</div>
           <div class="section-text small mb-2">${escapeFriendsHtml(item.HirdetesCim || "-")}</div>
           <div class="section-text small mb-2">${escapeFriendsHtml(item.MasikFelhasznalonev || "-")}</div>
           <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.Letrehozva).toLocaleString("hu-HU"))}</div>
@@ -715,7 +716,7 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
     ? []
     : friendMessageItems.map((item) => `
         <div class="friend-notification-item">
-          <div class="fw-semibold">${Number(item.OlvasatlanDb || 0) > 0 ? "Uj barat uzenet" : "Barat beszelgetes"}</div>
+          <div class="fw-semibold">${Number(item.OlvasatlanDb || 0) > 0 ? "Új barát üzenet" : "Barát beszélgetés"}</div>
           <div class="section-text small mb-2">${escapeFriendsHtml(item.MasikFelhasznalonev || "-")}</div>
           <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.Letrehozva).toLocaleString("hu-HU"))}</div>
           <div class="d-flex gap-2 flex-wrap">
@@ -733,7 +734,7 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
     ? []
     : systemNotificationItems.map((item) => `
         <div class="friend-notification-item">
-          <div class="fw-semibold">${item.Olvasva ? "Ertesites" : "Uj ertesites"}</div>
+          <div class="fw-semibold">${item.Olvasva ? "Értesítés" : "Új értesítés"}</div>
           <div class="section-text small mb-2">${escapeFriendsHtml(item.Cim || "-")}</div>
           <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.Letrehozva).toLocaleString("hu-HU"))}</div>
           <div class="d-flex gap-2 flex-wrap">
@@ -824,7 +825,7 @@ function getCombinedUserMessageItems() {
       id: Number(item.Source === "marketplace-report" ? item.MarketplaceReportId : item.ForumReportId),
       source: item.Source || "forum-report",
       unread: !item.FelhasznaloOlvastaValaszt,
-      title: item.FelhasznaloOlvastaValaszt ? "Uzenet" : "Uj uzenet",
+      title: item.FelhasznaloOlvastaValaszt ? "Üzenet" : "Új üzenet",
       subtitle:
         item.Source === "marketplace-report"
           ? item.HirdetesCim || "Marketplace report"
@@ -838,7 +839,7 @@ function getCombinedUserMessageItems() {
       id: Number(item.BaratUzenetId),
       source: "friend-message",
       unread: Number(item.OlvasatlanDb || 0) > 0,
-      title: Number(item.OlvasatlanDb || 0) > 0 ? "Uj barat uzenet" : "Barat beszelgetes",
+      title: Number(item.OlvasatlanDb || 0) > 0 ? "Új barát üzenet" : "Barát beszélgetés",
       subtitle: item.MasikFelhasznalonev || "-",
       timestamp: item.Letrehozva,
     }));
@@ -849,7 +850,7 @@ function getCombinedUserMessageItems() {
       id: Number(item.MarketplaceUzenetId),
       source: "marketplace-message",
       unread: Number(item.OlvasatlanDb || 0) > 0,
-      title: Number(item.OlvasatlanDb || 0) > 0 ? "Uj marketplace uzenet" : "Marketplace beszelgetes",
+      title: Number(item.OlvasatlanDb || 0) > 0 ? "Új marketplace üzenet" : "Marketplace beszélgetés",
       subtitle: `${item.MasikFelhasznalonev || "-"} | ${item.HirdetesCim || "-"}`,
       timestamp: item.Letrehozva,
     }));
@@ -860,8 +861,8 @@ function getCombinedUserMessageItems() {
       id: Number(item.FelhasznaloErtesitesId),
       source: "system-notification",
       unread: !item.Olvasva,
-      title: !item.Olvasva ? "Uj ertesites" : "Ertesites",
-      subtitle: item.Cim || "Rendszeruzenet",
+      title: !item.Olvasva ? "Új értesítés" : "Értesítés",
+      subtitle: item.Cim || "Rendszerüzenet",
       timestamp: item.Letrehozva,
     }));
 
@@ -893,7 +894,7 @@ function renderUserMessagesPage(messages) {
 
   loading.classList.add("d-none");
   error.classList.add("d-none");
-  count.textContent = `${items.length} uzenet`;
+  count.textContent = `${items.length} üzenet`;
   list.innerHTML = "";
   empty.classList.toggle("d-none", items.length > 0);
 
@@ -982,7 +983,7 @@ async function loadUserMessagesPage() {
     renderUserMessagesPage(getCombinedUserMessageItems());
   } catch (loadError) {
     loading.classList.add("d-none");
-    error.textContent = loadError.message || "Nem sikerult betolteni az uzeneteket.";
+    error.textContent = loadError.message || "Nem sikerült betölteni az üzeneteket.";
     error.classList.remove("d-none");
   }
 }
@@ -994,15 +995,12 @@ async function startFriendConversation(targetUserId, username = "") {
     return;
   }
 
-  const rawMessage =
-    typeof showAppTextPrompt === "function"
-      ? await showAppTextPrompt({
-          title: "Uj barat uzenet",
-          label: username ? `${username} reszere` : "Uzenet",
-          placeholder: "Ird be az uzenetedet...",
-          confirmLabel: "Kuldes",
-        })
-      : window.prompt("Ird be az uzenetedet:");
+  const rawMessage = await friendsShowTextPrompt({
+    title: "Új barát üzenet",
+    label: username ? `${username} reszere` : "Uzenet",
+    placeholder: "Írd be az üzenetedet...",
+    confirmLabel: "Kuldes",
+  });
 
   if (rawMessage == null) {
     return;
@@ -1011,11 +1009,9 @@ async function startFriendConversation(targetUserId, username = "") {
   const message = String(rawMessage).trim();
 
   if (message.length < 3) {
-    if (typeof showAppAlert === "function") {
-      showAppAlert("Az uzenet legalabb 3 karakter legyen.", {
-        title: "Hiba",
-      });
-    }
+    friendsShowAlert("Az üzenet legalább 3 karakter legyen.", {
+      title: "Hiba",
+    });
     return;
   }
 
@@ -1029,9 +1025,7 @@ async function startFriendConversation(targetUserId, username = "") {
 
   await Promise.all([loadFriendNotifications(), loadUserMessagesPage()]);
 
-  if (typeof showAppSuccess === "function") {
-    await showAppSuccess("Az uzenet sikeresen elkuldve.");
-  }
+  await friendsShowSuccess("Az üzenet sikeresen elküldve.");
 }
 
 function initializeUserMessagesPage() {
@@ -1141,7 +1135,7 @@ function renderFriendsPageLists() {
         let disabledAttr = "";
 
         if (hasPendingSent) {
-          buttonLabel = "Kerelem elkuldve";
+          buttonLabel = "Kérelem elküldve";
           buttonClass = "btn-secondary";
           disabledAttr = "disabled";
         } else if (hasPendingReceived) {
@@ -1237,7 +1231,7 @@ async function loadFriendsOverview() {
     );
   } catch (error) {
     if (document.body.dataset.page === "baratok" && typeof showAppAlert === "function") {
-      showAppAlert(error.message || "Nem sikerult betolteni a baratok adatait.", {
+      showAppAlert(error.message || "Nem sikerült betölteni a barátok adatait.", {
         title: "Hiba",
       });
     }
@@ -1345,7 +1339,7 @@ function initializeFriendsPage() {
           await startFriendConversation(targetUserId, messageButton.dataset.messageFriendName || "");
         } catch (error) {
           if (typeof showAppAlert === "function") {
-            showAppAlert(error.message || "Nem sikerult elkuldeni az uzenetet.", {
+            showAppAlert(error.message || "Nem sikerült elküldeni az üzenetet.", {
               title: "Hiba",
             });
           }
@@ -1363,12 +1357,9 @@ function initializeFriendsPage() {
         return;
       }
 
-      const confirmed =
-        typeof showAppConfirm === "function"
-          ? await showAppConfirm("Biztosan törölni szeretnéd ezt a barátot?", {
-              confirmLabel: "Törlés",
-            })
-          : window.confirm("Biztosan törölni szeretnéd ezt a barátot?");
+      const confirmed = await friendsShowConfirm("Biztosan törölni szeretnéd ezt a barátot?", {
+        confirmLabel: "Törlés",
+      });
 
       if (!confirmed) {
         return;
@@ -1379,17 +1370,13 @@ function initializeFriendsPage() {
           method: "DELETE",
         });
 
-        if (typeof showAppSuccess === "function") {
-          await showAppSuccess("A barát sikeresen törölve lett.");
-        }
+        await friendsShowSuccess("A barát sikeresen törölve lett.");
 
         await Promise.all([loadFriendsOverview(), loadFriendNotifications()]);
       } catch (error) {
-        if (typeof showAppAlert === "function") {
-          showAppAlert(error.message || "Nem sikerült törölni a barátot.", {
-            title: "Hiba",
-          });
-        }
+        friendsShowAlert(error.message || "Nem sikerült törölni a barátot.", {
+          title: "Hiba",
+        });
       }
     });
   }

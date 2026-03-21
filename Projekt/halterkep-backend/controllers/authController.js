@@ -46,11 +46,11 @@ function validateRegisterInput({ email, username, password, securityQuestion, se
   const trimmedUsername = username.trim();
 
   if (!EMAIL_REGEX.test(normalizedEmail)) {
-    return "Adj meg egy ervenyes email cimet.";
+    return "Adj meg egy érvényes email címet.";
   }
 
   if (trimmedUsername.length < 3 || trimmedUsername.length > 50) {
-    return "A felhasznalonev minimum 3, maximum 50 karakter lehet.";
+    return "A felhasználónév minimum 3, maximum 50 karakter lehet.";
   }
 
   const passwordError = validatePassword(password);
@@ -59,11 +59,11 @@ function validateRegisterInput({ email, username, password, securityQuestion, se
   }
 
   if (!SECURITY_QUESTIONS.includes(securityQuestion)) {
-    return "Valassz egy ervenyes biztonsagi kerdest.";
+    return "Válassz egy érvényes biztonsági kérdést.";
   }
 
   if (normalizeSecurityAnswer(securityAnswer).length < 2) {
-    return "Adj meg egy biztonsagi valaszt is.";
+    return "Adj meg egy biztonsági választ is.";
   }
 
   return null;
@@ -75,7 +75,7 @@ async function register(req, res) {
 
     if (!email || !username || !password || !securityQuestion || !securityAnswer) {
       return res.status(400).json({
-        message: "Az email, felhasznalonev, jelszo, biztonsagi kerdes es valasz kotelezo.",
+        message: "Az email, felhasználónév, jelszó, biztonsági kérdés és válasz kötelező.",
       });
     }
 
@@ -111,12 +111,12 @@ async function register(req, res) {
     if (foundUser) {
       if ((foundUser.Email || "").trim().toLowerCase() === normalizedEmail) {
         return res.status(409).json({
-          message: "Ez az email cim mar foglalt.",
+          message: "Ez az email cím már foglalt.",
         });
       }
 
       return res.status(409).json({
-        message: "Ez a felhasznalonev mar foglalt.",
+        message: "Ez a felhasználónév már foglalt.",
       });
     }
 
@@ -148,7 +148,7 @@ async function register(req, res) {
       `);
 
     return res.status(201).json({
-      message: "Sikeres regisztracio.",
+      message: "Sikeres regisztráció.",
       user: mapUser(result.recordset[0]),
     });
   } catch (error) {
@@ -156,12 +156,12 @@ async function register(req, res) {
 
     if (error?.number === 2601 || error?.number === 2627) {
       return res.status(409).json({
-        message: "Az email cim vagy a felhasznalonev mar foglalt.",
+        message: "Az email cím vagy a felhasználónév már foglalt.",
       });
     }
 
     return res.status(500).json({
-      message: "Szerverhiba tortent.",
+      message: "Szerverhiba történt.",
     });
   }
 }
@@ -172,7 +172,7 @@ async function login(req, res) {
 
     if (!identifier || !password) {
       return res.status(400).json({
-        message: "Az email vagy felhasznalonev es a jelszo kotelezo.",
+        message: "Az email vagy felhasználónév és a jelszó kötelező.",
       });
     }
 
@@ -201,13 +201,13 @@ async function login(req, res) {
 
     if (!user) {
       return res.status(401).json({
-        message: "Hibas belepesi adatok.",
+        message: "Hibás belépési adatok.",
       });
     }
 
     if (!user.Aktiv) {
       return res.status(403).json({
-        message: "A fiok inaktiv.",
+        message: "A fiók inaktív.",
       });
     }
 
@@ -215,7 +215,7 @@ async function login(req, res) {
 
     if (!isCorrectPassword) {
       return res.status(401).json({
-        message: "Hibas belepesi adatok.",
+        message: "Hibás belépési adatok.",
       });
     }
 
@@ -231,14 +231,14 @@ async function login(req, res) {
     );
 
     return res.status(200).json({
-      message: "Sikeres bejelentkezes.",
+      message: "Sikeres bejelentkezés.",
       token,
       user: mapUser(user),
     });
   } catch (error) {
     console.error("Login hiba:", error);
     return res.status(500).json({
-      message: "Szerverhiba tortent.",
+      message: "Szerverhiba történt.",
     });
   }
 }
@@ -249,7 +249,7 @@ async function getForgotPasswordQuestion(req, res) {
 
     if (!identifier) {
       return res.status(400).json({
-        message: "Add meg a felhasznalonevet vagy email cimet.",
+        message: "Add meg a felhasználónevet vagy email címet.",
       });
     }
 
@@ -267,19 +267,19 @@ async function getForgotPasswordQuestion(req, res) {
 
     if (!user) {
       return res.status(404).json({
-        message: "Nem talalhato ilyen felhasznalo.",
+        message: "Nem található ilyen felhasználó.",
       });
     }
 
     if (user.Admin) {
       return res.status(403).json({
-        message: "Az admin fiok jelszava itt nem allithato vissza.",
+        message: "Az admin fiók jelszava itt nem állítható vissza.",
       });
     }
 
     if (!user.BiztonsagiKerdes || !user.BiztonsagiValaszHash) {
       return res.status(400).json({
-        message: "Ehhez a fiokhoz nincs beallitva biztonsagi kerdes.",
+        message: "Ehhez a fiókhoz nincs beállítva biztonsági kérdés.",
       });
     }
 
@@ -287,9 +287,9 @@ async function getForgotPasswordQuestion(req, res) {
       question: user.BiztonsagiKerdes,
     });
   } catch (error) {
-    console.error("Biztonsagi kerdes lekeresi hiba:", error);
+    console.error("Biztonsági kérdés lekérési hiba:", error);
     return res.status(500).json({
-      message: "Szerverhiba tortent.",
+      message: "Szerverhiba történt.",
     });
   }
 }
@@ -302,7 +302,7 @@ async function resetPasswordWithSecurityQuestion(req, res) {
 
     if (!identifier || !securityAnswer || !newPassword) {
       return res.status(400).json({
-        message: "Az azonosito, a biztonsagi valasz es az uj jelszo kotelezo.",
+        message: "Az azonosító, a biztonsági válasz és az új jelszó kötelező.",
       });
     }
 
@@ -327,19 +327,19 @@ async function resetPasswordWithSecurityQuestion(req, res) {
 
     if (!user) {
       return res.status(404).json({
-        message: "Nem talalhato ilyen felhasznalo.",
+        message: "Nem található ilyen felhasználó.",
       });
     }
 
     if (user.Admin) {
       return res.status(403).json({
-        message: "Az admin fiok jelszava itt nem allithato vissza.",
+        message: "Az admin fiók jelszava itt nem állítható vissza.",
       });
     }
 
     if (!user.BiztonsagiValaszHash) {
       return res.status(400).json({
-        message: "Ehhez a fiokhoz nincs beallitva biztonsagi kerdes.",
+        message: "Ehhez a fiókhoz nincs beállítva biztonsági kérdés.",
       });
     }
 
@@ -350,7 +350,7 @@ async function resetPasswordWithSecurityQuestion(req, res) {
 
     if (!isCorrectAnswer) {
       return res.status(401).json({
-        message: "A biztonsagi valasz nem egyezik.",
+        message: "A biztonsági válasz nem egyezik.",
       });
     }
 
@@ -372,7 +372,7 @@ async function resetPasswordWithSecurityQuestion(req, res) {
   } catch (error) {
     console.error("Jelszo visszaallitas hiba:", error);
     return res.status(500).json({
-      message: "Szerverhiba tortent.",
+      message: "Szerverhiba történt.",
     });
   }
 }
