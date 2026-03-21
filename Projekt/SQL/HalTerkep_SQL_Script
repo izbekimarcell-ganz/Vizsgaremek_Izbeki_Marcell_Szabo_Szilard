@@ -21,6 +21,7 @@ GO
 IF OBJECT_ID(N'dbo.ForumHozzaszolas', N'U') IS NOT NULL DROP TABLE dbo.ForumHozzaszolas;
 IF OBJECT_ID(N'dbo.ForumTema', N'U') IS NOT NULL DROP TABLE dbo.ForumTema;
 IF OBJECT_ID(N'dbo.ForumReport', N'U') IS NOT NULL DROP TABLE dbo.ForumReport;
+IF OBJECT_ID(N'dbo.BaratUzenet', N'U') IS NOT NULL DROP TABLE dbo.BaratUzenet;
 IF OBJECT_ID(N'dbo.FelhasznaloErtesites', N'U') IS NOT NULL DROP TABLE dbo.FelhasznaloErtesites;
 IF OBJECT_ID(N'dbo.MarketplaceUzenet', N'U') IS NOT NULL DROP TABLE dbo.MarketplaceUzenet;
 IF OBJECT_ID(N'dbo.MarketplaceReport', N'U') IS NOT NULL DROP TABLE dbo.MarketplaceReport;
@@ -55,6 +56,8 @@ CREATE TABLE dbo.Felhasznalo
     Felhasznalonev     NVARCHAR(50)  NOT NULL,
     Email              NVARCHAR(100) NOT NULL,
     JelszoHash         NVARCHAR(255) NOT NULL,
+    ProfilKepUrl       NVARCHAR(MAX) NULL,
+    Bemutatkozas       NVARCHAR(1000) NULL,
     BiztonsagiKerdes   NVARCHAR(200) NULL,
     BiztonsagiValaszHash NVARCHAR(255) NULL,
     Admin              BIT           NOT NULL CONSTRAINT DF_Felhasznalo_Admin DEFAULT (0),
@@ -285,6 +288,45 @@ GO
 
 CREATE INDEX IX_ForumReport_FelhasznaloMessages
     ON dbo.ForumReport(FelhasznaloId, FelhasznaloTorolve, FelhasznaloOlvastaValaszt, AdminValaszLetrehozva DESC);
+GO
+
+CREATE TABLE dbo.BaratUzenet
+(
+    BaratUzenetId         INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_BaratUzenet PRIMARY KEY,
+    KuldoFelhasznaloId    INT            NOT NULL,
+    CimzettFelhasznaloId  INT            NOT NULL,
+    FelhasznaloEgyId AS (
+        CASE
+            WHEN KuldoFelhasznaloId < CimzettFelhasznaloId THEN KuldoFelhasznaloId
+            ELSE CimzettFelhasznaloId
+        END
+    ) PERSISTED,
+    FelhasznaloKettoId AS (
+        CASE
+            WHEN KuldoFelhasznaloId < CimzettFelhasznaloId THEN CimzettFelhasznaloId
+            ELSE KuldoFelhasznaloId
+        END
+    ) PERSISTED,
+    UzenetSzoveg          NVARCHAR(2000) NOT NULL,
+    Letrehozva            DATETIME2      NOT NULL CONSTRAINT DF_BaratUzenet_Letrehozva DEFAULT (SYSUTCDATETIME()),
+    CimzettOlvasta        BIT            NOT NULL CONSTRAINT DF_BaratUzenet_CimzettOlvasta DEFAULT (0),
+    KuldoTorolve          BIT            NOT NULL CONSTRAINT DF_BaratUzenet_KuldoTorolve DEFAULT (0),
+    CimzettTorolve        BIT            NOT NULL CONSTRAINT DF_BaratUzenet_CimzettTorolve DEFAULT (0),
+
+    CONSTRAINT CK_BaratUzenet_NemOnmaga CHECK (KuldoFelhasznaloId <> CimzettFelhasznaloId),
+    CONSTRAINT FK_BaratUzenet_Kuldo FOREIGN KEY (KuldoFelhasznaloId)
+        REFERENCES dbo.Felhasznalo(FelhasznaloId),
+    CONSTRAINT FK_BaratUzenet_Cimzett FOREIGN KEY (CimzettFelhasznaloId)
+        REFERENCES dbo.Felhasznalo(FelhasznaloId)
+);
+GO
+
+CREATE INDEX IX_BaratUzenet_Pair
+    ON dbo.BaratUzenet(FelhasznaloEgyId, FelhasznaloKettoId, Letrehozva DESC, BaratUzenetId DESC);
+GO
+
+CREATE INDEX IX_BaratUzenet_CimzettInbox
+    ON dbo.BaratUzenet(CimzettFelhasznaloId, CimzettTorolve, CimzettOlvasta, Letrehozva DESC);
 GO
 
 CREATE TABLE dbo.FelhasznaloErtesites

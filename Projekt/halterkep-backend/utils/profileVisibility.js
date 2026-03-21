@@ -20,6 +20,8 @@ async function getProfileVisibility(userId, viewer = null) {
         u.FelhasznaloId,
         u.Felhasznalonev,
         u.Email,
+        u.ProfilKepUrl,
+        u.Bemutatkozas,
         u.Admin,
         u.Aktiv,
         u.Letrehozva,

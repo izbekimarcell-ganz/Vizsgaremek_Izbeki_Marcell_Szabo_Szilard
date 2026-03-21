@@ -6,6 +6,7 @@ const friendsFeatureState = {
   overview: null,
   notifications: [],
   reportNotifications: [],
+  friendMessages: [],
   marketplaceMessages: [],
   systemNotifications: [],
   activeMessageContext: null,
@@ -154,7 +155,7 @@ function ensureUserReportMessageModal() {
   const replyButton = modalElement.querySelector("#userReportMessageReplyButton");
 
   if (replyButton && replyButton.dataset.bound !== "true") {
-    replyButton.addEventListener("click", sendMarketplaceConversationReply);
+    replyButton.addEventListener("click", sendActiveConversationReply);
     replyButton.dataset.bound = "true";
   }
 
@@ -207,12 +208,38 @@ function renderMarketplaceConversationMarkup(detail) {
   `;
 }
 
-async function sendMarketplaceConversationReply() {
+function renderFriendConversationMarkup(detail) {
+  const messages = Array.isArray(detail?.Uzenetek) ? detail.Uzenetek : [];
+
+  return `
+    <div class="app-list-item">
+      <div class="fw-semibold mb-2">Barat beszelgetes</div>
+      <div>Beszelgetes partner: ${escapeFriendsHtml(detail?.MasikFelhasznalonev || "-")}</div>
+    </div>
+    <div class="d-grid gap-2">
+      ${messages
+        .map(
+          (message) => `
+            <div class="app-list-item${message.SajatUzenet ? " border-primary-subtle" : ""}">
+              <div class="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
+                <div class="fw-semibold">${escapeFriendsHtml(message.SajatUzenet ? "Te" : (message.KuldoFelhasznalonev || detail?.MasikFelhasznalonev || "Felhasznalo"))}</div>
+                <div class="small section-text">${escapeFriendsHtml(new Date(message.Letrehozva).toLocaleString("hu-HU"))}</div>
+              </div>
+              <div>${escapeFriendsHtml(message.UzenetSzoveg || "-")}</div>
+            </div>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+async function sendActiveConversationReply() {
   const context = friendsFeatureState.activeMessageContext;
   const { replyText } = ensureUserReportMessageModal();
   const message = replyText?.value.trim() || "";
 
-  if (!context || context.source !== "marketplace-message") {
+  if (!context || !["marketplace-message", "friend-message"].includes(context.source)) {
     return;
   }
 
@@ -222,7 +249,12 @@ async function sendMarketplaceConversationReply() {
   }
 
   try {
-    await friendsApiRequest(`/marketplace/messages/${Number(context.id)}/reply`, {
+    const endpoint =
+      context.source === "friend-message"
+        ? `/friends/messages/${Number(context.id)}/reply`
+        : `/marketplace/messages/${Number(context.id)}/reply`;
+
+    await friendsApiRequest(endpoint, {
       method: "POST",
       body: JSON.stringify({ uzenet: message }),
     });
@@ -270,6 +302,8 @@ async function openUserReportMessage(reportId, source = "forum") {
     const endpoint =
       source === "marketplace-report"
         ? "/marketplace/reports/messages/" + numericReportId
+        : source === "friend-message"
+          ? "/friends/messages/" + numericReportId
         : source === "marketplace-message"
           ? "/marketplace/messages/" + numericReportId
           : source === "system-notification"
@@ -308,7 +342,7 @@ async function openUserReportMessage(reportId, source = "forum") {
     }
 
     if (replySection && replyText && replyButton) {
-      const canReply = source === "marketplace-message";
+      const canReply = source === "marketplace-message" || source === "friend-message";
       replySection.classList.toggle("d-none", !canReply);
       replyButton.classList.toggle("d-none", !canReply);
       replyText.value = "";
@@ -319,6 +353,8 @@ async function openUserReportMessage(reportId, source = "forum") {
 
     if (source === "marketplace-message") {
       bodyElement.innerHTML = renderMarketplaceConversationMarkup(message);
+    } else if (source === "friend-message") {
+      bodyElement.innerHTML = renderFriendConversationMarkup(message);
     } else if (source === "system-notification") {
       bodyElement.innerHTML =         '<div class="app-list-item">' +
           '<div class="fw-semibold mb-2">' + escapeFriendsHtml(message.Cim || 'Ertesites') + '</div>' +
@@ -378,6 +414,8 @@ async function deleteUserReportNotification(reportId, source = "forum") {
     const endpoint =
       source === "marketplace-report"
         ? "/marketplace/reports/messages/" + numericReportId
+        : source === "friend-message"
+          ? "/friends/messages/" + numericReportId
         : source === "marketplace-message"
           ? "/marketplace/messages/" + numericReportId
           : source === "system-notification"
@@ -570,7 +608,7 @@ function renderFriendsNav() {
   }
 }
 
-function renderFriendNotifications(friendNotifications, reportNotifications, marketplaceMessages = [], systemNotifications = []) {
+function renderFriendNotifications(friendNotifications, reportNotifications, friendMessages = [], marketplaceMessages = [], systemNotifications = []) {
   const lists = Array.from(document.querySelectorAll("[data-notification-list]"));
   const counts = Array.from(document.querySelectorAll("[data-notification-count]"));
   const user = getCurrentUserInfo();
@@ -582,21 +620,23 @@ function renderFriendNotifications(friendNotifications, reportNotifications, mar
 
   const friendItems = Array.isArray(friendNotifications) ? friendNotifications : [];
   const reportItems = Array.isArray(reportNotifications) ? reportNotifications : [];
+  const friendMessageItems = Array.isArray(friendMessages) ? friendMessages : [];
   const marketplaceMessageItems = Array.isArray(marketplaceMessages) ? marketplaceMessages : [];
   const systemNotificationItems = Array.isArray(systemNotifications) ? systemNotifications : [];
   const unreadReportCount = isAdmin
     ? reportItems.length
     : reportItems.filter((item) => !item.FelhasznaloOlvastaValaszt).length;
+  const unreadFriendMessageCount = friendMessageItems.filter((item) => Number(item.OlvasatlanDb || 0) > 0).length;
   const unreadMarketplaceMessageCount = marketplaceMessageItems.filter((item) => Number(item.OlvasatlanDb || 0) > 0).length;
   const unreadSystemNotificationCount = systemNotificationItems.filter((item) => !item.Olvasva).length;
-  const pendingCount = friendItems.length + unreadReportCount + unreadMarketplaceMessageCount + unreadSystemNotificationCount;
+  const pendingCount = friendItems.length + unreadReportCount + unreadFriendMessageCount + unreadMarketplaceMessageCount + unreadSystemNotificationCount;
 
   counts.forEach((count) => {
     count.textContent = String(pendingCount);
     count.classList.toggle("d-none", pendingCount === 0);
   });
 
-  if (!friendItems.length && !reportItems.length && !marketplaceMessageItems.length && !systemNotificationItems.length) {
+  if (!friendItems.length && !reportItems.length && !friendMessageItems.length && !marketplaceMessageItems.length && !systemNotificationItems.length) {
     lists.forEach((list) => {
       list.innerHTML = `<div class="friend-notification-empty">Meg nincs ertesitesed.</div>`;
     });
@@ -671,6 +711,24 @@ function renderFriendNotifications(friendNotifications, reportNotifications, mar
         </div>
       `);
 
+  const friendMessageMarkup = isAdmin
+    ? []
+    : friendMessageItems.map((item) => `
+        <div class="friend-notification-item">
+          <div class="fw-semibold">${Number(item.OlvasatlanDb || 0) > 0 ? "Uj barat uzenet" : "Barat beszelgetes"}</div>
+          <div class="section-text small mb-2">${escapeFriendsHtml(item.MasikFelhasznalonev || "-")}</div>
+          <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.Letrehozva).toLocaleString("hu-HU"))}</div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-sm btn-outline-info" type="button" data-report-id="${Number(item.BaratUzenetId)}" data-report-source="friend-message" data-action="open-user-report-message">
+              Megnyitas
+            </button>
+            <button class="btn btn-sm btn-outline-danger" type="button" data-report-id="${Number(item.BaratUzenetId)}" data-report-source="friend-message" data-action="delete-user-report-message">
+              Torles
+            </button>
+          </div>
+        </div>
+      `);
+
   const systemNotificationMarkup = isAdmin
     ? []
     : systemNotificationItems.map((item) => `
@@ -690,7 +748,7 @@ function renderFriendNotifications(friendNotifications, reportNotifications, mar
       `);
 
   lists.forEach((list) => {
-    list.innerHTML = [...friendMarkup, ...reportMarkup, ...marketplaceMessageMarkup, ...systemNotificationMarkup].join("");
+    list.innerHTML = [...friendMarkup, ...reportMarkup, ...friendMessageMarkup, ...marketplaceMessageMarkup, ...systemNotificationMarkup].join("");
   });
 }
 
@@ -708,6 +766,7 @@ async function loadFriendNotifications() {
       friendNotifications,
       forumReportNotifications,
       marketplaceReportNotifications,
+      friendMessages,
       marketplaceMessages,
       systemNotifications,
     ] = await Promise.all([
@@ -718,6 +777,7 @@ async function loadFriendNotifications() {
       isAdmin
         ? friendsApiRequest("/marketplace/reports/admin/notifications")
         : friendsApiRequest("/marketplace/reports/messages"),
+      isAdmin ? Promise.resolve([]) : friendsApiRequest("/friends/messages"),
       isAdmin ? Promise.resolve([]) : friendsApiRequest("/marketplace/messages"),
       isAdmin ? Promise.resolve([]) : friendsApiRequest("/notifications"),
     ]);
@@ -735,6 +795,9 @@ async function loadFriendNotifications() {
         Source: isAdmin ? "marketplace" : "marketplace-report",
       })),
     ];
+    friendsFeatureState.friendMessages = Array.isArray(friendMessages)
+      ? friendMessages
+      : [];
     friendsFeatureState.marketplaceMessages = Array.isArray(marketplaceMessages)
       ? marketplaceMessages
       : [];
@@ -745,11 +808,12 @@ async function loadFriendNotifications() {
     renderFriendNotifications(
       friendsFeatureState.notifications,
       friendsFeatureState.reportNotifications,
+      friendsFeatureState.friendMessages,
       friendsFeatureState.marketplaceMessages,
       friendsFeatureState.systemNotifications
     );
   } catch (error) {
-    renderFriendNotifications([], [], [], []);
+    renderFriendNotifications([], [], [], [], []);
   }
 }
 
@@ -766,6 +830,17 @@ function getCombinedUserMessageItems() {
           ? item.HirdetesCim || "Marketplace report"
           : getForumReasonLabel(item.IndokKod),
       timestamp: item.AdminValaszLetrehozva || item.Letrehozva,
+    }));
+
+  const friendMessages = (Array.isArray(friendsFeatureState.friendMessages)
+    ? friendsFeatureState.friendMessages
+    : []).map((item) => ({
+      id: Number(item.BaratUzenetId),
+      source: "friend-message",
+      unread: Number(item.OlvasatlanDb || 0) > 0,
+      title: Number(item.OlvasatlanDb || 0) > 0 ? "Uj barat uzenet" : "Barat beszelgetes",
+      subtitle: item.MasikFelhasznalonev || "-",
+      timestamp: item.Letrehozva,
     }));
 
   const marketplaceMessages = (Array.isArray(friendsFeatureState.marketplaceMessages)
@@ -790,7 +865,7 @@ function getCombinedUserMessageItems() {
       timestamp: item.Letrehozva,
     }));
 
-  return [...reportItems, ...marketplaceMessages, ...systemNotifications].sort((left, right) => {
+  return [...reportItems, ...friendMessages, ...marketplaceMessages, ...systemNotifications].sort((left, right) => {
     if (left.unread !== right.unread) {
       return left.unread ? -1 : 1;
     }
@@ -884,9 +959,10 @@ async function loadUserMessagesPage() {
   count.textContent = "";
 
   try {
-    const [forumMessages, marketplaceReportMessages, marketplaceMessages, systemNotifications] = await Promise.all([
+    const [forumMessages, marketplaceReportMessages, friendMessages, marketplaceMessages, systemNotifications] = await Promise.all([
       friendsApiRequest("/reports/messages"),
       friendsApiRequest("/marketplace/reports/messages"),
+      friendsApiRequest("/friends/messages"),
       friendsApiRequest("/marketplace/messages"),
       friendsApiRequest("/notifications"),
     ]);
@@ -900,6 +976,7 @@ async function loadUserMessagesPage() {
         Source: "marketplace-report",
       })),
     ];
+    friendsFeatureState.friendMessages = Array.isArray(friendMessages) ? friendMessages : [];
     friendsFeatureState.marketplaceMessages = Array.isArray(marketplaceMessages) ? marketplaceMessages : [];
     friendsFeatureState.systemNotifications = Array.isArray(systemNotifications) ? systemNotifications : [];
     renderUserMessagesPage(getCombinedUserMessageItems());
@@ -907,6 +984,53 @@ async function loadUserMessagesPage() {
     loading.classList.add("d-none");
     error.textContent = loadError.message || "Nem sikerult betolteni az uzeneteket.";
     error.classList.remove("d-none");
+  }
+}
+
+async function startFriendConversation(targetUserId, username = "") {
+  const numericTargetUserId = Number(targetUserId);
+
+  if (!Number.isInteger(numericTargetUserId) || numericTargetUserId <= 0) {
+    return;
+  }
+
+  const rawMessage =
+    typeof showAppTextPrompt === "function"
+      ? await showAppTextPrompt({
+          title: "Uj barat uzenet",
+          label: username ? `${username} reszere` : "Uzenet",
+          placeholder: "Ird be az uzenetedet...",
+          confirmLabel: "Kuldes",
+        })
+      : window.prompt("Ird be az uzenetedet:");
+
+  if (rawMessage == null) {
+    return;
+  }
+
+  const message = String(rawMessage).trim();
+
+  if (message.length < 3) {
+    if (typeof showAppAlert === "function") {
+      showAppAlert("Az uzenet legalabb 3 karakter legyen.", {
+        title: "Hiba",
+      });
+    }
+    return;
+  }
+
+  await friendsApiRequest("/friends/messages", {
+    method: "POST",
+    body: JSON.stringify({
+      targetUserId: numericTargetUserId,
+      uzenet: message,
+    }),
+  });
+
+  await Promise.all([loadFriendNotifications(), loadUserMessagesPage()]);
+
+  if (typeof showAppSuccess === "function") {
+    await showAppSuccess("Az uzenet sikeresen elkuldve.");
   }
 }
 
@@ -1072,16 +1196,24 @@ function renderFriendsPageLists() {
               >
                 Megnyitás
               </button>
-              <button
-                class="btn btn-sm btn-outline-danger"
-                type="button"
-                data-remove-friend-id="${Number(user.FelhasznaloId)}"
-              >
-                Törlés
-              </button>
-            </div>
-          </div>
-        `
+               <button
+                 class="btn btn-sm btn-outline-danger"
+                 type="button"
+                 data-remove-friend-id="${Number(user.FelhasznaloId)}"
+               >
+                 Törlés
+               </button>
+               <button
+                 class="btn btn-sm btn-outline-info"
+                 type="button"
+                 data-message-friend-id="${Number(user.FelhasznaloId)}"
+                 data-message-friend-name="${escapeFriendsHtml(user.Felhasznalonev)}"
+               >
+                 Üzenet
+               </button>
+             </div>
+           </div>
+         `
       )
       .join("");
   }
@@ -1099,7 +1231,9 @@ async function loadFriendsOverview() {
     renderFriendNotifications(
       overview.pendingReceived || friendsFeatureState.notifications,
       friendsFeatureState.reportNotifications,
-      friendsFeatureState.marketplaceMessages
+      friendsFeatureState.friendMessages,
+      friendsFeatureState.marketplaceMessages,
+      friendsFeatureState.systemNotifications
     );
   } catch (error) {
     if (document.body.dataset.page === "baratok" && typeof showAppAlert === "function") {
@@ -1197,6 +1331,27 @@ function initializeFriendsPage() {
       }
 
       const removeButton = event.target.closest("[data-remove-friend-id]");
+
+      const messageButton = event.target.closest("[data-message-friend-id]");
+
+      if (messageButton) {
+        const targetUserId = Number(messageButton.dataset.messageFriendId);
+
+        if (!Number.isInteger(targetUserId) || targetUserId <= 0) {
+          return;
+        }
+
+        try {
+          await startFriendConversation(targetUserId, messageButton.dataset.messageFriendName || "");
+        } catch (error) {
+          if (typeof showAppAlert === "function") {
+            showAppAlert(error.message || "Nem sikerult elkuldeni az uzenetet.", {
+              title: "Hiba",
+            });
+          }
+        }
+        return;
+      }
 
       if (!removeButton) {
         return;

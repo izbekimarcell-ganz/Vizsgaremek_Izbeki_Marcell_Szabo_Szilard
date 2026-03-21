@@ -5377,6 +5377,230 @@ async function handleProfilePrivacyToggle(event) {
   }
 }
 
+const profileCustomizationState = {
+  savedImageUrl: null,
+  pendingImageUrl: null,
+  removeImage: false,
+  isOpen: false,
+};
+
+function getProfileDisplayName(user = {}) {
+  return user?.username || user?.Felhasznalonev || user?.felhasznalonev || "Horgasz";
+}
+
+function getProfileBioValue(user = {}) {
+  const bio = user?.bio ?? user?.Bemutatkozas ?? "";
+  return typeof bio === "string" ? bio.trim() : "";
+}
+
+function getProfileImageValue(user = {}) {
+  const imageUrl = user?.profileImageUrl ?? user?.ProfilKepUrl ?? null;
+  return typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null;
+}
+
+function getProfileInitials(name = "") {
+  const normalized = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+
+  return normalized || "HT";
+}
+
+function getEffectiveProfileImageUrl() {
+  if (profileCustomizationState.pendingImageUrl) {
+    return profileCustomizationState.pendingImageUrl;
+  }
+
+  if (profileCustomizationState.removeImage) {
+    return null;
+  }
+
+  return profileCustomizationState.savedImageUrl;
+}
+
+function renderProfileAvatar(user = {}, imageUrlOverride = getProfileImageValue(user)) {
+  const profileAvatar = $("#profileAvatar");
+
+  if (!profileAvatar) {
+    return;
+  }
+
+  const displayName = getProfileDisplayName(user);
+  const imageUrl = imageUrlOverride;
+
+  if (imageUrl) {
+    profileAvatar.innerHTML = `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(displayName)} profilképe">`;
+    return;
+  }
+
+  profileAvatar.textContent = getProfileInitials(displayName);
+}
+
+function renderProfileBio(user = {}) {
+  const profileBio = $("#profileBio");
+
+  if (!profileBio) {
+    return;
+  }
+
+  const bio = getProfileBioValue(user);
+  profileBio.textContent = bio || "Még nincs bemutatkozás.";
+}
+
+function syncProfileCustomizationControls(user = {}, options = {}) {
+  const { resetFileInput = false, preserveBioInput = false } = options;
+  const profileCustomizationSection = $("#profileCustomizationSection");
+  const profileCustomizationToggleButton = $("#profileCustomizationToggleButton");
+  const profileImageInput = $("#profileImageInput");
+  const profileBioInput = $("#profileBioInput");
+  const removeProfileImageButton = $("#removeProfileImageButton");
+
+  if (profileCustomizationSection) {
+    profileCustomizationSection.classList.toggle("d-none", !profileCustomizationState.isOpen);
+  }
+
+  if (profileCustomizationToggleButton) {
+    profileCustomizationToggleButton.classList.toggle("d-none", getViewedProfileUserId() !== null);
+  }
+
+  if (profileImageInput && resetFileInput) {
+    profileImageInput.value = "";
+  }
+
+  if (profileBioInput && !preserveBioInput) {
+    profileBioInput.value = getProfileBioValue(user);
+  }
+
+  if (removeProfileImageButton) {
+    removeProfileImageButton.disabled = !getEffectiveProfileImageUrl();
+  }
+}
+
+function setProfileCustomizationOpen(isOpen) {
+  profileCustomizationState.isOpen = Boolean(isOpen) && getViewedProfileUserId() === null;
+  syncProfileCustomizationControls(getStoredUser() || {});
+}
+
+function resetProfileCustomizationState(user = {}) {
+  profileCustomizationState.savedImageUrl = getProfileImageValue(user);
+  profileCustomizationState.pendingImageUrl = null;
+  profileCustomizationState.removeImage = false;
+  syncProfileCustomizationControls(user, { resetFileInput: true });
+}
+
+function handleProfileCustomizationOpen() {
+  if (getViewedProfileUserId() !== null) {
+    return;
+  }
+
+  resetProfileCustomizationState(getStoredUser() || {});
+  setProfileCustomizationOpen(true);
+
+  const profileCustomizationSection = $("#profileCustomizationSection");
+  if (profileCustomizationSection) {
+    requestAnimationFrame(() => {
+      profileCustomizationSection.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    });
+  }
+}
+
+async function handleProfileImageSelection(event) {
+  const input = event?.target;
+
+  if (!input) {
+    return;
+  }
+
+  try {
+    const imageDataUrl = await getImageDataUrlFromInput(input, "A profilkép");
+
+    if (!imageDataUrl) {
+      profileCustomizationState.pendingImageUrl = null;
+      profileCustomizationState.removeImage = false;
+      syncProfileCustomizationControls(getStoredUser() || {}, { preserveBioInput: true });
+      return;
+    }
+
+    profileCustomizationState.pendingImageUrl = imageDataUrl;
+    profileCustomizationState.removeImage = false;
+    syncProfileCustomizationControls(getStoredUser() || {}, { preserveBioInput: true });
+  } catch (error) {
+    input.value = "";
+    showAppAlert(error.message || "Nem sikerült beolvasni a profilképet.", { title: "Hiba" });
+  }
+}
+
+function handleProfileImageRemove() {
+  profileCustomizationState.pendingImageUrl = null;
+  profileCustomizationState.removeImage = true;
+  syncProfileCustomizationControls(getStoredUser() || {}, {
+    resetFileInput: true,
+    preserveBioInput: true,
+  });
+}
+
+function handleProfileCustomizationCancel() {
+  resetProfileCustomizationState(getStoredUser() || {});
+  setProfileCustomizationOpen(false);
+}
+
+async function handleProfileCustomizationSave() {
+  if (getViewedProfileUserId() !== null) {
+    return;
+  }
+
+  const saveButton = $("#saveProfileCustomizationButton");
+  const cancelButton = $("#cancelProfileCustomizationButton");
+  const bioInput = $("#profileBioInput");
+  const currentUser = getStoredUser() || {};
+  const effectiveImageUrl = profileCustomizationState.pendingImageUrl !== null
+    ? profileCustomizationState.pendingImageUrl
+    : (profileCustomizationState.removeImage ? "" : profileCustomizationState.savedImageUrl || "");
+
+  if (saveButton) {
+    saveButton.disabled = true;
+  }
+  if (cancelButton) {
+    cancelButton.disabled = true;
+  }
+
+  try {
+    const response = await apiRequest("/users/me/profile", {
+      method: "PUT",
+      body: JSON.stringify({
+        profileImageUrl: effectiveImageUrl,
+        bio: bioInput?.value || "",
+      }),
+    });
+
+    const updatedUser = response?.user || {};
+    updateStoredUser(updatedUser);
+    resetProfileCustomizationState(updatedUser);
+    setProfileCustomizationOpen(false);
+    await loadUserProfile();
+    await showAppSuccess(response?.message || "A profil sikeresen frissítve.");
+  } catch (error) {
+    showAppAlert(error.message || "Nem sikerült elmenteni a profil módosításait.", {
+      title: "Hiba",
+    });
+    syncProfileCustomizationControls(currentUser, { preserveBioInput: true });
+  } finally {
+    if (saveButton) {
+      saveButton.disabled = false;
+    }
+    if (cancelButton) {
+      cancelButton.disabled = false;
+    }
+  }
+}
+
 function bindProfilePrivacyToggle() {
   const toggle = $("#profilePrivateToggle");
 
@@ -5388,10 +5612,44 @@ function bindProfilePrivacyToggle() {
   toggle.dataset.bound = "true";
 }
 
+function bindProfileCustomizationControls() {
+  const profileCustomizationToggleButton = $("#profileCustomizationToggleButton");
+  const profileImageInput = $("#profileImageInput");
+  const saveProfileCustomizationButton = $("#saveProfileCustomizationButton");
+  const cancelProfileCustomizationButton = $("#cancelProfileCustomizationButton");
+  const removeProfileImageButton = $("#removeProfileImageButton");
+
+  if (profileCustomizationToggleButton && profileCustomizationToggleButton.dataset.bound !== "true") {
+    profileCustomizationToggleButton.addEventListener("click", handleProfileCustomizationOpen);
+    profileCustomizationToggleButton.dataset.bound = "true";
+  }
+
+  if (profileImageInput && profileImageInput.dataset.bound !== "true") {
+    profileImageInput.addEventListener("change", handleProfileImageSelection);
+    profileImageInput.dataset.bound = "true";
+  }
+
+  if (saveProfileCustomizationButton && saveProfileCustomizationButton.dataset.bound !== "true") {
+    saveProfileCustomizationButton.addEventListener("click", handleProfileCustomizationSave);
+    saveProfileCustomizationButton.dataset.bound = "true";
+  }
+
+  if (cancelProfileCustomizationButton && cancelProfileCustomizationButton.dataset.bound !== "true") {
+    cancelProfileCustomizationButton.addEventListener("click", handleProfileCustomizationCancel);
+    cancelProfileCustomizationButton.dataset.bound = "true";
+  }
+
+  if (removeProfileImageButton && removeProfileImageButton.dataset.bound !== "true") {
+    removeProfileImageButton.addEventListener("click", handleProfileImageRemove);
+    removeProfileImageButton.dataset.bound = "true";
+  }
+}
+
 function prepareProfilePage() {
   const viewedUserId = getViewedProfileUserId();
 
   bindProfilePrivacyToggle();
+  bindProfileCustomizationControls();
 
   if (viewedUserId !== null) {
     loadUserProfile();
@@ -6962,11 +7220,19 @@ async function loadUserProfile() {
   const profileContent = $("#profileContent");
   const profileEmpty = $("#profileEmpty");
   const profileLoading = $("#profileLoading");
+  const profilePrivateNotice = $("#profilePrivateNotice");
   const profileName = $("#profileName");
   const profileEmail = $("#profileEmail");
   const profileEmailSection = $("#profileEmailSection");
   const profileCreated = $("#profileCreated");
   const profileRoles = $("#profileRoles");
+  const profileAvatar = $("#profileAvatar");
+  const profileDisplayName = $("#profileDisplayName");
+  const profileBio = $("#profileBio");
+  const profilePrivacySection = $("#profilePrivacySection");
+  const profilePrivateToggle = $("#profilePrivateToggle");
+  const profileCustomizationSection = $("#profileCustomizationSection");
+  const profileCustomizationToggleButton = $("#profileCustomizationToggleButton");
   const profilePageTitle = $("#profilePageTitle");
   const profilePageDescription = document.querySelector("main .container .mb-4 .section-text");
   const profileActions = $("#profileActions");
@@ -6984,10 +7250,14 @@ async function loadUserProfile() {
       profileError.classList.add("d-none");
       profileError.textContent = "";
     }
+    if (profilePrivateNotice) {
+      profilePrivateNotice.classList.add("d-none");
+      profilePrivateNotice.textContent = "Privát fiók.";
+    }
 
     const user = isExternalProfile
       ? await apiRequest(`/users/${viewedUserId}/profile`)
-      : getStoredUser();
+      : await apiRequest("/users/me/profile");
 
     if (!user) {
       if (profileLoading) profileLoading.classList.add("d-none");
@@ -7009,7 +7279,14 @@ async function loadUserProfile() {
         ? "A kiválasztott felhasználó profilja."
         : "Profilinformációk és beállítások.";
     }
-    if (profileName) profileName.textContent = user.username || "";
+    if (!isExternalProfile) {
+      updateStoredUser(user);
+    }
+    if (profileName) profileName.textContent = getProfileDisplayName(user);
+    if (profileDisplayName) profileDisplayName.textContent = getProfileDisplayName(user);
+    resetProfileCustomizationState(user);
+    renderProfileAvatar(user);
+    renderProfileBio(user);
     if (profileEmail) profileEmail.textContent = isExternalProfile ? "-" : user.email || "";
     if (profileEmailSection) {
       profileEmailSection.classList.toggle("d-none", isExternalProfile);
@@ -7024,6 +7301,15 @@ async function loadUserProfile() {
     }
     if (profilePrivacySection) {
       profilePrivacySection.classList.toggle("d-none", isExternalProfile);
+    }
+    if (profileCustomizationToggleButton) {
+      profileCustomizationToggleButton.classList.toggle("d-none", isExternalProfile);
+    }
+    if (profileCustomizationSection) {
+      profileCustomizationSection.classList.toggle(
+        "d-none",
+        isExternalProfile || !profileCustomizationState.isOpen
+      );
     }
     if (profilePrivateToggle) {
       profilePrivateToggle.checked = !isExternalProfile && isPrivateProfileEnabled(user);

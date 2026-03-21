@@ -1,6 +1,41 @@
 const { sql, poolPromise } = require("../DbConfig");
 const { getProfileVisibility } = require("../utils/profileVisibility");
 
+function mapProfileUser(user, { includeEmail = false } = {}) {
+  return {
+    id: user.FelhasznaloId,
+    username: user.Felhasznalonev,
+    email: includeEmail ? user.Email : undefined,
+    profileImageUrl: user.ProfilKepUrl || null,
+    bio: user.Bemutatkozas || "",
+    letrehozva: user.Letrehozva,
+    aktiv: Boolean(user.Aktiv),
+    admin: Boolean(user.Admin),
+    private: Boolean(user.Privat),
+  };
+}
+
+function normalizeProfileImageUrl(value) {
+  const normalized = String(value || "").trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  const isDataImage = /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(normalized);
+  const isHttpImage = /^https?:\/\//i.test(normalized);
+
+  if (!isDataImage && !isHttpImage) {
+    throw new Error("A profilkep csak ervenyes kep URL vagy feltoltott kep lehet.");
+  }
+
+  return normalized;
+}
+
+function normalizeBio(value) {
+  return String(value || "").trim().slice(0, 1000);
+}
+
 async function getUsers(req, res) {
   try {
     const pool = await poolPromise;
@@ -139,6 +174,10 @@ async function deleteUserByAdmin(req, res) {
           WHERE KezdemenyezoFelhasznaloId = @userId
              OR CimzettFelhasznaloId = @userId;
 
+          DELETE FROM BaratUzenet
+          WHERE KuldoFelhasznaloId = @userId
+             OR CimzettFelhasznaloId = @userId;
+
           DELETE FROM ForumHozzaszolas
           WHERE FelhasznaloId = @userId;
 
@@ -240,10 +279,7 @@ async function getPublicUserProfile(req, res) {
     const { user, isFriend, isPrivate } = profileAccess;
 
     return res.status(200).json({
-      id: user.FelhasznaloId,
-      username: user.Felhasznalonev,
-      letrehozva: user.Letrehozva,
-      aktiv: Boolean(user.Aktiv),
+      ...mapProfileUser(user, { includeEmail: false }),
       admin: false,
       private: isPrivate,
       isFriend,
@@ -252,6 +288,117 @@ async function getPublicUserProfile(req, res) {
     console.error("Nyilvanos profil lekeresi hiba:", error);
     return res.status(500).json({
       message: "Hiba a profil lekérésekor.",
+    });
+  }
+}
+
+async function getOwnProfile(req, res) {
+  try {
+    const userId = Number.parseInt(req.user?.id, 10);
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(401).json({
+        message: "Bejelentkezes szukseges.",
+      });
+    }
+
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("userId", sql.Int, userId)
+      .query(`
+        SELECT
+          FelhasznaloId,
+          Felhasznalonev,
+          Email,
+          ProfilKepUrl,
+          Bemutatkozas,
+          Admin,
+          Aktiv,
+          Letrehozva,
+          Privat
+        FROM Felhasznalo
+        WHERE FelhasznaloId = @userId
+      `);
+
+    const user = result.recordset[0];
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Felhasznalo nem talalhato.",
+      });
+    }
+
+    return res.status(200).json(mapProfileUser(user, { includeEmail: true }));
+  } catch (error) {
+    console.error("Sajat profil lekeresi hiba:", error);
+    return res.status(500).json({
+      message: "Hiba a profil lekeresekor.",
+    });
+  }
+}
+
+async function updateOwnProfile(req, res) {
+  try {
+    const userId = Number.parseInt(req.user?.id, 10);
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      return res.status(401).json({
+        message: "Bejelentkezes szukseges.",
+      });
+    }
+
+    let profileImageUrl;
+
+    try {
+      profileImageUrl = normalizeProfileImageUrl(req.body?.profileImageUrl);
+    } catch (validationError) {
+      return res.status(400).json({
+        message: validationError.message,
+      });
+    }
+
+    const bio = normalizeBio(req.body?.bio);
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("userId", sql.Int, userId)
+      .input("profileImageUrl", sql.NVarChar(sql.MAX), profileImageUrl)
+      .input("bio", sql.NVarChar(1000), bio || null)
+      .query(`
+        UPDATE Felhasznalo
+        SET
+          ProfilKepUrl = @profileImageUrl,
+          Bemutatkozas = @bio
+        OUTPUT
+          INSERTED.FelhasznaloId,
+          INSERTED.Felhasznalonev,
+          INSERTED.Email,
+          INSERTED.ProfilKepUrl,
+          INSERTED.Bemutatkozas,
+          INSERTED.Admin,
+          INSERTED.Aktiv,
+          INSERTED.Letrehozva,
+          INSERTED.Privat
+        WHERE FelhasznaloId = @userId
+      `);
+
+    const user = result.recordset[0];
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Felhasznalo nem talalhato.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "A profil sikeresen frissitve.",
+      user: mapProfileUser(user, { includeEmail: true }),
+    });
+  } catch (error) {
+    console.error("Profil frissitesi hiba:", error);
+    return res.status(500).json({
+      message: "Hiba a profil frissitesekor.",
     });
   }
 }
@@ -271,6 +418,8 @@ async function updateOwnProfilePrivacy(req, res) {
           INSERTED.FelhasznaloId,
           INSERTED.Felhasznalonev,
           INSERTED.Email,
+          INSERTED.ProfilKepUrl,
+          INSERTED.Bemutatkozas,
           INSERTED.Admin,
           INSERTED.Aktiv,
           INSERTED.Letrehozva,
@@ -294,6 +443,8 @@ async function updateOwnProfilePrivacy(req, res) {
         id: user.FelhasznaloId,
         username: user.Felhasznalonev,
         email: user.Email,
+        profileImageUrl: user.ProfilKepUrl || null,
+        bio: user.Bemutatkozas || "",
         admin: Boolean(user.Admin),
         aktiv: Boolean(user.Aktiv),
         letrehozva: user.Letrehozva,
@@ -313,6 +464,8 @@ module.exports = {
   toggleUserActive,
   deleteUserByAdmin,
   searchUsers,
+  getOwnProfile,
   getPublicUserProfile,
+  updateOwnProfile,
   updateOwnProfilePrivacy,
 };

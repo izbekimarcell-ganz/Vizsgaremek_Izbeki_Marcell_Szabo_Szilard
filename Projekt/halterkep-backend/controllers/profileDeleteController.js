@@ -46,6 +46,10 @@ const deleteProfile = async (req, res) => {
           WHERE KezdemenyezoFelhasznaloId = @userId
              OR CimzettFelhasznaloId = @userId;
 
+          DELETE FROM BaratUzenet
+          WHERE KuldoFelhasznaloId = @userId
+             OR CimzettFelhasznaloId = @userId;
+
           DELETE FROM ForumHozzaszolas
           WHERE FelhasznaloId = @userId;
 
