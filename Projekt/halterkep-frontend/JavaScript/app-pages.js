@@ -258,9 +258,91 @@ async function showVizteruletDetails(vizteruletId) {
 /* =========================
    Fogásnapló oldal előkészítés
    ========================= */
+function getCatchCreateModalInstance() {
+  const modalElement = $("#catchCreateModal");
+
+  if (!modalElement || typeof bootstrap === "undefined") {
+    return null;
+  }
+
+  return bootstrap.Modal.getOrCreateInstance(modalElement);
+}
+
+function formatCatchCreateSelectedDate(dateKey) {
+  if (!dateKey) {
+    return "Válassz napot a naptárból.";
+  }
+
+  const date = new Date(`${dateKey}T12:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return "Válassz napot a naptárból.";
+  }
+
+  return date.toLocaleDateString("hu-HU", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  });
+}
+
+function setCatchCreateSelectedDate(dateKey) {
+  const normalizedDateKey =
+    typeof normalizeDateKey === "function" ? normalizeDateKey(dateKey) : String(dateKey || "").trim();
+  const selectedDateInput = $("#catchSelectedDate");
+  const selectedDateLabel = $("#catchSelectedDateLabel");
+
+  if (selectedDateInput) {
+    selectedDateInput.value = normalizedDateKey || "";
+  }
+
+  if (selectedDateLabel) {
+    selectedDateLabel.textContent = normalizedDateKey
+      ? `Kiválasztott nap: ${formatCatchCreateSelectedDate(normalizedDateKey)}`
+      : "Válassz napot a naptárból.";
+  }
+}
+
+function getDefaultCatchTimeValue() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+}
+
+function openCatchCreateModal(dateKey) {
+  const normalizedDateKey =
+    typeof normalizeDateKey === "function" ? normalizeDateKey(dateKey) : String(dateKey || "").trim();
+
+  if (!normalizedDateKey) {
+    showAppAlert("Előbb válassz ki egy napot a naptárban.", { title: "Hiányzó nap" });
+    return;
+  }
+
+  setCatchCreateSelectedDate(normalizedDateKey);
+
+  const catchTimeInput = $("#catchDateTime");
+  const catchFormMessage = $("#catchFormMessage");
+
+  if (catchTimeInput && !catchTimeInput.value) {
+    catchTimeInput.value = getDefaultCatchTimeValue();
+  }
+
+  if (catchFormMessage) {
+    catchFormMessage.textContent = "";
+    catchFormMessage.className = "small mt-3";
+  }
+
+  const modalInstance = getCatchCreateModalInstance();
+  if (modalInstance) {
+    modalInstance.show();
+  }
+}
+
+window.openCatchCreateModal = openCatchCreateModal;
+
 function prepareCatchLogPage() {
   const catchForm = $("#catchForm");
   const catchListContainer = $("#catchListContainer");
+  const catchCreateModal = $("#catchCreateModal");
 
   if (!isLoggedIn()) {
     setPendingRedirect("fogasnaplo.html");
@@ -270,6 +352,16 @@ function prepareCatchLogPage() {
 
   if (catchForm) {
     catchForm.addEventListener("submit", handleAddCatch);
+  }
+
+  if (catchCreateModal && catchCreateModal.dataset.bound !== "true") {
+    catchCreateModal.addEventListener("hidden.bs.modal", () => {
+      if (catchForm) {
+        catchForm.reset();
+      }
+      setCatchCreateSelectedDate($("#catchSelectedDate")?.value || "");
+    });
+    catchCreateModal.dataset.bound = "true";
   }
 
   if (catchListContainer) {
@@ -342,10 +434,17 @@ async function handleAddCatch(event) {
     return;
   }
   
+  const selectedDateKey = $("#catchSelectedDate")?.value || "";
+  const timeValue = form.querySelector("#catchDateTime")?.value || "";
+  const fogasIdeje =
+    document.body.dataset.page === "fogasnaplo"
+      ? (selectedDateKey && timeValue ? `${selectedDateKey}T${timeValue}` : "")
+      : form.querySelector("#catchDateTime")?.value;
+
   const catchData = {
     halfajId: parseInt(form.querySelector("#catchSpeciesId")?.value),
     vizteruletId: parseInt(form.querySelector("#catchWaterbodyId")?.value),
-    fogasIdeje: form.querySelector("#catchDateTime")?.value,
+    fogasIdeje,
     sulyKg: parseFloat(form.querySelector("#catchWeight")?.value) || null,
     hosszCm: parseInt(form.querySelector("#catchLength")?.value) || null,
     fotoUrl,
@@ -365,6 +464,10 @@ async function handleAddCatch(event) {
 
     await showAppSuccess("Fogás sikeresen rögzítve!");
     form.reset();
+    const modalInstance = getCatchCreateModalInstance();
+    if (modalInstance) {
+      modalInstance.hide();
+    }
     loadSajatFogasok();
   } catch (error) {
     showAppAlert(error.message || "Hiba a fogás rögzítése során!", { title: "Hiba" });

@@ -14,7 +14,6 @@
 </head>
 <body data-page="fogasnaplo" data-theme="dark">
 
-  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
     <div class="container nav-container">
       <a class="navbar-brand d-flex align-items-center gap-3" href="index.html">
@@ -73,76 +72,53 @@
       </div>
     </div>
   </nav>
-  <!-- Navbar vége -->
 
-  <!-- Fő tartalom -->
   <main class="main-content py-5">
     <div class="container">
       <div class="mb-4">
         <h1 class="mb-1">Fogásnapló</h1>
-        <p class="section-text mb-0">Új fogás rögzítése és korábbi fogások listázása.</p>
+        <p class="section-text mb-0">A naptárból rögzítheted az új fogásokat, és visszanézheted a korábbiakat.</p>
       </div>
 
       <div class="row g-4 catch-log-layout">
-        <!-- Új fogás űrlap -->
         <div class="col-lg-6">
           <div class="card app-card catch-form-card">
             <div class="card-body">
-              <h2 class="h5 mb-3">Új fogás</h2>
+              <h2 class="h5 mb-2">Horgásznaptár</h2>
+              <p class="section-text small mb-3">
+                Válassz egy napot, majd a `+` menüben adhatsz hozzá új fogást, megjegyzést vagy horgásznap jelölést.
+              </p>
 
-              <form id="catchForm" enctype="multipart/form-data" novalidate>
-                <div class="mb-3">
-                  <label class="form-label" for="catchWaterbodyId">Vízterület</label>
-                  <select id="catchWaterbodyId" name="vizteruletId" class="form-select app-input">
-                    <option value="">Válassz vízterületet</option>
-                  </select>
+              <div id="profileFishingCalendar" class="profile-fishing-calendar">
+                <div class="profile-calendar-toolbar">
+                  <button id="profileCalendarPrev" class="btn btn-outline-light btn-sm" type="button" aria-label="Előző hónap">
+                    &lsaquo;
+                  </button>
+                  <div id="profileCalendarMonthLabel" class="fw-semibold"></div>
+                  <button id="profileCalendarNext" class="btn btn-outline-light btn-sm" type="button" aria-label="Következő hónap">
+                    &rsaquo;
+                  </button>
                 </div>
-
-                <div class="mb-3">
-                  <label class="form-label" for="catchSpeciesId">Halfaj</label>
-                  <select id="catchSpeciesId" name="halfajId" class="form-select app-input">
-                    <option value="">Válassz halfajt</option>
-                  </select>
+                <div class="profile-calendar-weekdays" aria-hidden="true">
+                  <span>H</span>
+                  <span>K</span>
+                  <span>Sze</span>
+                  <span>Cs</span>
+                  <span>P</span>
+                  <span>Szo</span>
+                  <span>V</span>
                 </div>
-
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label" for="catchDateTime">Dátum / idő</label>
-                    <input id="catchDateTime" name="fogasIdeje" type="datetime-local" class="form-control app-input" />
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label" for="catchWeight">Súly (kg)</label>
-                    <input id="catchWeight" name="sulyKg" type="number" step="0.01" class="form-control app-input" />
-                  </div>
+                <div id="profileCalendarGrid" class="profile-calendar-grid"></div>
+                <div id="profileCalendarMonthEmpty" class="section-text small mt-3 d-none">
+                  Ebben a hónapban nincs rögzített horgásznap.
                 </div>
-
-                <div class="mt-3">
-                  <label class="form-label" for="catchLength">Hossz (cm)</label>
-                  <input id="catchLength" name="hosszCm" type="number" class="form-control app-input" />
-                </div>
-
-                <div class="mt-3">
-                  <label class="form-label" for="catchImage">Kép</label>
-                  <input id="catchImage" name="foto" type="file" accept="image/*" class="form-control app-input" />
-                </div>
-
-                <div class="mt-3">
-                  <label class="form-label" for="catchNote">Megjegyzés</label>
-                  <textarea id="catchNote" name="megjegyzes" class="form-control app-input" rows="4"></textarea>
-                </div>
-
-                <div class="d-flex flex-wrap gap-2 mt-4">
-                  <button id="saveCatchButton" class="btn btn-primary" type="submit">Mentés</button>
-                  <button id="resetCatchButton" class="btn btn-outline-light" type="reset">Mégse</button>
-                </div>
-              </form>
-
-              <div id="catchFormMessage" class="small mt-3"></div>
+                <div id="profileCalendarSelectedDate" class="fw-semibold mt-3 d-none"></div>
+                <div id="profileCalendarDayCatches" class="profile-calendar-day-catches mt-3"></div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Saját fogások -->
         <div class="col-lg-6">
           <div class="card app-card catch-list-card">
             <div class="card-body catch-list-card-body">
@@ -169,41 +145,103 @@
                 <div class="col-md-6">
                   <label class="form-label small mb-1" for="catchFilterWater">Hely</label>
                   <select id="catchFilterWater" class="form-select form-select-sm app-input">
-                    <option value="">&Ouml;sszes hely</option>
+                    <option value="">Összes hely</option>
                   </select>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label small mb-1" for="catchFilterSpecies">Halfaj</label>
                   <select id="catchFilterSpecies" class="form-select form-select-sm app-input">
-                    <option value="">&Ouml;sszes halfaj</option>
+                    <option value="">Összes halfaj</option>
                   </select>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label small mb-1" for="catchFilterMinSize">M&eacute;ret min. (cm)</label>
+                  <label class="form-label small mb-1" for="catchFilterMinSize">Méret min. (cm)</label>
                   <input id="catchFilterMinSize" type="number" min="0" class="form-control form-control-sm app-input" placeholder="pl. 30" />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label small mb-1" for="catchFilterMaxSize">M&eacute;ret max. (cm)</label>
+                  <label class="form-label small mb-1" for="catchFilterMaxSize">Méret max. (cm)</label>
                   <input id="catchFilterMaxSize" type="number" min="0" class="form-control form-control-sm app-input" placeholder="pl. 80" />
                 </div>
               </div>
 
-              <div id="catchListContainer" class="catch-list-scroll-area">
-                <!-- Dinamikus fogáslista ide -->
-              </div>
+              <div id="catchListContainer" class="catch-list-scroll-area"></div>
             </div>
           </div>
         </div>
       </div>
     </div>
   </main>
-  <!-- Fő tartalom vége -->
 
-  <!-- Footer -->
+  <div class="modal fade" id="catchCreateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content app-card border-info-subtle">
+        <div class="modal-header border-secondary-subtle">
+          <div>
+            <h2 class="modal-title fs-5 mb-1">Új fogás</h2>
+            <div id="catchSelectedDateLabel" class="section-text small">Válassz napot a naptárból.</div>
+          </div>
+          <button type="button" class="btn-close admin-modal-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+        </div>
+        <div class="modal-body">
+          <form id="catchForm" enctype="multipart/form-data" novalidate>
+            <input id="catchSelectedDate" type="hidden" />
+
+            <div class="mb-3">
+              <label class="form-label" for="catchWaterbodyId">Vízterület</label>
+              <select id="catchWaterbodyId" name="vizteruletId" class="form-select app-input">
+                <option value="">Válassz vízterületet</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="catchSpeciesId">Halfaj</label>
+              <select id="catchSpeciesId" name="halfajId" class="form-select app-input">
+                <option value="">Válassz halfajt</option>
+              </select>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="catchDateTime">Időpont</label>
+                <input id="catchDateTime" name="fogasIdeje" type="time" class="form-control app-input" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="catchWeight">Súly (kg)</label>
+                <input id="catchWeight" name="sulyKg" type="number" step="0.01" class="form-control app-input" />
+              </div>
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label" for="catchLength">Hossz (cm)</label>
+              <input id="catchLength" name="hosszCm" type="number" class="form-control app-input" />
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label" for="catchImage">Kép</label>
+              <input id="catchImage" name="foto" type="file" accept="image/*" class="form-control app-input" />
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label" for="catchNote">Megjegyzés</label>
+              <textarea id="catchNote" name="megjegyzes" class="form-control app-input" rows="4"></textarea>
+            </div>
+
+            <div id="catchFormMessage" class="small mt-3"></div>
+
+            <div class="d-flex flex-wrap gap-2 mt-4">
+              <button id="saveCatchButton" class="btn btn-primary" type="submit">Mentés</button>
+              <button id="resetCatchButton" class="btn btn-outline-light" type="reset">Űrlap törlése</button>
+              <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Mégse</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <footer class="py-4 border-top border-secondary-subtle app-footer">
     <div class="container text-center footer-text">© HalTérkép</div>
   </footer>
-  <!-- Footer vége -->
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../JavaScript/script.js"></script>
@@ -214,8 +252,3 @@
   <script src="../JavaScript/friend-search.js"></script>
 </body>
 </html>
-
-
-
-
-

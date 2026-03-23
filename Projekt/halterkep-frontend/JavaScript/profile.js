@@ -405,6 +405,10 @@ function formatProfileCalendarSelectedDate(dateKey) {
   });
 }
 
+function getFishingCalendarPageMode() {
+  return document.body.dataset.page === "fogasnaplo" ? "catch-log" : "profile";
+}
+
 function normalizeFishingDayEntries(days = []) {
   if (!Array.isArray(days)) {
     return [];
@@ -732,6 +736,9 @@ function renderProfileFishingCalendar(catches = [], manualDays = [], options = {
   }
 
   const { isOwnProfile = false, keepMonth = false } = options;
+  const calendarMode = getFishingCalendarPageMode();
+  const allowDayMenu = calendarMode === "catch-log" && Boolean(isOwnProfile);
+  const showDayDetails = calendarMode === "profile";
 
   if (!Array.isArray(catches)) {
     clearProfileFishingCalendar();
@@ -780,9 +787,13 @@ function renderProfileFishingCalendar(catches = [], manualDays = [], options = {
     && isSameMonth(getDateFromDateKey(profileCalendarState.selectedDateKey), profileCalendarState.currentMonth);
 
   if (!profileCalendarState.selectedDateKey) {
-    profileCalendarState.selectedDateKey = monthMarkedKeys[0] || "";
+    profileCalendarState.selectedDateKey = showDayDetails
+      ? monthMarkedKeys[0] || ""
+      : `${profileCalendarState.currentMonth.getFullYear()}-${String(profileCalendarState.currentMonth.getMonth() + 1).padStart(2, "0")}-01`;
   } else if (!hasSelectedDateInCurrentMonth) {
-    profileCalendarState.selectedDateKey = monthMarkedKeys[0] || "";
+    profileCalendarState.selectedDateKey = showDayDetails
+      ? monthMarkedKeys[0] || ""
+      : `${profileCalendarState.currentMonth.getFullYear()}-${String(profileCalendarState.currentMonth.getMonth() + 1).padStart(2, "0")}-01`;
   }
 
   calendar.classList.remove("d-none");
@@ -865,7 +876,7 @@ function renderProfileFishingCalendar(catches = [], manualDays = [], options = {
 
     dayWrapper.appendChild(button);
 
-    if (profileCalendarState.isOwnProfile) {
+    if (allowDayMenu) {
       const menu = document.createElement("div");
       menu.className = "profile-calendar-day-menu";
 
@@ -887,6 +898,25 @@ function renderProfileFishingCalendar(catches = [], manualDays = [], options = {
       const panel = document.createElement("div");
       panel.className = "profile-calendar-day-menu-panel";
       panel.classList.toggle("d-none", profileCalendarState.menuOpenDateKey !== dateKey);
+
+      const createCatchButton = document.createElement("button");
+      createCatchButton.type = "button";
+      createCatchButton.className = "profile-calendar-day-menu-action";
+      createCatchButton.textContent = "Új fogás";
+      createCatchButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        profileCalendarState.selectedDateKey = dateKey;
+        profileCalendarState.menuOpenDateKey = "";
+
+        if (typeof window.openCatchCreateModal === "function") {
+          window.openCatchCreateModal(dateKey);
+        }
+
+        renderProfileFishingCalendar(profileCalendarState.catches, profileCalendarState.manualDays, {
+          isOwnProfile: profileCalendarState.isOwnProfile,
+          keepMonth: true,
+        });
+      });
 
       const actionButton = document.createElement("button");
       actionButton.type = "button";
@@ -924,6 +954,7 @@ function renderProfileFishingCalendar(catches = [], manualDays = [], options = {
         noteButton.disabled = true;
       }
 
+      panel.appendChild(createCatchButton);
       panel.appendChild(actionButton);
       panel.appendChild(noteButton);
       menu.appendChild(toggleButton);
@@ -934,14 +965,18 @@ function renderProfileFishingCalendar(catches = [], manualDays = [], options = {
     grid.appendChild(dayWrapper);
   }
 
-  renderProfileCalendarDayDetails(
-    profileCalendarState.selectedDateKey ? catchesByDate.get(profileCalendarState.selectedDateKey) || [] : [],
-    profileCalendarState.selectedDateKey,
-    Boolean(profileCalendarState.selectedDateKey) &&
-      manualDayKeys.has(profileCalendarState.selectedDateKey) &&
-      !(catchesByDate.get(profileCalendarState.selectedDateKey) || []).length,
-    manualDaysByDate.get(profileCalendarState.selectedDateKey)?.Megjegyzes || ""
-  );
+  if (showDayDetails) {
+    renderProfileCalendarDayDetails(
+      profileCalendarState.selectedDateKey ? catchesByDate.get(profileCalendarState.selectedDateKey) || [] : [],
+      profileCalendarState.selectedDateKey,
+      Boolean(profileCalendarState.selectedDateKey) &&
+        manualDayKeys.has(profileCalendarState.selectedDateKey) &&
+        !(catchesByDate.get(profileCalendarState.selectedDateKey) || []).length,
+      manualDaysByDate.get(profileCalendarState.selectedDateKey)?.Megjegyzes || ""
+    );
+  } else {
+    renderProfileCalendarDayDetails([], "", false, "");
+  }
 }
 
 function changeProfileCalendarMonth(delta) {
@@ -1213,7 +1248,7 @@ function applyCatchFilters(context, options = {}) {
 
   if (context === "profile") {
     bindProfileFishingCalendarControls();
-    renderProfileFishingCalendar(source, profileCalendarState.manualDays, {
+    renderProfileFishingCalendar(filtered, profileCalendarState.manualDays, {
       isOwnProfile: profileCalendarState.isOwnProfile,
       keepMonth: true,
     });
@@ -1243,7 +1278,9 @@ function applyCatchFilters(context, options = {}) {
     return;
   }
 
-  renderCatchCards(elements.list, filtered, { allowDelete });
+  if (context !== "profile") {
+    renderCatchCards(elements.list, filtered, { allowDelete });
+  }
 }
 
 function syncCatchFilterOptions(context, catches) {
@@ -1283,20 +1320,32 @@ async function loadSajatFogasok() {
       catchListEmpty.textContent = "Még nincs rögzített fogásod.";
     }
 
-    const data = await apiRequest("/fogasnaplo/sajat");
+    const [data, fishingDays] = await Promise.all([
+      apiRequest("/fogasnaplo/sajat"),
+      apiRequest("/horgasznapok/sajat"),
+    ]);
     catchCollections.own = Array.isArray(data) ? data : [];
+    profileCalendarState.manualDays = normalizeFishingDayEntries(fishingDays);
+    profileCalendarState.isOwnProfile = true;
     syncCatchFilterOptions("own", catchCollections.own);
     applyCatchFilters("own", {
       allowDelete: true,
       emptyMessage: "Még nincs rögzített fogásod.",
       filteredEmptyMessage: "Nincs a szűrésnek megfelelő fogás.",
     });
+    bindProfileFishingCalendarControls();
+    renderProfileFishingCalendar(catchCollections.own, profileCalendarState.manualDays, {
+      isOwnProfile: true,
+      keepMonth: true,
+    });
   } catch (error) {
     console.error("Fog\u00E1sok bet\u00F6lt\u00E9si hiba:", error);
     clearElement(catchListContainer);
     catchCollections.own = [];
+    profileCalendarState.manualDays = [];
     catchFilterPanelState.own = false;
     updateCatchFiltersVisibility("own");
+    clearProfileFishingCalendar();
     if (catchListError) {
       catchListError.classList.remove("d-none");
       catchListError.textContent = "Hiba történt az adatok betöltése során.";
