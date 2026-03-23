@@ -44,8 +44,8 @@
 
 ## 2026.03.23
 
-- A footer meg a navbar mindig látszódjon(tehát a navbar vegyük le a elcsúszós cuccot és a footer pedig mindig látszódjon mint navbar és ha görgetünk akkor csak a képernyő közepe tekerőjön
-- a header legyen egy picikét kisebb/vékonyabb és a footer pedig legyen ugyan olyan színű mint a navbar
+- ~~A footer meg a navbar mindig látszódjon(tehát a navbar vegyük le a elcsúszós cuccot és a footer pedig mindig látszódjon mint navbar és ha görgetünk akkor csak a képernyő közepe tekerőjön~~ **(KÉSZ)**
+- ~~a header legyen egy picikét kisebb/vékonyabb és a footer pedig legyen ugyan olyan színű mint a navbar~~ **(KÉSZ)**
 - a barátoknál újra kell fogalmazni dolgokat(A barátok címet ismerősökre, a nem barát felhasználókat felhasználókra)
 - a fogásnaplóhoz rakjuk bele a naptárat(Úgy hogy a az új fogás helyére kerüljön be a naptár és a + menübe kerüljön be egy "Új fogás" választék amire hogyha rányomunk, akkor egy modal ablakban feljön az eredeti új fogás menü csak ugye dátumot már nem kell állítani(mert ugye a naptárban már a naphoz adjuk hozzá) csak órát meg percet keljen ott ahol eddig volt a dátum. És a naptárból az a rész ahol hogyha rányomunk a napra és kidobja az ahoz a naphoz kapcsolódó dolgokat nem kell. Meg megjegyzést meg horgásznap jelölést is csak a fogásnapló oldalon lehessen, tehát a profilba úgy módósítsd a naptárat hogy csak az működjön hogy ha rányomunk egy napra akkor kidobja az az napi dolgokat a naptár alá)
 - A projekt nevét és mindenhol máshol a HalTérképről át kell írni HalBarátok-ra

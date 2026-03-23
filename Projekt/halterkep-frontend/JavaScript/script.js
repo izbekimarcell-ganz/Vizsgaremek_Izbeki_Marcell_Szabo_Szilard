@@ -1146,7 +1146,7 @@ async function updateNavbar() {
         : `
             <a class="dropdown-item" href="profil.html">Profil</a>
             <a class="dropdown-item" href="uzenetek.html">Üzenetek</a>
-            <a class="dropdown-item" href="baratok.html">Barátok</a>
+            <a class="dropdown-item" href="baratok.html">Ismerősök</a>
             <button class="dropdown-item desktop-account-menu-logout" type="button" onclick="handleLogout()">Kijelentkezés</button>
           `;
 

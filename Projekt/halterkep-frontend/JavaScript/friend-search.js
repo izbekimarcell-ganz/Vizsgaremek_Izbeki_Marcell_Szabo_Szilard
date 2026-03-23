@@ -224,7 +224,7 @@ function renderFriendConversationMarkup(detail) {
 
   return `
     <div class="app-list-item">
-      <div class="fw-semibold mb-2">Barát beszélgetés</div>
+      <div class="fw-semibold mb-2">Ismerős beszélgetés</div>
       <div>Beszélgetés partner: ${escapeFriendsHtml(detail?.MasikFelhasznalonev || "-")}</div>
     </div>
     <div class="d-grid gap-2">
@@ -468,7 +468,7 @@ function renderFriendsNav() {
   } else {
     navItem.classList.remove("d-none");
     navItem.innerHTML = `
-      <a class="nav-link" href="baratok.html">Barátok</a>
+      <a class="nav-link" href="baratok.html">Ismerősök</a>
     `;
   }
 
@@ -554,8 +554,8 @@ function renderFriendsNav() {
 
         const confirmMessage =
           action === "accept"
-            ? "Biztosan elfogadod ezt a barátkérelmet?"
-            : "Biztosan elutasítod ezt a barátkérelmet?";
+            ? "Biztosan elfogadod ezt az ismerősnek jelölést?"
+            : "Biztosan elutasítod ezt az ismerősnek jelölést?";
 
         const isConfirmed = await friendsShowConfirm(confirmMessage, {
           confirmLabel: action === "accept" ? "Elfogadás" : "Elutasítás",
@@ -574,13 +574,13 @@ function renderFriendsNav() {
 
           await friendsShowSuccess(
             action === "accept"
-              ? "A barátkérelem sikeresen elfogadva."
-              : "A barátkérelem sikeresen elutasítva."
+              ? "Az ismerősnek jelölés sikeresen elfogadva."
+              : "Az ismerősnek jelölés sikeresen elutasítva."
           );
 
           await Promise.all([loadFriendNotifications(), refreshFriendsOverviewIfNeeded()]);
         } catch (error) {
-          friendsShowAlert(error.message || "Nem sikerült feldolgozni a barátkérelmet.", {
+          friendsShowAlert(error.message || "Nem sikerült feldolgozni az ismerősnek jelölést.", {
             title: "Hiba",
           });
         }
@@ -648,7 +648,7 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
     (item) => `
       <div class="friend-notification-item">
         <div class="fw-semibold">${escapeFriendsHtml(item.Felhasznalonev)}</div>
-        <div class="section-text small mb-3">barátkérelmet küldött neked.</div>
+        <div class="section-text small mb-3">ismerősnek jelölést küldött neked.</div>
         <div class="d-flex gap-2 flex-wrap">
           <button class="btn btn-sm btn-success" type="button" data-request-id="${Number(item.BaratKerelemId)}" data-action="accept">
             Elfogadás
@@ -716,7 +716,7 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
     ? []
     : friendMessageItems.map((item) => `
         <div class="friend-notification-item">
-          <div class="fw-semibold">${Number(item.OlvasatlanDb || 0) > 0 ? "Új barát üzenet" : "Barát beszélgetés"}</div>
+          <div class="fw-semibold">${Number(item.OlvasatlanDb || 0) > 0 ? "Új ismerős üzenet" : "Ismerős beszélgetés"}</div>
           <div class="section-text small mb-2">${escapeFriendsHtml(item.MasikFelhasznalonev || "-")}</div>
           <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.Letrehozva).toLocaleString("hu-HU"))}</div>
           <div class="d-flex gap-2 flex-wrap">
@@ -839,7 +839,7 @@ function getCombinedUserMessageItems() {
       id: Number(item.BaratUzenetId),
       source: "friend-message",
       unread: Number(item.OlvasatlanDb || 0) > 0,
-      title: Number(item.OlvasatlanDb || 0) > 0 ? "Új barát üzenet" : "Barát beszélgetés",
+      title: Number(item.OlvasatlanDb || 0) > 0 ? "Új ismerős üzenet" : "Ismerős beszélgetés",
       subtitle: item.MasikFelhasznalonev || "-",
       timestamp: item.Letrehozva,
     }));
@@ -996,7 +996,7 @@ async function startFriendConversation(targetUserId, username = "") {
   }
 
   const rawMessage = await friendsShowTextPrompt({
-    title: "Új barát üzenet",
+    title: "Új ismerős üzenet",
     label: username ? `${username} reszere` : "Uzenet",
     placeholder: "Írd be az üzenetedet...",
     confirmLabel: "Kuldes",
@@ -1231,7 +1231,7 @@ async function loadFriendsOverview() {
     );
   } catch (error) {
     if (document.body.dataset.page === "baratok" && typeof showAppAlert === "function") {
-      showAppAlert(error.message || "Nem sikerült betölteni a barátok adatait.", {
+      showAppAlert(error.message || "Nem sikerült betölteni az ismerősök adatait.", {
         title: "Hiba",
       });
     }
@@ -1301,13 +1301,13 @@ function initializeFriendsPage() {
         });
 
         if (typeof showAppSuccess === "function") {
-          await showAppSuccess("A barátkérelem sikeresen elküldve.");
+          await showAppSuccess("Az ismerősnek jelölés sikeresen elküldve.");
         }
 
         await Promise.all([loadFriendsOverview(), loadFriendNotifications()]);
       } catch (error) {
         if (typeof showAppAlert === "function") {
-          showAppAlert(error.message || "Nem sikerült elküldeni a barátkérelmet.", {
+          showAppAlert(error.message || "Nem sikerült elküldeni az ismerősnek jelölést.", {
             title: "Hiba",
           });
         }
@@ -1357,7 +1357,7 @@ function initializeFriendsPage() {
         return;
       }
 
-      const confirmed = await friendsShowConfirm("Biztosan törölni szeretnéd ezt a barátot?", {
+      const confirmed = await friendsShowConfirm("Biztosan törölni szeretnéd ezt az ismerőst?", {
         confirmLabel: "Törlés",
       });
 
@@ -1370,11 +1370,11 @@ function initializeFriendsPage() {
           method: "DELETE",
         });
 
-        await friendsShowSuccess("A barát sikeresen törölve lett.");
+        await friendsShowSuccess("Az ismerős sikeresen törölve lett.");
 
         await Promise.all([loadFriendsOverview(), loadFriendNotifications()]);
       } catch (error) {
-        friendsShowAlert(error.message || "Nem sikerült törölni a barátot.", {
+        friendsShowAlert(error.message || "Nem sikerült törölni az ismerőst.", {
           title: "Hiba",
         });
       }
