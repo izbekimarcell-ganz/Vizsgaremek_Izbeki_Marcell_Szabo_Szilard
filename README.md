@@ -21,7 +21,7 @@
 - ~~Térkép tervezésének és megcsinálásának elkezdése~~ **(Törölve)**
 - ~~Regisztrációnál az adatok ellenőrzése~~ **(KÉSZ)**
 - ~~Marketplace csinálás~~ **(KÉSZ)**
-- ~~Pici redesign (nagyon látszik az ai)~~ **(KÉSZ)**
+- ~~Pici redesign (nagyon látszik az ai)~~ **(KÉSZ)** 
 
 ## 2026.03.15
 
