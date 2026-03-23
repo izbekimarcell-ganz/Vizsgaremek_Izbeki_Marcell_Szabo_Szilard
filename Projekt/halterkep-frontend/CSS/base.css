@@ -216,6 +216,8 @@ body[data-theme="light"] .brand-title {
   background: var(--panel);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--border);
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
   flex-shrink: 0;
   transition: background 0.3s ease;
 }
@@ -229,15 +231,20 @@ body[data-theme="light"] .brand-title {
   flex-shrink: 0;
   background: var(--panel);
   backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border) !important;
 }
 
 .nav-container {
   position: relative;
 }
 
+.navbar-brand {
+  gap: 0.9rem !important;
+}
+
 .brand-logo {
-  width: 128px;
-  height: 128px;
+  width: 112px;
+  height: 112px;
   object-fit: contain;
 }
 
