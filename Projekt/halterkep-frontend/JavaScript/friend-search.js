@@ -1173,7 +1173,7 @@ function renderFriendsPageLists() {
   if (!filteredFriends.length) {
     friendsList.innerHTML = `
       <div class="friend-list-empty">
-        Még nincs elfogadott barátod.
+        Még nincs elfogadott ismerősöd.
       </div>
     `;
   } else {
