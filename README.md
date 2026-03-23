@@ -51,6 +51,9 @@
 - ~~A projekt nevét és mindenhol máshol a HalTérképről át kell írni HalBarátok-ra~~ **(KÉSZ)** 
 - ~~A főoldalon csak a nagy cím legyen(nyílván a navbar meg a footerel eggyütt) és minden mást veggyél ki~~ **(KÉSZ)**
 
+## 2026.03.24
+- A fájl nevek átírása HalTérkép-ről HalBarátok-ra
+
 ## Adatfeltöltések lista (itt hívjál fel vagy írjál rám!!!!)
  
 - elsőként minden előre feltöltött adatott töröljünk a scriptbő és ezzel az adabázisból.
