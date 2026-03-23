@@ -41,3 +41,17 @@
 ## 2026.03.22
 
 - ~~html fájlok mappába rendezése~~ **(KÉSZ)**
+
+## 2026.03.23
+
+- A footer meg a header mindig látszódjon
+- a header legyen egy picikét kisebb
+- a barátoknál újra kell fogalmazni dolgokat
+- a fogásnaplóhoz rakjuk bele a naptárat a hozzáadáshoz.
+
+## Adatfeltöltések lista
+
+- elsőként minden előre feltöltött adatott töröljünk a scriptbő és ezzel az adabázisból.
+- 3db felhasználó(a Felhsználót töröljük)
+- A vizeket rendesen feltölteni(egy ingyenes adatbázisról)
+  
