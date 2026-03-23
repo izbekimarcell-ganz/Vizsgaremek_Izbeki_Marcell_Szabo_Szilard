@@ -361,6 +361,7 @@ const profileCalendarState = {
   selectedDateKey: "",
   isOwnProfile: false,
   menuOpenDateKey: "",
+  monthBounds: null,
 };
 
 function getCatchDateKey(dateValue) {
@@ -495,6 +496,7 @@ function clearProfileFishingCalendar() {
   profileCalendarState.selectedDateKey = "";
   profileCalendarState.isOwnProfile = false;
   profileCalendarState.menuOpenDateKey = "";
+  profileCalendarState.monthBounds = null;
 
   if (calendar) {
     calendar.classList.add("d-none");
@@ -739,6 +741,7 @@ function renderProfileFishingCalendar(catches = [], manualDays = [], options = {
   const calendarMode = getFishingCalendarPageMode();
   const allowDayMenu = calendarMode === "catch-log" && Boolean(isOwnProfile);
   const showDayDetails = calendarMode === "profile";
+  const limitNavigationToMarkedMonths = calendarMode === "profile";
 
   if (!Array.isArray(catches)) {
     clearProfileFishingCalendar();
@@ -767,15 +770,21 @@ function renderProfileFishingCalendar(catches = [], manualDays = [], options = {
     ? getMonthStart(getDateFromDateKey(markedDateKeys[markedDateKeys.length - 1]))
     : new Date(todayMonth);
 
+  profileCalendarState.monthBounds = {
+    minMonth,
+    maxMonth,
+    limitNavigationToMarkedMonths,
+  };
+
   if (!profileCalendarState.currentMonth || !keepMonth) {
     profileCalendarState.currentMonth = markedDateKeys.length ? new Date(maxMonth) : new Date(todayMonth);
   }
 
-  if (!profileCalendarState.isOwnProfile && profileCalendarState.currentMonth < minMonth) {
+  if (limitNavigationToMarkedMonths && profileCalendarState.currentMonth < minMonth) {
     profileCalendarState.currentMonth = new Date(minMonth);
   }
 
-  if (!profileCalendarState.isOwnProfile && profileCalendarState.currentMonth > maxMonth) {
+  if (limitNavigationToMarkedMonths && profileCalendarState.currentMonth > maxMonth) {
     profileCalendarState.currentMonth = new Date(maxMonth);
   }
 
@@ -799,8 +808,8 @@ function renderProfileFishingCalendar(catches = [], manualDays = [], options = {
   calendar.classList.remove("d-none");
   monthLabel.textContent = formatProfileCalendarMonth(profileCalendarState.currentMonth);
   monthEmpty.classList.toggle("d-none", monthMarkedKeys.length > 0);
-  prevButton.disabled = !profileCalendarState.isOwnProfile && profileCalendarState.currentMonth <= minMonth;
-  nextButton.disabled = !profileCalendarState.isOwnProfile && profileCalendarState.currentMonth >= maxMonth;
+  prevButton.disabled = limitNavigationToMarkedMonths && profileCalendarState.currentMonth <= minMonth;
+  nextButton.disabled = limitNavigationToMarkedMonths && profileCalendarState.currentMonth >= maxMonth;
 
   clearElement(grid);
 
@@ -984,11 +993,24 @@ function changeProfileCalendarMonth(delta) {
     return;
   }
 
-  profileCalendarState.currentMonth = new Date(
+  const bounds = profileCalendarState.monthBounds;
+  const nextMonth = new Date(
     profileCalendarState.currentMonth.getFullYear(),
     profileCalendarState.currentMonth.getMonth() + delta,
     1
   );
+
+  if (bounds?.limitNavigationToMarkedMonths) {
+    if (delta < 0 && nextMonth < bounds.minMonth) {
+      return;
+    }
+
+    if (delta > 0 && nextMonth > bounds.maxMonth) {
+      return;
+    }
+  }
+
+  profileCalendarState.currentMonth = nextMonth;
   profileCalendarState.menuOpenDateKey = "";
 
   renderProfileFishingCalendar(profileCalendarState.catches, profileCalendarState.manualDays, {
@@ -1278,7 +1300,9 @@ function applyCatchFilters(context, options = {}) {
     return;
   }
 
-  if (context !== "profile") {
+  if (context === "profile") {
+    renderCatchCards(elements.list, filtered);
+  } else {
     renderCatchCards(elements.list, filtered, { allowDelete });
   }
 }

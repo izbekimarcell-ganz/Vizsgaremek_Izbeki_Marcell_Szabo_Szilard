@@ -869,15 +869,19 @@ body[data-page="fogasnaplo"] .catch-form-card {
   height: auto;
 }
 
+body[data-page="fogasnaplo"] .catch-list-card {
+  width: 100%;
+}
+
 body[data-page="fogasnaplo"] .catch-list-card-body {
   display: flex;
   flex-direction: column;
 }
 
 body[data-page="fogasnaplo"] .catch-list-scroll-area {
-  max-height: clamp(28rem, 62vh, 40rem);
-  overflow-y: auto;
-  padding-right: 0.35rem;
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
 }
 
 body[data-page="fogasnaplo"] .catch-list-scroll-area::-webkit-scrollbar {
