@@ -232,57 +232,11 @@ function initializePageHooks() {
 
 function initializeNavbarScrollBehavior() {
   const navbar = document.querySelector(".app-navbar");
-  const navbarMenu = $("#mainNavbar");
 
   if (!navbar) {
     return;
   }
-
-  let lastScrollY = Math.max(window.scrollY, 0);
-  let isTicking = false;
-  const scrollTolerance = 10;
-  const topRevealOffset = 24;
-
-  const applyNavbarVisibility = () => {
-    const currentScrollY = Math.max(window.scrollY, 0);
-    const isNearTop = currentScrollY <= topRevealOffset;
-    const isMenuOpen = navbarMenu?.classList.contains("show");
-    const scrollDelta = Math.abs(currentScrollY - lastScrollY);
-
-    if (isNearTop || isMenuOpen) {
-      navbar.classList.remove("navbar-hidden");
-    } else if (scrollDelta >= scrollTolerance) {
-      const isScrollingDown = currentScrollY > lastScrollY;
-      navbar.classList.toggle("navbar-hidden", isScrollingDown);
-    }
-
-    lastScrollY = currentScrollY;
-    isTicking = false;
-  };
-
-  const requestVisibilityUpdate = () => {
-    if (isTicking) {
-      return;
-    }
-
-    isTicking = true;
-    window.requestAnimationFrame(applyNavbarVisibility);
-  };
-
-  window.addEventListener("scroll", requestVisibilityUpdate, { passive: true });
-  window.addEventListener("resize", requestVisibilityUpdate);
-
-  if (navbarMenu) {
-    navbarMenu.addEventListener("show.bs.collapse", () => {
-      navbar.classList.remove("navbar-hidden");
-    });
-
-    navbarMenu.addEventListener("shown.bs.collapse", () => {
-      navbar.classList.remove("navbar-hidden");
-    });
-  }
-
-  applyNavbarVisibility();
+  navbar.classList.remove("navbar-hidden");
 }
 
 /* =========================
