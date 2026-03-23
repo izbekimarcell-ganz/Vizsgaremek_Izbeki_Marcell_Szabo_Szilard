@@ -40,4 +40,4 @@
 
 ## 2026.03.22
 
-- html fájlok mappába rendezése
+- ~~html fájlok mappába rendezése~~ **(KÉSZ)**
