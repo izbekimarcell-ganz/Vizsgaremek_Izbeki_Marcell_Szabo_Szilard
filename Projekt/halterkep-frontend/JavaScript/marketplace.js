@@ -898,7 +898,7 @@ async function prepareMarketplaceCreatePage() {
       if (pageSubtitle) {
         pageSubtitle.textContent = "Módosítsd a meglévő hirdetés adatait.";
       }
-      document.title = "HalTérkép - Hirdetés szerkesztése";
+      document.title = "HalBarátok - Hirdetés szerkesztése";
     } else {
       if (pageTitle) {
         pageTitle.textContent = "Új hirdetés feladása";
@@ -906,7 +906,7 @@ async function prepareMarketplaceCreatePage() {
       if (pageSubtitle) {
         pageSubtitle.textContent = "Adj fel új hirdetést a piactérre.";
       }
-      document.title = "HalTérkép - Hirdetésfeladás";
+      document.title = "HalBarátok - Hirdetésfeladás";
     }
 
     renderMarketplaceCreateImageList();

@@ -4,13 +4,13 @@
    ========================================================= */
 
 -- 1) Adatbázis létrehozása (ha nem létezik)
-IF DB_ID(N'HalTerkep') IS NULL
+IF DB_ID(N'HalBaratok') IS NULL
 BEGIN
-    CREATE DATABASE HalTerkep;
+    CREATE DATABASE HalBaratok;
 END
 GO
 
-USE HalTerkep;
+USE HalBaratok;
 GO
 
 SET NOCOUNT ON;

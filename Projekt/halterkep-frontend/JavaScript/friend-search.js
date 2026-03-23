@@ -2,7 +2,7 @@
   apiBaseUrl: "http://localhost:4000/api",
 };
 
-const sharedApp = window.HalTerkepShared || {};
+const sharedApp = window.HalBaratokShared || {};
 
 const friendsFeatureState = {
   overview: null,

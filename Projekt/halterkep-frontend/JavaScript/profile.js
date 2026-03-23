@@ -523,7 +523,7 @@ function clearProfileFishingCalendar() {
   }
 }
 
-window.HalTerkepShared = {
+window.HalBaratokShared = {
   apiRequest,
   escapeHtml,
   formatForumReportReason,
