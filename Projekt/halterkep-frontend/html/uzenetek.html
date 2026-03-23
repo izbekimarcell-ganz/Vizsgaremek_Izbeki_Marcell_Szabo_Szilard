@@ -1,23 +1,23 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="hu">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>HalTérkép - Barátok</title>
+  <title>HalTérkép - Üzenetek</title>
 
-  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="icon" type="image/png" href="../assets/favicon.png" />
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
     rel="stylesheet"
   />
-  <link rel="stylesheet" href="CSS/styles.css">
+  <link rel="stylesheet" href="../CSS/styles.css">
 </head>
-<body data-page="baratok" data-theme="dark">
+<body data-page="uzenetek" data-theme="dark">
 
   <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
     <div class="container nav-container">
       <a class="navbar-brand d-flex align-items-center gap-3" href="index.html">
-        <img src="assets/logo.png" alt="HalTérkép logó" class="brand-logo" />
+        <img src="../assets/logo.png" alt="HalTérkép logó" class="brand-logo" />
         <div>
           <div class="fw-bold brand-title">HalTérkép</div>
           <small class="brand-subtitle">Horgászvizek • Halfajok • Fogásnapló • Fórum</small>
@@ -76,68 +76,39 @@
   <main class="main-content py-5">
     <div class="container">
       <div class="mb-4">
-        <h1 class="display-6 fw-bold mb-2">Barátok</h1>
-        <p class="section-text mb-0">Keress felhasználókat, küldj barátkérelmet, és kezeld a meglévő barátaidat.</p>
+        <h1 class="mb-1">Üzenetek</h1>
+        <p class="section-text mb-0">Itt látod az admin válaszait és a hirdetéseiddel kapcsolatos beérkező üzeneteket.</p>
       </div>
 
-      <div class="card app-card mb-4">
+      <div class="card app-card">
         <div class="card-body">
-          <label class="form-label" for="friendsSearchInputPage">Felhasználó keresése</label>
-          <input
-            id="friendsSearchInputPage"
-            class="form-control app-input"
-            type="search"
-            placeholder="Kezdj el gépelni egy felhasználónevet..."
-            autocomplete="off"
-          />
-        </div>
-      </div>
-
-      <div class="row g-4">
-        <div class="col-lg-6">
-          <div class="card app-card h-100">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
-                <div>
-                  <h2 class="h5 mb-1">Nem barát felhasználók</h2>
-                  <div class="section-text small">Itt tudsz új barátkérelmet küldeni.</div>
-                </div>
-                <span id="friendsNonFriendsCount" class="badge text-bg-secondary">0</span>
-              </div>
-              <div id="friendsNonFriendsList" class="d-grid gap-3"></div>
-            </div>
+          <div class="d-flex justify-content-between align-items-center gap-2 mb-3 flex-wrap">
+            <h2 class="h5 mb-0">Beérkezett üzenetek</h2>
+            <span id="userMessagesCount" class="section-text small"></span>
           </div>
-        </div>
 
-        <div class="col-lg-6">
-          <div class="card app-card h-100">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
-                <div>
-                  <h2 class="h5 mb-1">Barátok</h2>
-                  <div class="section-text small">Az elfogadott barátaid listája.</div>
-                </div>
-                <span id="friendsListCount" class="badge text-bg-secondary">0</span>
-              </div>
-              <div id="friendsList" class="d-grid gap-3"></div>
-            </div>
-          </div>
+          <div id="userMessagesLoading" class="section-text d-none">Betöltés...</div>
+          <div id="userMessagesError" class="text-danger d-none"></div>
+          <div id="userMessagesEmpty" class="section-text d-none">Még nincs beérkezett üzeneted.</div>
+          <div id="userMessagesList" class="d-grid gap-3"></div>
         </div>
       </div>
     </div>
   </main>
 
   <footer class="py-4 border-top border-secondary-subtle app-footer">
-    <div class="container text-center footer-text">© HalTérkép</div>
+    <div class="container text-center footer-text">
+      © HalTérkép
+    </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="JavaScript/script.js"></script>
-  <script src="JavaScript/marketplace.js"></script>
-  <script src="JavaScript/app-pages.js"></script>
-  <script src="JavaScript/admin.js"></script>
-  <script src="JavaScript/profile.js"></script>
-  <script src="JavaScript/friend-search.js"></script>
+  <script src="../JavaScript/script.js"></script>
+  <script src="../JavaScript/marketplace.js"></script>
+  <script src="../JavaScript/app-pages.js"></script>
+  <script src="../JavaScript/admin.js"></script>
+  <script src="../JavaScript/profile.js"></script>
+  <script src="../JavaScript/friend-search.js"></script>
 </body>
 </html>
 
