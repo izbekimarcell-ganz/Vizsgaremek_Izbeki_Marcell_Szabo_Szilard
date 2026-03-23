@@ -879,9 +879,28 @@ body[data-page="fogasnaplo"] .catch-list-card-body {
 }
 
 body[data-page="fogasnaplo"] .catch-list-scroll-area {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
   max-height: none;
   overflow: visible;
   padding-right: 0;
+}
+
+body[data-page="fogasnaplo"] .catch-list-scroll-area > .card {
+  margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+  body[data-page="fogasnaplo"] .catch-list-scroll-area {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  body[data-page="fogasnaplo"] .catch-list-scroll-area {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 body[data-page="fogasnaplo"] .catch-list-scroll-area::-webkit-scrollbar {
