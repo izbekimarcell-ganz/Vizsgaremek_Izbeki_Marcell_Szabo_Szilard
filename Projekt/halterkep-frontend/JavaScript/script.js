@@ -1107,6 +1107,7 @@ async function updateNavbar() {
   const catchLogNavItem = catchLogNavLink?.closest(".nav-item");
   const watersNavItem = findNavigationLink([DEFAULT_NAV_ITEMS[0].defaultHref])?.closest(".nav-item");
   const forumNavItem = findNavigationLink([DEFAULT_NAV_ITEMS[2].defaultHref])?.closest(".nav-item");
+  const homeHeroActionButton = $("#homeHeroActionButton");
   const user = getStoredUser();
   const isAdmin = isAdminUser(user);
   const loggedIn = isLoggedIn();
@@ -1185,6 +1186,11 @@ async function updateNavbar() {
 
   if (catchLogNavItem) {
     catchLogNavItem.classList.toggle("d-none", !loggedIn || isAdmin);
+  }
+
+  if (homeHeroActionButton) {
+    homeHeroActionButton.textContent = loggedIn ? "Profil megnyitása" : "Regisztráció";
+    homeHeroActionButton.setAttribute("href", loggedIn ? "profil.html" : "register.html");
   }
 
   if (document.body.dataset.page === "forum") {

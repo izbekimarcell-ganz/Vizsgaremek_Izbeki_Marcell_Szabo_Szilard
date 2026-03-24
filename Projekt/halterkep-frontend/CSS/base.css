@@ -784,6 +784,24 @@ body[data-theme="light"] .home-panel-copy::before {
   line-height: 1.65;
 }
 
+.home-hero-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15rem;
+  min-height: 3.25rem;
+  padding: 0.85rem 1.75rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+}
+
+body[data-theme="light"] .home-hero-action-button {
+  box-shadow: 0 12px 24px rgba(21, 32, 43, 0.14);
+}
+
 .home-panel-title {
   margin: 0;
   font-size: clamp(2rem, 4.4vw, 3.1rem);
@@ -840,6 +858,11 @@ body[data-theme="light"] .home-panel-copy::before {
 
   .home-main-title {
     font-size: clamp(2.15rem, 12vw, 3.2rem);
+  }
+
+  .home-hero-action-button {
+    width: min(100%, 18rem);
+    min-width: 0;
   }
 
   .home-main-lead,
