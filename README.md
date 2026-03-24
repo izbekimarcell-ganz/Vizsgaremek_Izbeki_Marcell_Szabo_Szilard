@@ -58,8 +58,8 @@
 
 ## 2026.03.24
 - A fájl nevek átírása HalTérkép-ről HalBarátok-ra
-- ~~ Fogásnapló "törlés" gomb legyen "szerkesztés" gomb, lehessen szerekeszteni törlés helyett ~~ **(KÉSZ)**
-- ~~ Főoldali gomb hozzáadása Regisztráció/Profil megnyitása ként, ha bevan jelentkezve a felhasználó.~~ **(KÉSZ)**
+- ~~Fogásnapló "törlés" gomb legyen "szerkesztés" gomb, lehessen szerekeszteni törlés helyett~~ **(KÉSZ)**
+- ~~Főoldali gomb hozzáadása Regisztráció/Profil megnyitása ként, ha bevan jelentkezve a felhasználó.~~ **(KÉSZ)**
 
 ## Adatfeltöltések lista (itt hívjál fel vagy írjál rám!!!!)
  
