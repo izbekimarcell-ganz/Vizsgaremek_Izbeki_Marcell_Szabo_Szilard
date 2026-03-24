@@ -58,6 +58,7 @@
 
 ## 2026.03.24
 - A fájl nevek átírása HalTérkép-ről HalBarátok-ra
+- Fogásnapló "törlés" gomb legyen "szerkesztés" gomb, lehessen szerekeszteni törlés helyett
 
 ## Adatfeltöltések lista (itt hívjál fel vagy írjál rám!!!!)
  
