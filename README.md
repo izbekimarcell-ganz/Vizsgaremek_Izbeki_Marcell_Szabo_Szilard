@@ -57,7 +57,7 @@
 - ~~A főoldalon csak a nagy cím legyen(nyílván a navbar meg a footerel eggyütt) és minden mást veggyél ki~~ **(KÉSZ)**
 
 ## 2026.03.24
-- A fájl nevek átírása HalTérkép-ről HalBarátok-ra
+- ~~A fájl nevek átírása HalTérkép-ről HalBarátok-ra~~ **(KÉSZ)**
 - ~~Fogásnapló "törlés" gomb legyen "szerkesztés" gomb, lehessen szerekeszteni törlés helyett~~ **(KÉSZ)**
 - ~~Főoldali gomb hozzáadása Regisztráció/Profil megnyitása ként, ha bevan jelentkezve a felhasználó.~~ **(KÉSZ)**
 
