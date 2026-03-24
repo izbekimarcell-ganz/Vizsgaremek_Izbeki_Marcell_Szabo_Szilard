@@ -9,6 +9,8 @@ async function getCatchesForUserId(userId) {
     .query(`
       SELECT
         f.FogasId,
+        f.HalfajId,
+        f.VizteruletId,
         f.FogasIdeje,
         f.SulyKg,
         f.HosszCm,
@@ -114,6 +116,68 @@ async function createCatch(req, res) {
   }
 }
 
+async function updateOwnCatch(req, res) {
+  try {
+    const fogasId = Number.parseInt(req.params.id, 10);
+    const { halfajId, vizteruletId, fogasIdeje, sulyKg, hosszCm, fotoUrl, megjegyzes } = req.body;
+
+    if (Number.isNaN(fogasId)) {
+      return res.status(400).json({
+        message: "Érvénytelen fogás azonosító.",
+      });
+    }
+
+    if (!halfajId || !vizteruletId || !fogasIdeje) {
+      return res.status(400).json({
+        message: "A halfaj, a vízterület és a fogás ideje kötelező.",
+      });
+    }
+
+    const pool = await poolPromise;
+    const result = await pool
+      .request()
+      .input("fogasId", sql.Int, fogasId)
+      .input("felhasznaloId", sql.Int, req.user.id)
+      .input("halfajId", sql.Int, parseInt(halfajId, 10))
+      .input("vizteruletId", sql.Int, parseInt(vizteruletId, 10))
+      .input("fogasIdeje", sql.DateTime2, new Date(fogasIdeje))
+      .input("sulyKg", sql.Decimal(5, 2), sulyKg ?? null)
+      .input("hosszCm", sql.Int, hosszCm ?? null)
+      .input("fotoUrl", sql.NVarChar(sql.MAX), fotoUrl || null)
+      .input("megjegyzes", sql.NVarChar(500), megjegyzes || null)
+      .query(`
+        UPDATE FogasNaplo
+        SET
+          HalfajId = @halfajId,
+          VizteruletId = @vizteruletId,
+          FogasIdeje = @fogasIdeje,
+          SulyKg = @sulyKg,
+          HosszCm = @hosszCm,
+          FotoUrl = @fotoUrl,
+          Megjegyzes = @megjegyzes
+        OUTPUT INSERTED.FogasId
+        WHERE FogasId = @fogasId
+          AND FelhasznaloId = @felhasznaloId
+      `);
+
+    if (!result.recordset.length) {
+      return res.status(404).json({
+        message: "A fogás nem található, vagy nincs jogod szerkeszteni.",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Fogás sikeresen frissítve.",
+      fogasId: result.recordset[0].FogasId,
+    });
+  } catch (error) {
+    console.error("Fogásszerkesztési hiba:", error);
+    return res.status(500).json({
+      message: "Hiba a fogás szerkesztése közben.",
+    });
+  }
+}
+
 async function deleteOwnCatch(req, res) {
   try {
     const fogasId = Number.parseInt(req.params.id, 10);
@@ -157,5 +221,6 @@ module.exports = {
   getOwnCatches,
   getUserProfileCatches,
   createCatch,
+  updateOwnCatch,
   deleteOwnCatch,
 };

@@ -924,6 +924,7 @@ function renderCatchCards(container, catches, { allowDelete = false } = {}) {
     return;
   }
 
+  const allowEditOnPage = allowDelete && document.body?.dataset?.page === "fogasnaplo";
   clearElement(container);
 
   catches.forEach((fogas) => {
@@ -941,10 +942,10 @@ function renderCatchCards(container, catches, { allowDelete = false } = {}) {
         </p>
         ${renderImageHtml(fogas.FotoUrl, "Fog\u00E1s fot\u00F3")}
         ${
-          allowDelete
+          allowEditOnPage
             ? `
               <div class="mt-3 d-flex justify-content-end">
-                <button class="btn btn-sm btn-outline-danger" type="button" onclick="deleteCatch(${Number(fogas.FogasId)})">T\u00F6rl\u00E9s</button>
+                <button class="btn btn-sm btn-outline-info" type="button" onclick="editCatch(${Number(fogas.FogasId)})">Szerkeszt\u00E9s</button>
               </div>
             `
             : ""

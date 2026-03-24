@@ -177,7 +177,7 @@
       <div class="modal-content app-card border-info-subtle">
         <div class="modal-header border-secondary-subtle">
           <div>
-            <h2 class="modal-title fs-5 mb-1">Új fogás</h2>
+            <h2 id="catchModalTitle" class="modal-title fs-5 mb-1">Új fogás</h2>
             <div id="catchSelectedDateLabel" class="section-text small">Válassz napot a naptárból.</div>
           </div>
           <button type="button" class="btn-close admin-modal-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
@@ -185,6 +185,8 @@
         <div class="modal-body">
           <form id="catchForm" enctype="multipart/form-data" novalidate>
             <input id="catchSelectedDate" type="hidden" />
+            <input id="catchEditingId" type="hidden" />
+            <input id="catchExistingImageUrl" type="hidden" />
 
             <div class="mb-3">
               <label class="form-label" for="catchWaterbodyId">Vízterület</label>
@@ -219,6 +221,7 @@
             <div class="mt-3">
               <label class="form-label" for="catchImage">Kép</label>
               <input id="catchImage" name="foto" type="file" accept="image/*" class="form-control app-input" />
+              <div id="catchImageHelp" class="form-text">Szerkesztéskor üresen hagyva a meglévő kép marad.</div>
             </div>
 
             <div class="mt-3">

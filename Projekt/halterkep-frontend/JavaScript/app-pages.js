@@ -308,6 +308,61 @@ function getDefaultCatchTimeValue() {
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 }
 
+const catchFormState = {
+  mode: "create",
+  editingCatchId: null,
+};
+
+function resetCatchFormState({ preserveSelectedDate = false } = {}) {
+  const catchForm = $("#catchForm");
+  const selectedDate = preserveSelectedDate ? $("#catchSelectedDate")?.value || "" : "";
+  const modalTitle = $("#catchModalTitle");
+  const editingIdInput = $("#catchEditingId");
+  const existingImageUrlInput = $("#catchExistingImageUrl");
+  const catchFormMessage = $("#catchFormMessage");
+  const catchTimeInput = $("#catchDateTime");
+  const saveCatchButton = $("#saveCatchButton");
+  const resetCatchButton = $("#resetCatchButton");
+
+  catchFormState.mode = "create";
+  catchFormState.editingCatchId = null;
+
+  if (catchForm) {
+    catchForm.reset();
+  }
+
+  if (editingIdInput) {
+    editingIdInput.value = "";
+  }
+
+  if (existingImageUrlInput) {
+    existingImageUrlInput.value = "";
+  }
+
+  if (modalTitle) {
+    modalTitle.textContent = "Új fogás";
+  }
+
+  if (saveCatchButton) {
+    saveCatchButton.textContent = "Mentés";
+  }
+
+  if (resetCatchButton) {
+    resetCatchButton.textContent = "Űrlap törlése";
+  }
+
+  if (catchFormMessage) {
+    catchFormMessage.textContent = "";
+    catchFormMessage.className = "small mt-3";
+  }
+
+  setCatchCreateSelectedDate(selectedDate);
+
+  if (catchTimeInput && !catchTimeInput.value) {
+    catchTimeInput.value = getDefaultCatchTimeValue();
+  }
+}
+
 function openCatchCreateModal(dateKey) {
   const normalizedDateKey =
     typeof normalizeDateKey === "function" ? normalizeDateKey(dateKey) : String(dateKey || "").trim();
@@ -317,6 +372,7 @@ function openCatchCreateModal(dateKey) {
     return;
   }
 
+  resetCatchFormState();
   setCatchCreateSelectedDate(normalizedDateKey);
 
   const catchTimeInput = $("#catchDateTime");
@@ -339,6 +395,94 @@ function openCatchCreateModal(dateKey) {
 
 window.openCatchCreateModal = openCatchCreateModal;
 
+function populateCatchFormForEdit(fogas) {
+  const modalTitle = $("#catchModalTitle");
+  const editingIdInput = $("#catchEditingId");
+  const existingImageUrlInput = $("#catchExistingImageUrl");
+  const waterbodySelect = $("#catchWaterbodyId");
+  const speciesSelect = $("#catchSpeciesId");
+  const catchTimeInput = $("#catchDateTime");
+  const catchWeightInput = $("#catchWeight");
+  const catchLengthInput = $("#catchLength");
+  const catchNoteInput = $("#catchNote");
+  const saveCatchButton = $("#saveCatchButton");
+  const resetCatchButton = $("#resetCatchButton");
+  const catchDate = new Date(fogas.FogasIdeje);
+  const normalizedDateKey = typeof normalizeDateKey === "function"
+    ? normalizeDateKey(catchDate)
+    : catchDate.toISOString().slice(0, 10);
+
+  catchFormState.mode = "edit";
+  catchFormState.editingCatchId = Number(fogas.FogasId);
+
+  if (modalTitle) {
+    modalTitle.textContent = "Fogás szerkesztése";
+  }
+
+  if (editingIdInput) {
+    editingIdInput.value = String(fogas.FogasId);
+  }
+
+  if (existingImageUrlInput) {
+    existingImageUrlInput.value = fogas.FotoUrl || "";
+  }
+
+  if (waterbodySelect) {
+    waterbodySelect.value = String(fogas.VizteruletId ?? "");
+  }
+
+  if (speciesSelect) {
+    speciesSelect.value = String(fogas.HalfajId ?? "");
+  }
+
+  setCatchCreateSelectedDate(normalizedDateKey);
+
+  if (catchTimeInput && !Number.isNaN(catchDate.getTime())) {
+    catchTimeInput.value = `${String(catchDate.getHours()).padStart(2, "0")}:${String(catchDate.getMinutes()).padStart(2, "0")}`;
+  }
+
+  if (catchWeightInput) {
+    catchWeightInput.value = fogas.SulyKg ?? "";
+  }
+
+  if (catchLengthInput) {
+    catchLengthInput.value = fogas.HosszCm ?? "";
+  }
+
+  if (catchNoteInput) {
+    catchNoteInput.value = fogas.Megjegyzes || "";
+  }
+
+  if (saveCatchButton) {
+    saveCatchButton.textContent = "Szerkesztés mentése";
+  }
+
+  if (resetCatchButton) {
+    resetCatchButton.textContent = "Eredeti adatok";
+  }
+}
+
+async function editCatch(fogasId) {
+  const targetId = Number(fogasId);
+  const ownCatches = Array.isArray(catchCollections?.own) ? catchCollections.own : [];
+  const fogas = ownCatches.find((item) => Number(item.FogasId) === targetId);
+
+  if (!Number.isInteger(targetId) || targetId <= 0 || !fogas) {
+    showAppAlert("A kiválasztott fogás nem található.", { title: "Hiba" });
+    return;
+  }
+
+  resetCatchFormState();
+  populateCatchFormForEdit(fogas);
+
+  const modalInstance = getCatchCreateModalInstance();
+  if (modalInstance) {
+    modalInstance.show();
+  }
+}
+
+window.editCatch = editCatch;
+
 function prepareCatchLogPage() {
   const catchForm = $("#catchForm");
   const catchListContainer = $("#catchListContainer");
@@ -356,10 +500,7 @@ function prepareCatchLogPage() {
 
   if (catchCreateModal && catchCreateModal.dataset.bound !== "true") {
     catchCreateModal.addEventListener("hidden.bs.modal", () => {
-      if (catchForm) {
-        catchForm.reset();
-      }
-      setCatchCreateSelectedDate($("#catchSelectedDate")?.value || "");
+      resetCatchFormState();
     });
     catchCreateModal.dataset.bound = "true";
   }
@@ -422,13 +563,17 @@ async function loadCatchFormOptions() {
 async function handleAddCatch(event) {
   event.preventDefault();
   const form = event.target;
-  let fotoUrl = null;
+  let fotoUrl = $("#catchExistingImageUrl")?.value || null;
+  const isEditing = catchFormState.mode === "edit" && Number.isInteger(catchFormState.editingCatchId);
 
   try {
-    fotoUrl = await getImageDataUrlFromInput(
+    const uploadedImage = await getImageDataUrlFromInput(
       form.querySelector("#catchImage"),
       "A fogás képe"
     );
+    if (uploadedImage) {
+      fotoUrl = uploadedImage;
+    }
   } catch (error) {
     showAppAlert(error.message, { title: "Hiba" });
     return;
@@ -457,13 +602,13 @@ async function handleAddCatch(event) {
   }
 
   try {
-    await apiRequest("/fogasnaplo", {
-      method: "POST",
+    await apiRequest(isEditing ? `/fogasnaplo/${catchFormState.editingCatchId}` : "/fogasnaplo", {
+      method: isEditing ? "PUT" : "POST",
       body: JSON.stringify(catchData),
     });
 
-    await showAppSuccess("Fogás sikeresen rögzítve!");
-    form.reset();
+    await showAppSuccess(isEditing ? "Fogás sikeresen frissítve!" : "Fogás sikeresen rögzítve!");
+    resetCatchFormState();
     const modalInstance = getCatchCreateModalInstance();
     if (modalInstance) {
       modalInstance.hide();
