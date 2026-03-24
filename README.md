@@ -1,3 +1,8 @@
+# Csapattagok
+- Izbéki Marcell
+- Szabó Szilárd
+
+
 # Fejlesztési feladatok/Ötletek
 
 ## 2026.03.10
