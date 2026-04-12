@@ -140,8 +140,8 @@ async function openAdminTarget(target, syncHash = true) {
   if (target === "reports") {
     openAdminPanel(
       "reports",
-      "Report üzenetek",
-      "Felhasználói fórum reportok, ügyfélszolgálati levelezések és admin közlemények kezelése."
+      "Bejelentések",
+      "Felhasználói fórumbejelentések, ügyfélszolgálati levelezések és admin közlemények kezelése."
     );
     if (syncHash) updateAdminLocationHash("reports");
     await loadAdminReports();
@@ -874,11 +874,11 @@ function renderAdminReports() {
   }
 
   const reports = Array.isArray(adminState.reports) ? adminState.reports : [];
-  reportsCount.textContent = `${reports.length} report`;
+  reportsCount.textContent = `${reports.length} bejelentés`;
   clearElement(reportsList);
 
   if (!reports.length) {
-    reportsList.innerHTML = `<div class="section-text">Nincs megjeleníthető report.</div>`;
+    reportsList.innerHTML = `<div class="section-text">Nincs megjeleníthető bejelentés.</div>`;
     return;
   }
 
@@ -886,10 +886,10 @@ function renderAdminReports() {
     const isMarketplaceReport = report.Source === "marketplace";
     const reportId = Number(isMarketplaceReport ? report.MarketplaceReportId : report.ForumReportId);
     const typeLabel = isMarketplaceReport
-      ? "Marketplace report"
+      ? "Piactér bejelentés"
       : report.CelTipus === "reply"
-        ? "Hozzaszolas report"
-        : "Tema report";
+        ? "Hozzászólás bejelentés"
+        : "Téma bejelentés";
     const title = isMarketplaceReport ? report.HirdetesCim : report.TemaCim;
     const item = document.createElement("div");
     item.className = `app-list-item admin-report-item${report.AdminOlvasva ? "" : " is-unread"}`;
@@ -938,7 +938,7 @@ async function loadAdminReports() {
     renderAdminReports();
     await openPendingAdminReportFromSession();
   } catch (error) {
-    showAdminFeedback(error.message || "Nem sikerült betölteni a reportokat.", "danger");
+    showAdminFeedback(error.message || "Nem sikerült betölteni a bejelentéseket.", "danger");
   }
 }
 
@@ -981,7 +981,7 @@ async function openAdminReportModal(reportSource, reportId) {
 
     const reportTitle =
       reportSource === "marketplace"
-        ? "Marketplace hirdetés"
+        ? "Piactér hirdetés"
         : report.CelTipus === "reply"
           ? "Hozzászólás"
           : "Téma";
@@ -1001,7 +1001,7 @@ async function openAdminReportModal(reportSource, reportId) {
 
     detailBody.innerHTML = `
       <div class="app-list-item">
-        <div class="fw-semibold mb-2">Reportoló felhasználó</div>
+        <div class="fw-semibold mb-2">Bejelentő felhasználó</div>
         <div>${escapeHtml(report.ReportoloFelhasznalonev || "-")}</div>
       </div>
       <div class="app-list-item">
@@ -1012,7 +1012,7 @@ async function openAdminReportModal(reportSource, reportId) {
         ${contentPreview}
       </div>
       <div class="app-list-item">
-        <div class="fw-semibold mb-2">Report részletei</div>
+        <div class="fw-semibold mb-2">Bejelentés részletei</div>
         <div class="mb-2">Indok: ${escapeHtml(formatForumReportReason(report.IndokKod))}</div>
         <div>${escapeHtml(report.Reszletezes || "Nincs részletezés.")}</div>
       </div>
@@ -1035,7 +1035,7 @@ async function openAdminReportModal(reportSource, reportId) {
 
     await loadAdminReports();
   } catch (error) {
-    showAdminFeedback(error.message || "Nem sikerült megnyitni a reportot.", "danger");
+    showAdminFeedback(error.message || "Nem sikerült megnyitni a bejelentést.", "danger");
   }
 }
 
@@ -1052,7 +1052,7 @@ async function sendAdminReportReply() {
   const adminReply = replyText.value.trim();
 
   if (!adminReply) {
-    showAppAlert("Adj meg választ a reportoló felhasználónak.", { title: "Hiba" });
+    showAppAlert("Adj meg választ a bejelentést küldő felhasználónak.", { title: "Hiba" });
     return;
   }
 
@@ -1080,7 +1080,7 @@ async function sendAdminReportReply() {
 }
 
 async function deleteAdminReport(reportSource, reportId) {
-  if (!(await showAppConfirm("Biztosan törölni szeretnéd ezt a reportot?", { confirmLabel: "Törlés" }))) {
+  if (!(await showAppConfirm("Biztosan törölni szeretnéd ezt a bejelentést?", { confirmLabel: "Törlés" }))) {
     return;
   }
 
@@ -1097,9 +1097,9 @@ async function deleteAdminReport(reportSource, reportId) {
       createModalInstance("adminReportDetailModal")?.hide();
     }
     await loadAdminReports();
-    await showAppSuccess("A report sikeresen törölve.");
+    await showAppSuccess("A bejelentés sikeresen törölve.");
   } catch (error) {
-    showAdminFeedback(error.message || "Nem sikerült törölni a reportot.", "danger");
+    showAdminFeedback(error.message || "Nem sikerült törölni a bejelentést.", "danger");
   }
 }
 
@@ -1195,7 +1195,7 @@ function renderMarketplaceAdminListingDetail(listing) {
               ${escapeHtml(formatMarketplacePrice(listing.ArFt))}
             </div>
             <div class="small section-text mt-1">
-              ${listing.AktivReportDb ? `${escapeHtml(String(listing.AktivReportDb))} aktív report` : "Nincs aktív report"}
+              ${listing.AktivReportDb ? `${escapeHtml(String(listing.AktivReportDb))} aktív bejelentés` : "Nincs aktív bejelentés"}
             </div>
           </div>
         </div>
@@ -1204,7 +1204,7 @@ function renderMarketplaceAdminListingDetail(listing) {
         ${
           activeImage?.KepUrl
             ? `
-              <img src="${escapeHtml(activeImage.KepUrl)}" alt="${escapeHtml(listing.Cim || "Marketplace hirdetés")}" class="img-fluid rounded-4 marketplace-admin-detail-image" />
+              <img src="${escapeHtml(activeImage.KepUrl)}" alt="${escapeHtml(listing.Cim || "Piactér hirdetés")}" class="img-fluid rounded-4 marketplace-admin-detail-image" />
             `
             : '<div class="marketplace-admin-detail-placeholder">Nincs feltöltött kép</div>'
         }
@@ -1279,7 +1279,7 @@ function renderMarketplaceAdminListings() {
           </div>
           <div class="small section-text mt-1">
             ${escapeHtml(formatMarketplaceDate(listing.Letrehozva))}
-            ${listing.AktivReportDb ? ` | ${escapeHtml(String(listing.AktivReportDb))} aktív report` : ""}
+            ${listing.AktivReportDb ? ` | ${escapeHtml(String(listing.AktivReportDb))} aktív bejelentés` : ""}
           </div>
           <div class="small section-text mt-2">
             ${listing.Jegelve
@@ -1329,7 +1329,7 @@ async function loadMarketplaceAdminListings() {
 
     await openMarketplaceAdminListing(nextListingId);
   } catch (error) {
-    showMarketplaceAdminFeedback(error.message || "Nem sikerült betölteni a marketplace hirdetéseket.", "danger");
+    showMarketplaceAdminFeedback(error.message || "Nem sikerült betölteni a piactér hirdetéseket.", "danger");
   }
 }
 
@@ -1383,7 +1383,7 @@ async function deleteMarketplaceAdminListing(listingId) {
     return;
   }
 
-  if (!(await showAppConfirm("Biztosan törölni szeretnéd ezt a marketplace hirdetést?", { confirmLabel: "Törlés" }))) {
+  if (!(await showAppConfirm("Biztosan törölni szeretnéd ezt a piactér hirdetést?", { confirmLabel: "Törlés" }))) {
     return;
   }
 
@@ -1414,11 +1414,11 @@ function renderMarketplaceAdminReports() {
   }
 
   const reports = Array.isArray(marketplaceAdminState.reports) ? marketplaceAdminState.reports : [];
-  reportsCount.textContent = `${reports.length} report`;
+  reportsCount.textContent = `${reports.length} bejelentés`;
   clearElement(reportsList);
 
   if (!reports.length) {
-    reportsList.innerHTML = '<div class="section-text">Nincs megjeleníthető marketplace report.</div>';
+    reportsList.innerHTML = '<div class="section-text">Nincs megjeleníthető piactér bejelentés.</div>';
     return;
   }
 
@@ -1431,7 +1431,7 @@ function renderMarketplaceAdminReports() {
         <div>
           <div class="fw-semibold">${escapeHtml(report.ReportoloFelhasznalonev || "-")}</div>
           <div class="small section-text mb-2">
-            ${escapeHtml(formatDateTime(report.Letrehozva))} | Marketplace report
+            ${escapeHtml(formatDateTime(report.Letrehozva))} | Piactér bejelentés
           </div>
           <div class="admin-forum-item-title">${escapeHtml(report.HirdetesCim || "-")}</div>
           <div class="small section-text mt-1">${escapeHtml(formatForumReportReason(report.IndokKod))}</div>
@@ -1453,7 +1453,7 @@ async function loadMarketplaceAdminReports() {
     renderMarketplaceAdminReports();
     await openPendingMarketplaceAdminReportFromSession();
   } catch (error) {
-    showMarketplaceAdminFeedback(error.message || "Nem sikerült betölteni a marketplace reportokat.", "danger");
+    showMarketplaceAdminFeedback(error.message || "Nem sikerült betölteni a piactér bejelentéseit.", "danger");
   }
 }
 
@@ -1492,7 +1492,7 @@ async function openMarketplaceAdminReportModal(reportId) {
 
     detailBody.innerHTML = `
       <div class="app-list-item">
-        <div class="fw-semibold mb-2">Reportoló felhasználó</div>
+        <div class="fw-semibold mb-2">Bejelentő felhasználó</div>
         <div>${escapeHtml(report.ReportoloFelhasznalonev || "-")}</div>
       </div>
       <div class="app-list-item">
@@ -1501,7 +1501,7 @@ async function openMarketplaceAdminReportModal(reportId) {
         <div class="small section-text mt-1">Hirdető: ${escapeHtml(report.HirdetoFelhasznalonev || "-")}</div>
       </div>
       <div class="app-list-item">
-        <div class="fw-semibold mb-2">Report részletei</div>
+        <div class="fw-semibold mb-2">Bejelentés részletei</div>
         <div class="mb-2">Indok: ${escapeHtml(formatForumReportReason(report.IndokKod))}</div>
         <div>${escapeHtml(report.Reszletezes || "Nincs részletezés.")}</div>
       </div>
@@ -1518,7 +1518,7 @@ async function openMarketplaceAdminReportModal(reportId) {
     createModalInstance("adminMarketplaceReportDetailModal")?.show();
     await loadMarketplaceAdminReports();
   } catch (error) {
-    showMarketplaceAdminFeedback(error.message || "Nem sikerült megnyitni a marketplace reportot.", "danger");
+    showMarketplaceAdminFeedback(error.message || "Nem sikerült megnyitni a piactér bejelentést.", "danger");
   }
 }
 
@@ -1534,7 +1534,7 @@ async function sendMarketplaceAdminReportReply() {
   const adminReply = replyText.value.trim();
 
   if (!adminReply) {
-    showAppAlert("Adj meg választ a reportoló felhasználónak.", { title: "Hiba" });
+    showAppAlert("Adj meg választ a bejelentést küldő felhasználónak.", { title: "Hiba" });
     return;
   }
 
@@ -1547,14 +1547,14 @@ async function sendMarketplaceAdminReportReply() {
     marketplaceAdminState.activeReportId = null;
     reportModal?.hide();
     await loadMarketplaceAdminReports();
-    await showAppSuccess("Az admin válasz sikeresen elküldve.");
+    await showAppSuccess("Az adminisztrátori válasz sikeresen elküldve.");
   } catch (error) {
     showMarketplaceAdminFeedback(error.message || "Nem sikerült elküldeni a választ.", "danger");
   }
 }
 
 async function deleteMarketplaceAdminReportEntry(reportId) {
-  if (!(await showAppConfirm("Biztosan törölni szeretnéd ezt a marketplace reportot?", { confirmLabel: "Törlés" }))) {
+  if (!(await showAppConfirm("Biztosan törölni szeretnéd ezt a piactér bejelentést?", { confirmLabel: "Törlés" }))) {
     return;
   }
 
@@ -1565,9 +1565,9 @@ async function deleteMarketplaceAdminReportEntry(reportId) {
       createModalInstance("adminMarketplaceReportDetailModal")?.hide();
     }
     await loadMarketplaceAdminReports();
-    await showAppSuccess("A marketplace report sikeresen törölve.");
+    await showAppSuccess("A piactér bejelentés sikeresen törölve.");
   } catch (error) {
-    showMarketplaceAdminFeedback(error.message || "Nem sikerült törölni a marketplace reportot.", "danger");
+    showMarketplaceAdminFeedback(error.message || "Nem sikerült törölni a piactér bejelentést.", "danger");
   }
 }
 
@@ -1599,7 +1599,7 @@ function prepareMarketplaceAdminPage() {
 }
 
 /* =========================
-   Admin oldal előkészítés
+   Adminisztrációs oldal előkészítése
    ========================= */
 function prepareAdminPage() {
   const usersTableBody = $("#adminUsersTableBody");

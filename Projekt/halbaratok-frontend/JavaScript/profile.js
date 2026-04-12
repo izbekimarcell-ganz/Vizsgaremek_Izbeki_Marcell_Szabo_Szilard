@@ -323,7 +323,7 @@ function prepareProfilePage() {
 }
 
 /* =========================
-   Login oldal előkészítése
+   Bejelentkezési oldal előkészítése
    ========================= */
 function prepareLoginPage() {
   if (isLoggedIn()) {
@@ -332,7 +332,7 @@ function prepareLoginPage() {
 }
 
 /* =========================
-   Register oldal előkészítése
+   Regisztrációs oldal előkészítése
    ========================= */
 function prepareRegisterPage() {
   if (isLoggedIn()) {
@@ -1562,7 +1562,7 @@ async function loadUserProfile() {
         : "-";
     }
     if (profileRoles) {
-      profileRoles.textContent = isAdminUser(user) ? "Admin" : "Felhasználó";
+      profileRoles.textContent = isAdminUser(user) ? "Adminisztrátor" : "Felhasználó";
     }
     if (profilePrivacySection) {
       profilePrivacySection.classList.toggle("d-none", isExternalProfile);

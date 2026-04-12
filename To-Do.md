@@ -16,11 +16,11 @@
 - ~~Lehessen a fiókot úgy beállítani, hogy csak a barátok lássák és mindenki másnak privát legyen~~ **(KÉSZ)**
 - A vízterületeknél az információkat pontosítani (a halfajokból csak kevés van feltüntetve, pl. Dunán csak 4 hal van pedig sokkal több van) **()**
 - ~~Jelszó újrakérés megcsinálása offline (biztonsági kérdés)~~ **(KÉSZ)**
-- ~~Report funkció(forum és mraketplace)~~ **(KÉSZ)**
+- ~~Bejelentés funkció (fórum és piactér)~~ **(KÉSZ)**
 - ~~A főoldal átrendezése~~ **(KÉSZ)**
 - ~~Térkép tervezésének és megcsinálásának elkezdése~~ **(Törölve)**
 - ~~Regisztrációnál az adatok ellenőrzése~~ **(KÉSZ)**
-- ~~Marketplace csinálás~~ **(KÉSZ)**
+- ~~Piactér elkészítése~~ **(KÉSZ)**
 - ~~Pici redesign (nagyon látszik az ai)~~ **(KÉSZ)** 
 
 ## 2026.03.15

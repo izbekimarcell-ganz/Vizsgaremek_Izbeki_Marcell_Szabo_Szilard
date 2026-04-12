@@ -28,15 +28,15 @@ const ADMIN_SHORTCUTS = {
   },
   marketplaceModeration: {
     href: "marketplace-admin.html",
-    label: "Marketplace moderáció",
-    title: "Marketplace moderáció",
-    description: "Marketplace hirdetések és kapcsolódó reportok áttekintése, moderálása.",
+    label: "Piactér moderáció",
+    title: "Piactér moderáció",
+    description: "Piactér hirdetések és kapcsolódó bejelentések áttekintése, moderálása.",
   },
   reports: {
     href: "admin.html#reports",
-    label: "Üzenetek",
-    title: "Report üzenetek",
-    description: "Beérkezett reportok áttekintése és admin válaszok küldése.",
+    label: "Bejelentések",
+    title: "Bejelentések",
+    description: "Beérkezett bejelentések áttekintése és adminisztrátori válaszok küldése.",
   },
 };
 
@@ -92,7 +92,7 @@ const HOME_PAGE_SHORTCUTS = [
     defaultLabel: "04 / Piactér",
     adminLabel: "04 / Piactér",
     defaultHref: "marketplace.html",
-    defaultTitle: "Marketplace",
+    defaultTitle: "Piactér",
     defaultDescription: "Horgászfelszerelések böngészése kategóriák szerint, kereséssel és saját hirdetés feladásával.",
     adminShortcut: ADMIN_SHORTCUTS.marketplaceModeration,
   },
@@ -540,7 +540,7 @@ function ensureMarketplaceNavItem() {
     marketplaceNavItem = document.createElement("li");
     marketplaceNavItem.className = "nav-item";
     marketplaceNavItem.id = "marketplaceNavItem";
-    marketplaceNavItem.innerHTML = '<a class="nav-link" href="marketplace.html">Marketplace</a>';
+    marketplaceNavItem.innerHTML = '<a class="nav-link" href="marketplace.html">Piactér</a>';
 
     if (forumNavItem) {
       forumNavItem.insertAdjacentElement("afterend", marketplaceNavItem);
@@ -1141,7 +1141,7 @@ async function updateNavbar() {
     if (desktopAccountMenuNavItem) {
       const menuItems = isAdmin
         ? `
-            <a class="dropdown-item" href="admin.html">Admin</a>
+            <a class="dropdown-item" href="admin.html">Adminisztráció</a>
             <a class="dropdown-item" href="admin.html#reports">Üzenetek</a>
             <button class="dropdown-item desktop-account-menu-logout" type="button" onclick="handleLogout()">Kijelentkezés</button>
           `
@@ -1388,10 +1388,10 @@ function updateAccountShortcut(user = getStoredUser()) {
 
   if (isAdminUser(user)) {
     shortcutLink.setAttribute("href", "admin.html");
-    if (shortcutLabel) shortcutLabel.textContent = "05 / Admin";
-    if (shortcutTitle) shortcutTitle.textContent = "Admin";
+    if (shortcutLabel) shortcutLabel.textContent = "05 / Adminisztráció";
+    if (shortcutTitle) shortcutTitle.textContent = "Adminisztráció";
     if (shortcutDescription) {
-      shortcutDescription.textContent = "Felhasználók, moderáció és report üzenetek kezelése.";
+      shortcutDescription.textContent = "Felhasználók, moderáció és bejelentések kezelése.";
     }
     return;
   }

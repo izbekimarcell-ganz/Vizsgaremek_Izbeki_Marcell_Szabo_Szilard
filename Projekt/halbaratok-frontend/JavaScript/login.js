@@ -69,7 +69,7 @@
       const target = pendingRedirect || "./index.html";
       window.location.href = target;
     } catch (error) {
-      console.error("Login fetch hiba:", error);
+      console.error("Bejelentkezési kérés hiba:", error);
       await showAppAlert("Nem sikerült kapcsolódni a szerverhez.", { title: "Hiba" });
     }
 
@@ -145,7 +145,7 @@
       forgotResetForm.classList.remove("d-none");
       forgotSecurityAnswer.focus();
     } catch (error) {
-      console.error("Forgot password question hiba:", error);
+      console.error("Elfelejtett jelszó kérdésének lekérési hibája:", error);
       await showAppAlert("Nem sikerült kapcsolódni a szerverhez.", { title: "Hiba" });
     }
 
@@ -212,7 +212,7 @@
       form.classList.remove("was-validated");
       loginIdentifierInput.value = lastIdentifier;
     } catch (error) {
-      console.error("Forgot password reset hiba:", error);
+      console.error("Jelszó-visszaállítási hiba:", error);
       await showAppAlert("Nem sikerült kapcsolódni a szerverhez.", { title: "Hiba" });
     }
 

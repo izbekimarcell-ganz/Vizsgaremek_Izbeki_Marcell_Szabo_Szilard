@@ -376,14 +376,14 @@ async function openUserReportMessage(reportId, source = "forum") {
       const targetTitle =
         source === "marketplace-report" ? message.HirdetesCim || "-" : getForumReasonLabel(message.IndokKod);
       bodyElement.innerHTML =         '<div class="app-list-item">' +
-          '<div class="fw-semibold mb-2">A te reportod</div>' +
+          '<div class="fw-semibold mb-2">A te bejelentésed</div>' +
           (source === 'marketplace-report'
             ? '<div class="mb-2">Hirdetés: ' + escapeFriendsHtml(targetTitle) + '</div>'
             : '<div class="mb-2">Indok: ' + escapeFriendsHtml(getForumReasonLabel(message.IndokKod)) + '</div>') +
           '<div>' + escapeFriendsHtml(message.Reszletezes || 'Nem adtál meg további részletezést.') + '</div>' +
         '</div>' +
         '<div class="app-list-item">' +
-          '<div class="fw-semibold mb-2">Admin válasza</div>' +
+          '<div class="fw-semibold mb-2">Adminisztrátori válasz</div>' +
           '<div>' + escapeFriendsHtml(message.AdminValasz || '-') + '</div>' +
         '</div>';
     }
@@ -411,7 +411,7 @@ async function deleteUserReportNotification(reportId, source = "forum") {
   }
 
   const confirmed = await friendsShowConfirm("Biztosan törölni szeretnéd ezt az üzenetet?", {
-    confirmLabel: "Torles",
+    confirmLabel: "Törlés",
   });
 
   if (!confirmed) {
@@ -665,11 +665,11 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
     if (isAdmin) {
       return `
         <div class="friend-notification-item">
-          <div class="fw-semibold">${item.Source === "marketplace" ? "Új marketplace report" : "Új fórum report"}</div>
+          <div class="fw-semibold">${item.Source === "marketplace" ? "Új piactér bejelentés" : "Új fórumbejelentés"}</div>
           <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.Letrehozva).toLocaleString("hu-HU"))}</div>
           <div class="d-flex gap-2 flex-wrap">
             <button class="btn btn-sm btn-outline-info" type="button" data-report-id="${Number(item.Source === "marketplace" ? item.MarketplaceReportId : item.ForumReportId)}" data-report-source="${escapeFriendsHtml(item.Source || "forum")}" data-action="open-admin-report">
-              Megnyitas
+              Megnyitás
             </button>
           </div>
         </div>
@@ -679,14 +679,14 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
     return `
       <div class="friend-notification-item">
           <div class="fw-semibold">${item.FelhasznaloOlvastaValaszt ? "Üzenet" : "Új üzenet"}</div>
-        <div class="section-text small mb-2">${escapeFriendsHtml(item.Source === "marketplace-report" ? (item.HirdetesCim || "Marketplace report") : getForumReasonLabel(item.IndokKod))}</div>
+        <div class="section-text small mb-2">${escapeFriendsHtml(item.Source === "marketplace-report" ? (item.HirdetesCim || "Piactér bejelentés") : getForumReasonLabel(item.IndokKod))}</div>
         <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.AdminValaszLetrehozva || item.Letrehozva).toLocaleString("hu-HU"))}</div>
         <div class="d-flex gap-2 flex-wrap">
           <button class="btn btn-sm btn-outline-info" type="button" data-report-id="${Number(item.Source === "marketplace-report" ? item.MarketplaceReportId : item.ForumReportId)}" data-report-source="${escapeFriendsHtml(item.Source || "forum")}" data-action="open-user-report-message">
-            Megnyitas
+            Megnyitás
           </button>
           <button class="btn btn-sm btn-outline-danger" type="button" data-report-id="${Number(item.Source === "marketplace-report" ? item.MarketplaceReportId : item.ForumReportId)}" data-report-source="${escapeFriendsHtml(item.Source || "forum")}" data-action="delete-user-report-message">
-            Torles
+            Törlés
           </button>
         </div>
       </div>
@@ -697,16 +697,16 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
     ? []
     : marketplaceMessageItems.map((item) => `
         <div class="friend-notification-item">
-          <div class="fw-semibold">${Number(item.OlvasatlanDb || 0) > 0 ? "Új marketplace üzenet" : "Marketplace beszélgetés"}</div>
+          <div class="fw-semibold">${Number(item.OlvasatlanDb || 0) > 0 ? "Új piactér üzenet" : "Piactér beszélgetés"}</div>
           <div class="section-text small mb-2">${escapeFriendsHtml(item.HirdetesCim || "-")}</div>
           <div class="section-text small mb-2">${escapeFriendsHtml(item.MasikFelhasznalonev || "-")}</div>
           <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.Letrehozva).toLocaleString("hu-HU"))}</div>
           <div class="d-flex gap-2 flex-wrap">
             <button class="btn btn-sm btn-outline-info" type="button" data-report-id="${Number(item.MarketplaceUzenetId)}" data-report-source="marketplace-message" data-action="open-user-report-message">
-              Megnyitas
+              Megnyitás
             </button>
             <button class="btn btn-sm btn-outline-danger" type="button" data-report-id="${Number(item.MarketplaceUzenetId)}" data-report-source="marketplace-message" data-action="delete-user-report-message">
-              Torles
+              Törlés
             </button>
           </div>
         </div>
@@ -721,10 +721,10 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
           <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.Letrehozva).toLocaleString("hu-HU"))}</div>
           <div class="d-flex gap-2 flex-wrap">
             <button class="btn btn-sm btn-outline-info" type="button" data-report-id="${Number(item.BaratUzenetId)}" data-report-source="friend-message" data-action="open-user-report-message">
-              Megnyitas
+              Megnyitás
             </button>
             <button class="btn btn-sm btn-outline-danger" type="button" data-report-id="${Number(item.BaratUzenetId)}" data-report-source="friend-message" data-action="delete-user-report-message">
-              Torles
+              Törlés
             </button>
           </div>
         </div>
@@ -739,10 +739,10 @@ function renderFriendNotifications(friendNotifications, reportNotifications, fri
           <div class="section-text small mb-3">${escapeFriendsHtml(new Date(item.Letrehozva).toLocaleString("hu-HU"))}</div>
           <div class="d-flex gap-2 flex-wrap">
             <button class="btn btn-sm btn-outline-info" type="button" data-report-id="${Number(item.FelhasznaloErtesitesId)}" data-report-source="system-notification" data-action="open-user-report-message">
-              Megnyitas
+              Megnyitás
             </button>
             <button class="btn btn-sm btn-outline-danger" type="button" data-report-id="${Number(item.FelhasznaloErtesitesId)}" data-report-source="system-notification" data-action="delete-user-report-message">
-              Torles
+              Törlés
             </button>
           </div>
         </div>
@@ -828,7 +828,7 @@ function getCombinedUserMessageItems() {
       title: item.FelhasznaloOlvastaValaszt ? "Üzenet" : "Új üzenet",
       subtitle:
         item.Source === "marketplace-report"
-          ? item.HirdetesCim || "Marketplace report"
+          ? item.HirdetesCim || "Piactér bejelentés"
           : getForumReasonLabel(item.IndokKod),
       timestamp: item.AdminValaszLetrehozva || item.Letrehozva,
     }));
@@ -850,7 +850,7 @@ function getCombinedUserMessageItems() {
       id: Number(item.MarketplaceUzenetId),
       source: "marketplace-message",
       unread: Number(item.OlvasatlanDb || 0) > 0,
-      title: Number(item.OlvasatlanDb || 0) > 0 ? "Új marketplace üzenet" : "Marketplace beszélgetés",
+      title: Number(item.OlvasatlanDb || 0) > 0 ? "Új piactér üzenet" : "Piactér beszélgetés",
       subtitle: `${item.MasikFelhasznalonev || "-"} | ${item.HirdetesCim || "-"}`,
       timestamp: item.Letrehozva,
     }));
@@ -921,7 +921,7 @@ function renderUserMessagesPage(messages) {
             data-user-message-open="${item.id}"
             data-user-message-source="${escapeFriendsHtml(item.source)}"
           >
-            Megnyitas
+            Megnyitás
           </button>
           <button
             class="btn btn-sm btn-outline-danger"
@@ -929,7 +929,7 @@ function renderUserMessagesPage(messages) {
             data-user-message-delete="${item.id}"
             data-user-message-source="${escapeFriendsHtml(item.source)}"
           >
-            Torles
+            Törlés
           </button>
         </div>
       </div>

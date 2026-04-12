@@ -179,9 +179,9 @@ async function getTopicsForAdmin(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Admin fórumtémák lekérési hiba:", error);
+    console.error("Adminisztrációs fórumtémák lekérési hibája:", error);
     return res.status(500).json({
-      message: "Hiba a fórum témák admin lekérésekor.",
+      message: "Hiba a fórumtémák adminisztrációs lekérésekor.",
     });
   }
 }
@@ -216,9 +216,9 @@ async function getRepliesForAdmin(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Admin hozzászólások lekérési hiba:", error);
+    console.error("Adminisztrációs hozzászólások lekérési hibája:", error);
     return res.status(500).json({
-      message: "Hiba a hozzászólások admin lekérésekor.",
+      message: "Hiba a hozzászólások adminisztrációs lekérésekor.",
     });
   }
 }

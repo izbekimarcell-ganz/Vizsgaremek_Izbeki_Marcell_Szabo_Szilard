@@ -696,7 +696,7 @@ async function loadForumTopics() {
               ? `<button
                   class="btn btn-sm forum-report-button"
                   type="button"
-                  aria-label="Téma reportolása"
+                  aria-label="Téma bejelentése"
                   onclick="openForumReportModal('topic', ${tema.TemaId})"
                 >🚩</button>`
               : ""
@@ -795,7 +795,7 @@ function handleForumReportReasonChange() {
 
 function openForumReportModal(targetType, targetId) {
   if (!isLoggedIn()) {
-    showAppAlert("A report küldéséhez be kell jelentkezned.", { title: "Bejelentkezés szükséges" });
+    showAppAlert("A bejelentés küldéséhez be kell jelentkezned.", { title: "Bejelentkezés szükséges" });
     return;
   }
 
@@ -834,7 +834,7 @@ async function handleForumReportSubmit(event) {
   const details = $("#forumReportDetails")?.value.trim() || "";
 
   if (!targetType || !Number.isInteger(targetId) || targetId <= 0 || !reasonCode) {
-    showAppAlert("Válassz report indokot, mielőtt elküldöd a jelentést.", { title: "Hiba" });
+    showAppAlert("Válassz bejelentési indokot, mielőtt elküldöd a jelentést.", { title: "Hiba" });
     return;
   }
 
@@ -855,9 +855,9 @@ async function handleForumReportSubmit(event) {
     });
 
     createModalInstance("forumReportModal")?.hide();
-    await showAppSuccess("A report sikeresen elküldve.");
+    await showAppSuccess("A bejelentés sikeresen elküldve.");
   } catch (error) {
-    showAppAlert(error.message || "Nem sikerült elküldeni a reportot.", { title: "Hiba" });
+    showAppAlert(error.message || "Nem sikerült elküldeni a bejelentést.", { title: "Hiba" });
   }
 }
 
@@ -936,7 +936,7 @@ async function loadTopicReplies(temaId, highlightReplyId = null) {
               ? `<button
                   class="btn btn-sm forum-report-button"
                   type="button"
-                  aria-label="Hozzászólás reportolása"
+                  aria-label="Hozzászólás bejelentése"
                   onclick="openForumReportModal('reply', ${hz.HozzaszolasId})"
                 >🚩</button>`
               : ""

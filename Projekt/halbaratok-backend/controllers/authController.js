@@ -28,6 +28,20 @@ const mapUser = (user) => ({
 const normalizeEmail = (email = "") => email.trim().toLowerCase();
 const normalizeSecurityAnswer = (answer = "") =>
   answer.trim().toLowerCase().replace(/\s+/g, " ");
+const normalizeSecurityQuestion = (question = "") =>
+  String(question)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+
+const SECURITY_QUESTION_MAP = new Map(
+  SECURITY_QUESTIONS.map((question) => [normalizeSecurityQuestion(question), question])
+);
+
+const getCanonicalSecurityQuestion = (question = "") =>
+  SECURITY_QUESTION_MAP.get(normalizeSecurityQuestion(question)) || null;
 
 function validatePassword(password) {
   if (password.length < 8) {
@@ -44,6 +58,7 @@ function validatePassword(password) {
 function validateRegisterInput({ email, username, password, securityQuestion, securityAnswer }) {
   const normalizedEmail = normalizeEmail(email);
   const trimmedUsername = username.trim();
+  const canonicalSecurityQuestion = getCanonicalSecurityQuestion(securityQuestion);
 
   if (!EMAIL_REGEX.test(normalizedEmail)) {
     return "Adj meg egy érvényes email címet.";
@@ -58,7 +73,7 @@ function validateRegisterInput({ email, username, password, securityQuestion, se
     return passwordError;
   }
 
-  if (!SECURITY_QUESTIONS.includes(securityQuestion)) {
+  if (!canonicalSecurityQuestion) {
     return "Válassz egy érvényes biztonsági kérdést.";
   }
 
@@ -81,6 +96,7 @@ async function register(req, res) {
 
     const normalizedEmail = normalizeEmail(email);
     const trimmedUsername = username.trim();
+    const canonicalSecurityQuestion = getCanonicalSecurityQuestion(securityQuestion);
     const validationError = validateRegisterInput({
       email,
       username,
@@ -128,7 +144,7 @@ async function register(req, res) {
       .input("username", sql.NVarChar(50), trimmedUsername)
       .input("email", sql.NVarChar(100), normalizedEmail)
       .input("passwordHash", sql.NVarChar(255), passwordHash)
-      .input("securityQuestion", sql.NVarChar(200), securityQuestion)
+      .input("securityQuestion", sql.NVarChar(200), canonicalSecurityQuestion)
       .input("securityAnswerHash", sql.NVarChar(255), securityAnswerHash)
       .query(`
         INSERT INTO Felhasznalo
@@ -152,7 +168,7 @@ async function register(req, res) {
       user: mapUser(result.recordset[0]),
     });
   } catch (error) {
-    console.error("Register hiba:", error);
+    console.error("Regisztrációs hiba:", error);
 
     if (error?.number === 2601 || error?.number === 2627) {
       return res.status(409).json({
@@ -236,7 +252,7 @@ async function login(req, res) {
       user: mapUser(user),
     });
   } catch (error) {
-    console.error("Login hiba:", error);
+    console.error("Bejelentkezési hiba:", error);
     return res.status(500).json({
       message: "Szerverhiba történt.",
     });

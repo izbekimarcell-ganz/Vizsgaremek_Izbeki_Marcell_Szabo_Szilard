@@ -171,9 +171,9 @@ async function getMarketplaceCategories(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Marketplace kategóriák lekérési hiba:", error);
+    console.error("Piactér kategóriák lekérési hibája:", error);
     return res.status(500).json({
-      message: "Hiba a marketplace kategóriák lekérésekor.",
+      message: "Hiba a piactér kategóriák lekérésekor.",
     });
   }
 }
@@ -246,9 +246,9 @@ async function getMarketplaceListings(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Marketplace hirdetések lekérési hiba:", error);
+    console.error("Piactér hirdetések lekérési hibája:", error);
     return res.status(500).json({
-      message: "Hiba a marketplace hirdetések lekérésekor.",
+      message: "Hiba a piactér hirdetések lekérésekor.",
     });
   }
 }
@@ -331,9 +331,9 @@ async function getMarketplaceListingById(req, res) {
       Kepek: imagesResult.recordset,
     });
   } catch (error) {
-    console.error("Marketplace hirdetés részlet lekérési hiba:", error);
+    console.error("Piactér hirdetésrészlet lekérési hibája:", error);
     return res.status(500).json({
-      message: "Hiba a marketplace hirdetés részleteinek lekérésekor.",
+      message: "Hiba a piactér hirdetés részleteinek lekérésekor.",
     });
   }
 }
@@ -378,7 +378,7 @@ async function createMarketplaceListing(req, res) {
 
     if (normalizedImages.length > MAX_MARKETPLACE_IMAGES) {
       return res.status(400).json({
-        message: `Legfeljebb ${MAX_MARKETPLACE_IMAGES} kep toltheto fel.`,
+        message: `Legfeljebb ${MAX_MARKETPLACE_IMAGES} kép tölthető fel.`,
       });
     }
 
@@ -450,11 +450,11 @@ async function createMarketplaceListing(req, res) {
       try {
         await transaction.rollback();
       } catch (rollbackError) {
-        console.error("Marketplace hirdetés rollback hiba:", rollbackError);
+        console.error("Piactér hirdetés visszagörgetési hiba:", rollbackError);
       }
     }
 
-    console.error("Marketplace hirdetés létrehozási hiba:", error);
+    console.error("Piactér hirdetés létrehozási hibája:", error);
     return res.status(500).json({
       message: "Hiba a hirdetés létrehozása közben.",
     });
@@ -506,7 +506,7 @@ async function updateMarketplaceListing(req, res) {
 
     if (normalizedImages.length > MAX_MARKETPLACE_IMAGES) {
       return res.status(400).json({
-        message: `Legfeljebb ${MAX_MARKETPLACE_IMAGES} kep toltheto fel.`,
+        message: `Legfeljebb ${MAX_MARKETPLACE_IMAGES} kép tölthető fel.`,
       });
     }
 
@@ -592,11 +592,11 @@ async function updateMarketplaceListing(req, res) {
       try {
         await transaction.rollback();
       } catch (rollbackError) {
-        console.error("Marketplace hirdetés update rollback hiba:", rollbackError);
+        console.error("Piactér hirdetés frissítési visszagörgetési hiba:", rollbackError);
       }
     }
 
-    console.error("Marketplace hirdetés frissítési hiba:", error);
+    console.error("Piactér hirdetés frissítési hibája:", error);
     return res.status(500).json({
       message: "Hiba a hirdetés frissítése közben.",
     });
@@ -641,7 +641,7 @@ async function setMarketplaceListingFrozenState(req, res) {
       Jegelve: Boolean(result.recordset[0].Jegelve),
     });
   } catch (error) {
-    console.error("Marketplace hirdetés jegelési hiba:", error);
+    console.error("Piactér hirdetés jegelési hibája:", error);
     return res.status(500).json({
       message: "Hiba a hirdetés állapotának módosításakor.",
     });
@@ -702,7 +702,7 @@ async function deleteMarketplaceListing(req, res) {
       message: "A hirdetés sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Marketplace hirdetés törlési hiba:", error);
+    console.error("Piactér hirdetés törlési hibája:", error);
     return res.status(500).json({
       message: "Hiba a hirdetés törlése közben.",
     });
@@ -769,9 +769,9 @@ async function getMarketplaceListingsForAdmin(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Marketplace admin hirdetések lekérési hiba:", error);
+    console.error("Piactér adminisztrációs hirdetések lekérési hibája:", error);
     return res.status(500).json({
-      message: "Hiba a marketplace hirdetések admin lekérésekor.",
+      message: "Hiba a piactér hirdetések adminisztrációs lekérésekor.",
     });
   }
 }
@@ -858,9 +858,9 @@ async function getMarketplaceListingDetailForAdmin(req, res) {
       UgrasUrl: buildMarketplaceJumpUrl(listingId),
     });
   } catch (error) {
-    console.error("Marketplace admin hirdetés részlet hiba:", error);
+    console.error("Piactér adminisztrációs hirdetésrészlet hibája:", error);
     return res.status(500).json({
-      message: "Hiba a marketplace hirdetés részleteinek admin lekérésekor.",
+      message: "Hiba a piactér hirdetés részleteinek adminisztrációs lekérésekor.",
     });
   }
 }
@@ -896,9 +896,9 @@ async function setMarketplaceListingFrozenStateForAdmin(req, res) {
       Jegelve: Boolean(result.recordset[0].Jegelve),
     });
   } catch (error) {
-    console.error("Marketplace admin jegelési hiba:", error);
+    console.error("Piactér adminisztrációs jegelési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a hirdetés admin állapotmódosítása közben.",
+      message: "Hiba a hirdetés adminisztrációs állapotmódosítása közben.",
     });
   }
 }
@@ -946,15 +946,15 @@ async function deleteMarketplaceListingForAdmin(req, res) {
       recipientUserId: Number(listing.FelhasznaloId),
       adminUserId: Number(req.user?.id),
       type: "marketplace-listing-deleted",
-      title: "Marketplace hirdetés törölve",
-      body: `Az admin törölte a "${String(listing.Cim || "").trim() || "Névtelen hirdetés"}" című hirdetésedet.`,
+      title: "Piactér hirdetés törölve",
+      body: `Az adminisztrátor törölte a "${String(listing.Cim || "").trim() || "Névtelen hirdetés"}" című hirdetésedet.`,
     });
 
     return res.status(200).json({
       message: "A hirdetés sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Marketplace admin törlési hiba:", error);
+    console.error("Piactér adminisztrációs törlési hiba:", error);
     return res.status(500).json({
       message: "Hiba a hirdetés admin törlése közben.",
     });
@@ -1017,7 +1017,7 @@ async function createMarketplaceMessage(req, res) {
       message: "Az üzenet sikeresen elküldve.",
     });
   } catch (error) {
-    console.error("Marketplace üzenet küldési hiba:", error);
+    console.error("Piactér üzenetküldési hiba:", error);
     return res.status(500).json({
       message: "Hiba az üzenet küldése közben.",
     });
@@ -1107,7 +1107,7 @@ async function getMarketplaceMessages(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Marketplace üzenetek lekérési hiba:", error);
+    console.error("Piactér üzenetek lekérési hibája:", error);
     return res.status(500).json({
       message: "Hiba az üzenetek lekérésekor.",
     });
@@ -1183,7 +1183,7 @@ async function getMarketplaceMessageDetail(req, res) {
       Uzenetek: messagesResult.recordset,
     });
   } catch (error) {
-    console.error("Marketplace üzenet részlet hiba:", error);
+    console.error("Piactér üzenetrészlet hibája:", error);
     return res.status(500).json({
       message: "Hiba az üzenet megnyitása közben.",
     });
@@ -1248,7 +1248,7 @@ async function replyToMarketplaceMessage(req, res) {
       message: "Az üzenet sikeresen elküldve.",
     });
   } catch (error) {
-    console.error("Marketplace üzenet válasz küldési hiba:", error);
+    console.error("Piactér üzenetválasz küldési hiba:", error);
     return res.status(500).json({
       message: "Hiba az üzenet küldése közben.",
     });
@@ -1296,7 +1296,7 @@ async function deleteMarketplaceMessage(req, res) {
       message: "Az üzenet sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Marketplace üzenet törlési hiba:", error);
+    console.error("Piactér üzenet törlési hiba:", error);
     return res.status(500).json({
       message: "Hiba az üzenet törlése közben.",
     });
@@ -1319,7 +1319,7 @@ async function createMarketplaceReport(req, res) {
     }
 
     if (!REPORT_REASON_CODES.has(reasonCode)) {
-      return res.status(400).json({ message: "Érvénytelen report indok." });
+      return res.status(400).json({ message: "Érvénytelen bejelentési indok." });
     }
 
     if (reasonCode === "other" && details.length < 3) {
@@ -1332,11 +1332,11 @@ async function createMarketplaceReport(req, res) {
     const listing = await fetchMarketplaceListingTarget(pool, listingId);
 
     if (!listing) {
-      return res.status(404).json({ message: "A reportolni kívánt hirdetés nem található." });
+      return res.status(404).json({ message: "A bejelenteni kívánt hirdetés nem található." });
     }
 
     if (Number(listing.HirdetoFelhasznaloId) === reporterUserId) {
-      return res.status(400).json({ message: "A saját hirdetésedet nem reportolhatod." });
+      return res.status(400).json({ message: "A saját hirdetésedet nem jelentheted be." });
     }
 
     await pool
@@ -1369,12 +1369,12 @@ async function createMarketplaceReport(req, res) {
       `);
 
     return res.status(201).json({
-      message: "A report sikeresen elküldve.",
+      message: "A bejelentés sikeresen elküldve.",
     });
   } catch (error) {
-    console.error("Marketplace report küldési hiba:", error);
+    console.error("Piactér bejelentés küldési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a report elküldése közben.",
+      message: "Hiba a bejelentés elküldése közben.",
     });
   }
 }
@@ -1394,9 +1394,9 @@ async function getAdminMarketplaceReportNotifications(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Marketplace admin report értesítés hiba:", error);
+    console.error("Piactér adminisztrációs bejelentésértesítési hiba:", error);
     return res.status(500).json({
-      message: "Hiba az admin marketplace report értesítések lekérésekor.",
+      message: "Hiba az adminisztrációs piactér-bejelentések értesítéseinek lekérésekor.",
     });
   }
 }
@@ -1428,9 +1428,9 @@ async function getAdminMarketplaceReports(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Marketplace admin report lista hiba:", error);
+    console.error("Piactér adminisztrációs bejelentéslista hiba:", error);
     return res.status(500).json({
-      message: "Hiba a marketplace reportok lekérésekor.",
+      message: "Hiba a piactér bejelentések lekérésekor.",
     });
   }
 }
@@ -1440,7 +1440,7 @@ async function getAdminMarketplaceReportDetail(req, res) {
     const reportId = parsePositiveInt(req.params.reportId);
 
     if (!Number.isInteger(reportId) || reportId <= 0) {
-      return res.status(400).json({ message: "Érvénytelen report azonosító." });
+      return res.status(400).json({ message: "Érvénytelen bejelentés-azonosító." });
     }
 
     const pool = await poolPromise;
@@ -1479,7 +1479,7 @@ async function getAdminMarketplaceReportDetail(req, res) {
     const report = result.recordset[0];
 
     if (!report) {
-      return res.status(404).json({ message: "A report nem található." });
+      return res.status(404).json({ message: "A bejelentés nem található." });
     }
 
     return res.status(200).json({
@@ -1487,9 +1487,9 @@ async function getAdminMarketplaceReportDetail(req, res) {
       UgrasUrl: buildMarketplaceJumpUrl(Number(report.MarketplaceHirdetesId)),
     });
   } catch (error) {
-    console.error("Marketplace admin report részlet hiba:", error);
+    console.error("Piactér adminisztrációs bejelentés részlet hiba:", error);
     return res.status(500).json({
-      message: "Hiba a marketplace report részleteinek lekérésekor.",
+      message: "Hiba a piactér bejelentés részleteinek lekérésekor.",
     });
   }
 }
@@ -1500,7 +1500,7 @@ async function replyToMarketplaceReport(req, res) {
     const adminReply = normalizeText(req.body?.adminReply, 2000);
 
     if (!Number.isInteger(reportId) || reportId <= 0) {
-      return res.status(400).json({ message: "Érvénytelen report azonosító." });
+      return res.status(400).json({ message: "Érvénytelen bejelentés-azonosító." });
     }
 
     if (!adminReply) {
@@ -1525,14 +1525,14 @@ async function replyToMarketplaceReport(req, res) {
       `);
 
     if (!result.recordset.length) {
-      return res.status(404).json({ message: "A report nem található." });
+      return res.status(404).json({ message: "A bejelentés nem található." });
     }
 
     return res.status(200).json({
-      message: "Az admin válasz sikeresen elküldve.",
+      message: "Az adminisztrátori válasz sikeresen elküldve.",
     });
   } catch (error) {
-    console.error("Marketplace admin report válasz hiba:", error);
+    console.error("Piactér adminisztrációs bejelentés válasz hiba:", error);
     return res.status(500).json({
       message: "Hiba a válasz elküldése közben.",
     });
@@ -1544,7 +1544,7 @@ async function deleteAdminMarketplaceReport(req, res) {
     const reportId = parsePositiveInt(req.params.reportId);
 
     if (!Number.isInteger(reportId) || reportId <= 0) {
-      return res.status(400).json({ message: "Érvénytelen report azonosító." });
+      return res.status(400).json({ message: "Érvénytelen bejelentés-azonosító." });
     }
 
     const pool = await poolPromise;
@@ -1560,16 +1560,16 @@ async function deleteAdminMarketplaceReport(req, res) {
       `);
 
     if (!result.recordset.length) {
-      return res.status(404).json({ message: "A report nem található." });
+      return res.status(404).json({ message: "A bejelentés nem található." });
     }
 
     return res.status(200).json({
-      message: "A report sikeresen törölve.",
+      message: "A bejelentés sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Marketplace admin report törlési hiba:", error);
+    console.error("Piactér adminisztrációs bejelentés törlési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a report törlése közben.",
+      message: "Hiba a bejelentés törlése közben.",
     });
   }
 }
@@ -1605,7 +1605,7 @@ async function getUserMarketplaceReportMessages(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Marketplace user report üzenetek hiba:", error);
+    console.error("Piactér felhasználói bejelentésüzenetek hibája:", error);
     return res.status(500).json({
       message: "Hiba az üzenetek lekérésekor.",
     });
@@ -1671,7 +1671,7 @@ async function getUserMarketplaceReportMessageDetail(req, res) {
       UgrasUrl: buildMarketplaceJumpUrl(Number(message.MarketplaceHirdetesId)),
     });
   } catch (error) {
-    console.error("Marketplace user report üzenet részlet hiba:", error);
+    console.error("Piactér felhasználói bejelentésüzenet részlet hiba:", error);
     return res.status(500).json({
       message: "Hiba az üzenet megnyitása közben.",
     });
@@ -1714,7 +1714,7 @@ async function deleteUserMarketplaceReportMessage(req, res) {
       message: "Az üzenet sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Marketplace user report üzenet törlési hiba:", error);
+    console.error("Piactér felhasználói bejelentésüzenet törlési hiba:", error);
     return res.status(500).json({
       message: "Hiba az üzenet törlése közben.",
     });

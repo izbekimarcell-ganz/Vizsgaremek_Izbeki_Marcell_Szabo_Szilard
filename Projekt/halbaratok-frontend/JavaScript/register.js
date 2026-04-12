@@ -55,7 +55,7 @@ if (registerForm) {
       await showAppSuccess("Sikeres regisztráció!");
       window.location.href = "./login.html";
     } catch (error) {
-      console.error("Register fetch hiba:", error);
+      console.error("Regisztrációs kérés hiba:", error);
       await showAppAlert("Nem sikerült kapcsolódni a szerverhez.", { title: "Hiba" });
     }
   });

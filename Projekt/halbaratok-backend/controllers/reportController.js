@@ -45,13 +45,13 @@ async function createForumReport(req, res) {
 
     if (!["topic", "reply"].includes(targetType) || Number.isNaN(targetId) || targetId <= 0) {
       return res.status(400).json({
-        message: "Érvénytelen report célpont.",
+        message: "Érvénytelen bejelentési célpont.",
       });
     }
 
     if (!REPORT_REASON_CODES.has(reasonCode)) {
       return res.status(400).json({
-        message: "Érvénytelen report indok.",
+        message: "Érvénytelen bejelentési indok.",
       });
     }
 
@@ -101,7 +101,7 @@ async function createForumReport(req, res) {
 
     if (!targetRow) {
       return res.status(404).json({
-        message: "A reportolni kívánt tartalom nem található.",
+        message: "A bejelenteni kívánt tartalom nem található.",
       });
     }
 
@@ -144,12 +144,12 @@ async function createForumReport(req, res) {
       `);
 
     return res.status(201).json({
-      message: "A report sikeresen elküldve.",
+      message: "A bejelentés sikeresen elküldve.",
     });
   } catch (error) {
-    console.error("Fórumreport-küldési hiba:", error);
+    console.error("Fórumbejelentés-küldési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a report elküldése közben.",
+      message: "Hiba a bejelentés elküldése közben.",
     });
   }
 }
@@ -169,9 +169,9 @@ async function getAdminReportNotifications(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Admin fórum report értesítés hiba:", error);
+    console.error("Adminisztrációs fórumbejelentés-értesítési hiba:", error);
     return res.status(500).json({
-      message: "Hiba az admin report értesítések lekérésekor.",
+      message: "Hiba az adminisztrációs bejelentésértesítések lekérésekor.",
     });
   }
 }
@@ -205,9 +205,9 @@ async function getAdminReports(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Admin report lista lekérési hiba:", error);
+    console.error("Adminisztrációs bejelentéslista lekérési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a reportok lekérésekor.",
+      message: "Hiba a bejelentések lekérésekor.",
     });
   }
 }
@@ -218,7 +218,7 @@ async function getAdminReportDetail(req, res) {
 
     if (Number.isNaN(reportId) || reportId <= 0) {
       return res.status(400).json({
-        message: "Érvénytelen report azonosító.",
+        message: "Érvénytelen bejelentés-azonosító.",
       });
     }
 
@@ -262,7 +262,7 @@ async function getAdminReportDetail(req, res) {
 
     if (!report) {
       return res.status(404).json({
-        message: "A report nem található.",
+        message: "A bejelentés nem található.",
       });
     }
 
@@ -274,9 +274,9 @@ async function getAdminReportDetail(req, res) {
       ),
     });
   } catch (error) {
-    console.error("Admin report részlet lekérési hiba:", error);
+    console.error("Adminisztrációs bejelentés részlet lekérési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a report részleteinek lekérésekor.",
+      message: "Hiba a bejelentés részleteinek lekérésekor.",
     });
   }
 }
@@ -288,7 +288,7 @@ async function replyToReport(req, res) {
 
     if (Number.isNaN(reportId) || reportId <= 0) {
       return res.status(400).json({
-        message: "Érvénytelen report azonosító.",
+        message: "Érvénytelen bejelentés-azonosító.",
       });
     }
 
@@ -317,15 +317,15 @@ async function replyToReport(req, res) {
 
     if (!result.recordset.length) {
       return res.status(404).json({
-        message: "A report nem található.",
+        message: "A bejelentés nem található.",
       });
     }
 
     return res.status(200).json({
-      message: "Az admin válasz sikeresen elküldve.",
+      message: "Az adminisztrátori válasz sikeresen elküldve.",
     });
   } catch (error) {
-    console.error("Admin report válasz küldési hiba:", error);
+    console.error("Adminisztrációs bejelentés válaszküldési hiba:", error);
     return res.status(500).json({
       message: "Hiba a válasz elküldése közben.",
     });
@@ -338,7 +338,7 @@ async function deleteAdminReport(req, res) {
 
     if (Number.isNaN(reportId) || reportId <= 0) {
       return res.status(400).json({
-        message: "Érvénytelen report azonosító.",
+        message: "Érvénytelen bejelentés-azonosító.",
       });
     }
 
@@ -356,17 +356,17 @@ async function deleteAdminReport(req, res) {
 
     if (!result.recordset.length) {
       return res.status(404).json({
-        message: "A report nem található.",
+        message: "A bejelentés nem található.",
       });
     }
 
     return res.status(200).json({
-      message: "A report sikeresen törölve.",
+      message: "A bejelentés sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Admin report törlési hiba:", error);
+    console.error("Adminisztrációs bejelentés törlési hiba:", error);
     return res.status(500).json({
-      message: "Hiba a report törlésekor.",
+      message: "Hiba a bejelentés törlésekor.",
     });
   }
 }
@@ -402,7 +402,7 @@ async function getUserReportMessages(req, res) {
 
     return res.status(200).json(result.recordset);
   } catch (error) {
-    console.error("Felhasználói report üzenetek lekérési hiba:", error);
+    console.error("Felhasználói bejelentésüzenetek lekérési hibája:", error);
     return res.status(500).json({
       message: "Hiba az üzenetek lekérésekor.",
     });
@@ -469,7 +469,7 @@ async function getUserReportMessageDetail(req, res) {
 
     return res.status(200).json(message);
   } catch (error) {
-    console.error("Felhasználói report üzenet részlet hiba:", error);
+    console.error("Felhasználói bejelentésüzenet részlet hibája:", error);
     return res.status(500).json({
       message: "Hiba az üzenet megnyitásakor.",
     });
@@ -518,7 +518,7 @@ async function deleteUserReportMessage(req, res) {
       message: "Az üzenet sikeresen törölve.",
     });
   } catch (error) {
-    console.error("Felhasználói report üzenet törlési hiba:", error);
+    console.error("Felhasználói bejelentésüzenet törlési hibája:", error);
     return res.status(500).json({
       message: "Hiba az üzenet törlésekor.",
     });

@@ -91,7 +91,7 @@ async function toggleUserActive(req, res) {
 
     if (user.Admin) {
       return res.status(403).json({
-        message: "Admin fiók állapota itt nem módosítható.",
+        message: "Adminisztrátori fiók állapota itt nem módosítható.",
       });
     }
 
@@ -153,7 +153,7 @@ async function deleteUserByAdmin(req, res) {
 
     if (user.Admin) {
       return res.status(403).json({
-        message: "Admin fiók nem törölhető.",
+        message: "Adminisztrátori fiók nem törölhető.",
       });
     }
 
@@ -214,7 +214,7 @@ async function deleteUserByAdmin(req, res) {
       },
     });
   } catch (error) {
-    console.error("Admin felhasználó törlési hiba:", error);
+    console.error("Adminisztrátori felhasználó törlési hibája:", error);
     return res.status(500).json({
       message: "Hiba a felhasználó törlésekor.",
     });

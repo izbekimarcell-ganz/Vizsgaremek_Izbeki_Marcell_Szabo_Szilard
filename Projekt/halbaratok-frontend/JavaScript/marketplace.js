@@ -7,7 +7,7 @@ function createMarketplaceDraftImage({ dataUrl, name, sizeBytes = 0, existingIma
   return {
     clientId: generateMarketplaceDraftImageId(),
     dataUrl,
-    name: name || "Kep",
+    name: name || "Kép",
     sizeBytes,
     existingImageId,
   };
@@ -292,10 +292,10 @@ function renderMarketplaceCreateImageList() {
       return `
         <div class="marketplace-upload-item${isPrimary ? " is-primary" : ""}">
           <div class="marketplace-upload-preview">
-            <img src="${escapeHtml(image.dataUrl)}" alt="${escapeHtml(image.name || `Kep ${index + 1}`)}" />
+              <img src="${escapeHtml(image.dataUrl)}" alt="${escapeHtml(image.name || `Kép ${index + 1}`)}" />
           </div>
           <div class="marketplace-upload-meta">
-            <div class="fw-semibold">${escapeHtml(image.name || `Kep ${index + 1}`)}</div>
+                <div class="fw-semibold">${escapeHtml(image.name || `Kép ${index + 1}`)}</div>
             <div class="small section-text">${sizeLabel}</div>
           </div>
           <label class="marketplace-upload-primary">
@@ -376,7 +376,7 @@ async function handleMarketplaceCreateImagesChange(event) {
       convertedImages.push(
         createMarketplaceDraftImage({
           dataUrl: imageDataUrl,
-          name: file.name || "Kep",
+      name: file.name || "Kép",
           sizeBytes: Number(file.size) || 0,
         })
       );
@@ -407,7 +407,7 @@ function fillMarketplaceCreateFormFromListing(listing) {
   marketplaceState.createImageFiles = (Array.isArray(listing.Kepek) ? listing.Kepek : []).map((image, index) =>
     createMarketplaceDraftImage({
       dataUrl: image.KepUrl,
-      name: `Kep ${index + 1}`,
+        name: `Kép ${index + 1}`,
       existingImageId: image.MarketplaceHirdetesKepId,
     })
   );
@@ -574,7 +574,7 @@ function ensureMarketplaceDetailLightbox() {
     wrapper.innerHTML = `
       <div id="marketplaceLightbox" class="marketplace-lightbox" aria-hidden="true">
         <div class="marketplace-lightbox-backdrop" data-marketplace-lightbox-close></div>
-        <div class="marketplace-lightbox-dialog" role="dialog" aria-modal="true" aria-label="Marketplace képnézegető">
+        <div class="marketplace-lightbox-dialog" role="dialog" aria-modal="true" aria-label="Piactér képnézegető">
           <button type="button" class="marketplace-lightbox-close" data-marketplace-lightbox-close aria-label="Bezárás">×</button>
           <button type="button" class="marketplace-lightbox-control is-prev" data-marketplace-lightbox-prev aria-label="Előző kép">&lsaquo;</button>
           <div class="marketplace-lightbox-stage">
@@ -659,7 +659,7 @@ async function loadMarketplaceListings() {
         ? `
           <img
             src="${escapeHtml(listing.FoKepUrl)}"
-            alt="${escapeHtml(listing.Cim || "Marketplace hirdetés")}"
+            alt="${escapeHtml(listing.Cim || "Piactér hirdetés")}"
             class="marketplace-listing-thumb-image"
           />
         `
@@ -667,7 +667,7 @@ async function loadMarketplaceListings() {
 
       if (marketplaceState.viewMode === "list") {
         card.innerHTML = `
-          <a class="marketplace-listing-link marketplace-listing-link-list" href="marketplace-reszlet.html?id=${Number(listing.MarketplaceHirdetesId)}" aria-label="${escapeHtml(listing.Cim || "Marketplace hirdetés")}">
+          <a class="marketplace-listing-link marketplace-listing-link-list" href="marketplace-reszlet.html?id=${Number(listing.MarketplaceHirdetesId)}" aria-label="${escapeHtml(listing.Cim || "Piactér hirdetés")}">
             <div class="marketplace-listing-thumb">
               ${thumbHtml}
             </div>
@@ -679,7 +679,7 @@ async function loadMarketplaceListings() {
         `;
       } else {
         card.innerHTML = `
-          <a class="marketplace-listing-link" href="marketplace-reszlet.html?id=${Number(listing.MarketplaceHirdetesId)}" aria-label="${escapeHtml(listing.Cim || "Marketplace hirdetés")}">
+          <a class="marketplace-listing-link" href="marketplace-reszlet.html?id=${Number(listing.MarketplaceHirdetesId)}" aria-label="${escapeHtml(listing.Cim || "Piactér hirdetés")}">
             <div class="marketplace-listing-thumb">
               ${thumbHtml}
             </div>
@@ -824,7 +824,7 @@ function prepareMarketplacePage() {
       renderMarketplaceCategories();
       await loadMarketplaceListings();
     } catch (error) {
-      console.error("Marketplace betöltési hiba:", error);
+      console.error("Piactér betöltési hiba:", error);
       const resultCount = $("#marketplaceResultsCount");
       const emptyState = $("#marketplaceEmptyState");
       const listingsContainer = $("#marketplaceListings");
@@ -841,7 +841,7 @@ function prepareMarketplacePage() {
       if (emptyState) {
         emptyState.classList.remove("d-none");
         emptyState.querySelector(".section-text").textContent =
-          error.message || "Nem sikerült betölteni a marketplace hirdetéseket.";
+          error.message || "Nem sikerült betölteni a piactér hirdetéseket.";
       }
     }
   })();
@@ -1052,7 +1052,7 @@ function ensureMarketplaceReportModal() {
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
           <div class="modal-content app-card border-danger-subtle">
             <div class="modal-header border-secondary-subtle">
-              <h2 class="modal-title fs-5">Hirdetés reportolása</h2>
+              <h2 class="modal-title fs-5">Hirdetés bejelentése</h2>
               <button type="button" class="btn-close admin-modal-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
             </div>
             <form id="marketplaceReportForm">
@@ -1071,7 +1071,7 @@ function ensureMarketplaceReportModal() {
               </div>
               <div class="modal-footer border-secondary-subtle">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Mégse</button>
-                <button type="submit" class="btn btn-danger">Report küldése</button>
+                <button type="submit" class="btn btn-danger">Bejelentés küldése</button>
               </div>
             </form>
           </div>
@@ -1131,7 +1131,7 @@ function toggleMarketplaceReportDetailsVisibility() {
 
 function openMarketplaceReportModal() {
   if (!isLoggedIn()) {
-    showAppAlert("A report küldéséhez be kell jelentkezned.", { title: "Bejelentkezés szükséges" });
+    showAppAlert("A bejelentés küldéséhez be kell jelentkezned.", { title: "Bejelentkezés szükséges" });
     return;
   }
 
@@ -1143,7 +1143,7 @@ function openMarketplaceReportModal() {
 
   const currentUserId = getCurrentUserId();
   if (currentUserId && currentUserId === Number(listing.FelhasznaloId)) {
-    showAppAlert("A saját hirdetésedet nem reportolhatod.", { title: "Nem elérhető" });
+    showAppAlert("A saját hirdetésedet nem jelentheted be.", { title: "Nem elérhető" });
     return;
   }
 
@@ -1183,7 +1183,7 @@ async function handleMarketplaceReportSubmit(event) {
   }
 
   if (!reasonCode) {
-    setMarketplaceReportError("Válassz report indokot.");
+    setMarketplaceReportError("Válassz bejelentési indokot.");
     return;
   }
 
@@ -1202,9 +1202,9 @@ async function handleMarketplaceReportSubmit(event) {
     });
 
     createModalInstance("marketplaceReportModal")?.hide();
-    await showAppSuccess("A report sikeresen elküldve.");
+    await showAppSuccess("A bejelentés sikeresen elküldve.");
   } catch (error) {
-    setMarketplaceReportError(error.message || "Nem sikerült elküldeni a reportot.");
+    setMarketplaceReportError(error.message || "Nem sikerült elküldeni a bejelentést.");
   }
 }
 
@@ -1319,7 +1319,7 @@ async function prepareMarketplaceDetailPage() {
         lightbox.image.innerHTML = `
           <img
             src="${escapeHtml(images[lightboxImageIndex].KepUrl)}"
-            alt="${escapeHtml(listing.Cim || "Marketplace hirdetés")}"
+            alt="${escapeHtml(listing.Cim || "Piactér hirdetés")}"
             class="marketplace-lightbox-image-tag"
           />
         `;
@@ -1340,7 +1340,7 @@ async function prepareMarketplaceDetailPage() {
               data-marketplace-lightbox-index="${index}"
               aria-label="Kép ${index + 1}"
             >
-              <img src="${escapeHtml(image.KepUrl)}" alt="${escapeHtml(listing.Cim || "Marketplace kép")}" />
+              <img src="${escapeHtml(image.KepUrl)}" alt="${escapeHtml(listing.Cim || "Piactér kép")}" />
             </button>
           `)
           .join("");
@@ -1405,7 +1405,7 @@ async function prepareMarketplaceDetailPage() {
             <div class="marketplace-detail-image-canvas">
               <img
                 src="${escapeHtml(images[currentImageIndex].KepUrl)}"
-                alt="${escapeHtml(listing.Cim || "Marketplace hirdetés")}"
+                alt="${escapeHtml(listing.Cim || "Piactér hirdetés")}"
                 class="marketplace-detail-image-tag"
               />
             </div>
@@ -1448,7 +1448,7 @@ async function prepareMarketplaceDetailPage() {
             data-image-index="${index}"
             aria-label="Kép ${index + 1}"
           >
-            <img src="${escapeHtml(image.KepUrl)}" alt="${escapeHtml(listing.Cim || "Marketplace kép")}" />
+            <img src="${escapeHtml(image.KepUrl)}" alt="${escapeHtml(listing.Cim || "Piactér kép")}" />
           </button>
         `)
         .join("");
@@ -1462,7 +1462,7 @@ async function prepareMarketplaceDetailPage() {
     }
 
     if (titleElement) {
-      titleElement.textContent = `${statusLabels.length ? `${statusLabels.join(" • ")} - ` : ""}${listing.Cim || "Marketplace hirdetés"}`;
+      titleElement.textContent = `${statusLabels.length ? `${statusLabels.join(" • ")} - ` : ""}${listing.Cim || "Piactér hirdetés"}`;
       titleElement.classList.toggle("is-frozen", isFrozen);
     }
     if (statusElement) {
@@ -1679,7 +1679,7 @@ async function prepareMarketplaceDetailPage() {
     errorState.classList.add("d-none");
     content.classList.remove("d-none");
   } catch (error) {
-    console.error("Marketplace hirdetés részlet betöltési hiba:", error);
+    console.error("Piactér hirdetés részlet betöltési hiba:", error);
     showDetailError(error.message || "Nem sikerült betölteni a hirdetés részleteit.");
   }
 }

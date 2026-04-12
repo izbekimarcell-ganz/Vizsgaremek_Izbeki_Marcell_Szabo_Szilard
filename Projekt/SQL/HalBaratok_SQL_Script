@@ -354,7 +354,7 @@ CREATE INDEX IX_FelhasznaloErtesites_CimzettInbox
 GO
 
 /* =========================================================
-   6.5) Marketplace
+   6.5) Piactér
    ========================================================= */
 
 CREATE TABLE dbo.MarketplaceKategoria
@@ -621,7 +621,7 @@ BEGIN TRY
     DECLARE @TesztId INT = (SELECT FelhasznaloId FROM dbo.Felhasznalo WHERE Felhasznalonev = N'Felhasznalo');
 
     /* =========================================================
-       7.4.1) Marketplace kategóriák és minta hirdetések
+       7.4.1) Piactér kategóriák és minta hirdetések
        ========================================================= */
     DECLARE @MarketplaceKategoriak TABLE (Kod NVARCHAR(30), Nev NVARCHAR(100), Sorrend INT);
     INSERT INTO @MarketplaceKategoriak (Kod, Nev, Sorrend) VALUES
@@ -827,7 +827,7 @@ GO
 BELÉPÉSI ADATOK
 =========================================================
 
-Admin:
+Adminisztrátor:
 Felhasználónév: admin
 Email: admin@gmail.com
 Jelszó: Admin123!

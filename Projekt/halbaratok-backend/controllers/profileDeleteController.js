@@ -13,7 +13,7 @@ const deleteProfile = async (req, res) => {
 
     if (isAdmin) {
       return res.status(403).json({
-        message: "Admin fiók nem törölhető innen.",
+        message: "Adminisztrátori fiók nem törölhető innen.",
       });
     }
 

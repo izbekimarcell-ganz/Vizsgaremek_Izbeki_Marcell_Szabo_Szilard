@@ -45,7 +45,7 @@ function authenticateTokenOptional(req, res, next) {
 function requireAdmin(req, res, next) {
   if (!req.user?.admin) {
     return res.status(403).json({
-      message: "Admin jogosultság szükséges.",
+      message: "Adminisztrátori jogosultság szükséges.",
     });
   }
 
