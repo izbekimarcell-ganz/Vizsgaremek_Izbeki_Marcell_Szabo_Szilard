@@ -1,0 +1,67 @@
+const registerForm = document.getElementById("registerForm");
+const apiOrigin =
+  window.HalBaratokShared?.apiOrigin ||
+  window.HalBaratokConfig?.apiOrigin ||
+  "http://localhost:4000";
+const registerUrl = `${apiOrigin}/auth/register`;
+
+if (registerForm) {
+  registerForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const email = document.getElementById("registerEmail").value.trim();
+    const username = document.getElementById("registerUsername").value.trim();
+    const password = document.getElementById("registerPassword").value;
+    const confirmPassword = document.getElementById("registerPasswordConfirm").value;
+    const securityQuestion = document.getElementById("registerSecurityQuestion").value;
+    const securityAnswer = document.getElementById("registerSecurityAnswer").value.trim();
+
+    if (!registerForm.checkValidity()) {
+      registerForm.classList.add("was-validated");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      await showAppAlert("A két jelszó nem egyezik.", { title: "Hiba" });
+      return;
+    }
+
+    try {
+      const response = await fetch(registerUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          username,
+          password,
+          securityQuestion,
+          securityAnswer,
+        }),
+      });
+
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await response.json()
+        : await response.text();
+
+      if (!response.ok) {
+        await showAppAlert(
+          typeof data === "object" && data?.message
+            ? data.message
+            : "Hiba történt regisztráció közben.",
+          { title: "Hiba" }
+        );
+        return;
+      }
+
+      await showAppSuccess("Sikeres regisztráció!");
+      window.location.href = "./login.html";
+    } catch (error) {
+      console.error("Regisztrációs kérés hiba:", error);
+      await showAppAlert("Nem sikerült kapcsolódni a szerverhez.", { title: "Hiba" });
+    }
+  });
+}

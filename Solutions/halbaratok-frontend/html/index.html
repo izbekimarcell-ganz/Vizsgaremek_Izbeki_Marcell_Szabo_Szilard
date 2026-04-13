@@ -1,0 +1,128 @@
+﻿<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HalBarátok - Kezdőlap</title>
+
+  <link rel="icon" type="image/png" href="../assets/favicon.png" />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="../CSS/styles.css">
+</head>
+<body data-page="index" data-theme="dark">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
+    <div class="container nav-container">
+      <a class="navbar-brand d-flex align-items-center gap-3" href="index.html">
+        <img src="../assets/logo.png" alt="HalBarátok logó" class="brand-logo" />
+        <div>
+          <div class="fw-bold brand-title">HalBarátok</div>
+          <small class="brand-subtitle">Horgászvizek • Halfajok • Fogásnapló • Fórum</small>
+        </div>
+      </a>
+
+      <div class="nav-actions-mobile d-lg-none">
+        <button id="themeToggleMobile" class="theme-toggle-btn" type="button" aria-label="Téma váltása">
+          <span class="theme-icon">☀️</span>
+        </button>
+
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#mainNavbar"
+          aria-controls="mainNavbar"
+          aria-expanded="false"
+          aria-label="Navigáció megnyitása"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      </div>
+
+      <button
+        class="navbar-toggler d-none"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#mainNavbar"
+        aria-controls="mainNavbar"
+        aria-expanded="false"
+        aria-label="Navigáció megnyitása"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="mainNavbar">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center" id="navbarMenu">
+          <li class="nav-item friend-search-nav">
+            <div class="friend-search-container" id="friendSearchContainer">
+              <button class="friend-search-toggle" id="friendSearchToggle" type="button" aria-label="Ismerősök keresése">🔍</button>
+              <input id="friendSearchInput" class="form-control app-input friend-search-input" type="text" placeholder="Ismerősök keresése" autocomplete="off" />
+              <ul id="friendSearchResults" class="friend-search-results d-none"></ul>
+            </div>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="index.html">Kezdőlap</a></li>
+          <li class="nav-item"><a class="nav-link" href="vizteruletek.html">Vízterületek</a></li>
+          <li class="nav-item"><a class="nav-link" href="fogasnaplo.html">Fogásnapló</a></li>
+          <li class="nav-item"><a class="nav-link" href="forum.html">Fórum</a></li>
+          <li class="nav-item d-none" id="adminNavItem"><a class="nav-link" href="admin.html">Adminisztráció</a></li>
+          <li class="nav-item d-none" id="profilNavItem"><a class="nav-link" href="profil.html">Profil</a></li>
+
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0 d-none d-lg-block">
+            <button id="themeToggleDesktop" class="theme-toggle-btn" type="button" aria-label="Téma váltása">
+              <span class="theme-icon">☀️</span>
+            </button>
+          </li>
+
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="loginNavItem">
+            <a class="btn btn-outline-light btn-sm" href="login.html">Bejelentkezés</a>
+          </li>
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0" id="registerNavItem">
+            <a class="btn btn-primary btn-sm" href="register.html">Regisztráció</a>
+          </li>
+          <li class="nav-item ms-lg-2 mt-2 mt-lg-0 d-none" id="logoutNavItem">
+            <button class="btn btn-outline-danger btn-sm" onclick="handleLogout()">Kijelentkezés</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+  <!-- Navbar vége -->
+
+  <!-- Fő tartalom -->
+  <main class="main-content home-main">
+    <header class="home-panel home-panel-ghost home-panel-hero">
+      <div class="home-panel-shell home-panel-shell-centered">
+        <div class="home-panel-copy home-panel-copy-centered">
+          <h1 class="home-main-title">Magyarországi horgászvizek áttekinthetően</h1>
+          <a id="homeHeroActionButton" class="btn btn-primary home-hero-action-button mt-4" href="register.html">Regisztráció</a>
+        </div>
+      </div>
+    </header>
+  </main>
+  <!-- Fő tartalom vége -->
+
+  <!-- Footer -->
+  <footer class="py-4 border-top border-secondary-subtle app-footer">
+    <div class="container text-center footer-text">
+      © HalBarátok
+    </div>
+  </footer>
+  <!-- Footer vége -->
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../JavaScript/config.js"></script>
+  <script src="../JavaScript/script.js"></script>
+  <script src="../JavaScript/marketplace.js"></script>
+  <script src="../JavaScript/app-pages.js"></script>
+  <script src="../JavaScript/admin.js"></script>
+  <script src="../JavaScript/profile.js"></script>
+  <script src="../JavaScript/friend-search.js"></script>
+</body>
+</html>
+
+
+
